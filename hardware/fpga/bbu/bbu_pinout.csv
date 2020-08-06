@@ -1,0 +1,85 @@
+BBU Pin,Signal Name,Description,Device Connection,Device Pin
+1,GND,,,
+2,RD7,,,
+3,RD8,,,
+4,RD9,,,
+5,RD10,,,
+6,RD11,,,
+7,RD12,,,
+8,RD13,,,
+9,RD14,,,
+10,RD15,,,
+11,EXTPDS,,,
+12,EN245,Select Data Buffer,74LS245,
+13,VCC,,,
+14,/WR,,,
+15,/CAS-SIMM3,,SIMM3,2
+16,/CAS-SIMM1,,SIMM1,2
+17,/EOP,,53C80,
+18,/CAS-SIMM4,,SIMM4,2
+19,/CAS-SIMM2,,SIMM2,2
+20,/RAS,,,
+21,GND,,,
+22,VCC,,,
+23,A23,,,
+24,A22,,,
+25,A21,,,
+26,A20,,,
+27,A19,,,
+28,A17,,,
+29,A9,,,
+30,/IPL1,,68000,
+31,/IPL0,,68000,
+32,IRQ,,65C22/6523,
+33,/LDS,,68000,
+34,/BERR,,68000,
+35,/UDS,,,
+36,/VPA,,68000,
+37,CK,,68000,
+38,/DTACK,,68000,
+39,SELROM,Select ROM,ROM,"20 on ROM HI, LO"
+40,"RTxCB, PCLK, ADB CLK",All the things,"85C30, ADB, GLU","20 & 28 on 85C30, 16 on ADB, 9 on GLU"
+41,/AS,,,
+42,VCC,,,
+43,GND,,,
+44,FCLK,,"SWIM, GLU","24 on SWIM, 19 on GLU"
+45,SELSCC,Select SCC,85C30,32 on /CE
+46,/RD,,85C30,
+47,R/W,,,
+48,SELSWIM,Select SWIM,SWIM,7 on /DEV
+49,EXTFLP,PWM,External Floppy,10 on PWM
+50,PB7,,65C22/6523,
+51,SELSND,Select Sound,SND,
+52,EXTPDS,,,
+53,PA6,,65C22/6523,
+54,/LDS,,,
+55,DRQ,,53C80,22 on DRQ
+56,/DACK,,53C80,26 on /DACK
+57,SELSCSI,Select SCSI,53C80,21 on /CS
+58,SELVIA,Select VIA,65C22/6523,24 on RS0
+59,/RST,,,
+60,HSYNC,Horizontal Sync,J12,Pin 10 on J12
+61,VSYNC,Veritcal Sync,"J12, 65C22/6523","Pin 11 on J12, 40 on DB7"
+62,VIDOUT,Composite Video Out,"J12, 65C22/6523","Pin 9 on J12, 28 on PC3"
+63,GND,,,
+64,VCC,,,
+65,RA9,,,
+66,RA7,,,
+67,RA8,,,
+68,RA6,,,
+69,RD0,,,
+70,RA5,,,
+71,RA4,,,
+72,RD1,,,
+73,RA3,,,
+74,RD2,,,
+75,RD3,,,
+76,RA2,,,
+77,RD4,,,
+78,RA1,,,
+79,RA0,,,
+80,RD5,,,
+81,/PMCYC,,74F257,/OE
+82,EN257,Select Address Buffer,74F257,
+83,RD6,,,
+84,VCC,,,
