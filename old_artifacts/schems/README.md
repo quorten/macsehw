@@ -13,12 +13,12 @@ https://archive.org/details/Macintosh68kSchematics
 ----------
 
 Due to the illegiblity of the original Main Logic Board (MLB) page 1
-scan, this repository also contains a retrace of the schematic,
-striving to be as faithful as possible to the original.  The retrace
-was done by hand and careful eyeing in Inkscape, after doing some
-simple image processing on the input scan.  A script that uses the
-ImageMagick `convert` command is included to reproduce the processing
-steps.
+scan, this repository also contains a [retrace of the
+schematic](retrace_se_mlb_p1.pdf), striving to be as faithful as
+possible to the original.  The retrace was done by hand and careful
+eyeing in Inkscape, after doing some simple image processing on the
+input scan.  A script that uses the ImageMagick `convert` command is
+included to reproduce the processing steps.
 
 Notes related to the accuracy of the retrace.
 
