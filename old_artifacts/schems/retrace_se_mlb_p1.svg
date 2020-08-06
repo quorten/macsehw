@@ -60,8 +60,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="755.11068"
-     inkscape:cy="552.39988"
+     inkscape:cx="934.226"
+     inkscape:cy="440.20134"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -91,13 +91,13 @@
     <image
        xlink:href="se_mlb_p1_proc.png"
        style="display:none"
-       y="-1.2478054"
-       x="0.26458079"
-       id="image18"
-       preserveAspectRatio="none"
-       height="296.18311"
+       sodipodi:insensitive="true"
        width="386.15598"
-       sodipodi:insensitive="true" />
+       height="296.18311"
+       preserveAspectRatio="none"
+       id="image18"
+       x="0.26458079"
+       y="-1.2478054" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -2661,7 +2661,7 @@
          id="tspan901"
          x="300.85666"
          y="43.694649"
-         style="stroke-width:0.3562324">(2)(1)</tspan></text>
+         style="stroke-width:0.3562324">(2)(3)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -2694,7 +2694,7 @@
          id="tspan913"
          x="300.12323"
          y="61.347969"
-         style="stroke-width:0.3562324">(2)(1)</tspan></text>
+         style="stroke-width:0.3562324">(2)(3)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -2716,7 +2716,7 @@
          id="tspan921"
          x="300.16776"
          y="66.157104"
-         style="stroke-width:0.3562324">(1)(2)</tspan></text>
+         style="stroke-width:0.3562324">(3)(2)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -18932,7 +18932,7 @@
          y="58.591167"
          x="299.9559"
          id="tspan3555"
-         sodipodi:role="line">(1)</tspan></text>
+         sodipodi:role="line">(3)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
