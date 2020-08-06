@@ -22,11 +22,11 @@ included to reproduce the processing steps.
 
 Notes related to the accuracy of the retrace.
 
-* The pinouts of all integrated circuit components have been verified
-  with second sources.
+* The pinouts of all integrated circuit components and the RAM SIMMs
+  have been verified with second sources.
 
-* The pinouts of the PDS slot and RAM SIMMs have **not** yet been
-  verified with second sources.
+* The pinouts of the PDS slot have **not** yet been verified with
+  second sources.
 
 * The resistor values have been checked to be consistent with the
   reference designators, but **not all reference designators** have
