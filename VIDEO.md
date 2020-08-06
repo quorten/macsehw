@@ -9,10 +9,10 @@ The CRT is controlled by 3 digital output signals:
 * `*HSYNC`
 * `*VSYNC`
 
-These are all 5 V logic signals.  Therefore, they can be packed up
-into a DB-9 connector for TTL or ECL video.  Commercially available
-flat panel displays are avaiable with adapter electronics that can
-accept TTL or ECL video, since it apparently became very popular in
+These are all 5V logic signals.  Therefore, they can be packed up into
+a DB-9 connector for TTL or ECL video.  Commercially available flat
+panel displays are avaiable with adapter electronics that can accept
+TTL or ECL video, since these apparently became very popular in
 specialized industrial equipment.  Once you've got your monitor and
 connectors all set up, you should be good to go.
 
