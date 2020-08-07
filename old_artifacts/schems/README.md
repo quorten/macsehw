@@ -33,7 +33,7 @@ Notes related to the accuracy of the retrace.
   been verified to be consistent with the placement on the printed
   circuit board.
 
-* The schematic info blocks in the upper and lower left corners have
+* The schematic info blocks in the upper and lower right corners have
   been cross-checked with scans of other official Apple schematics to
   attempt to make them as faithful as possible to the original
   contents.
