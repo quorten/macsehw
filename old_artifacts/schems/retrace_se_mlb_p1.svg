@@ -59,9 +59,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="800.90173"
-     inkscape:cy="782.68426"
+     inkscape:zoom="2"
+     inkscape:cx="904.11064"
+     inkscape:cy="711.41592"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -89,7 +89,6 @@
      inkscape:groupmode="layer"
      id="layer1">
     <image
-       sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
        style="display:none"
        y="-1.2478054"
@@ -199,7 +198,7 @@
          style="stroke-width:0.3562324">2</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
+       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
        x="220.19357"
        y="76.532372"
        id="text112"><tspan
@@ -207,10 +206,10 @@
          id="tspan110"
          x="220.19357"
          y="76.532372"
-         style="stroke-width:0.3562324;fill:#ff0000;">A2</tspan></text>
+         style="stroke-width:0.3562324;fill:#000000;">A2</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
+       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
        x="220.46074"
        y="79.226379"
        id="text116"><tspan
@@ -218,7 +217,7 @@
          id="tspan114"
          x="220.46074"
          y="79.226379"
-         style="stroke-width:0.3562324;fill:#ff0000;">A1</tspan></text>
+         style="stroke-width:0.3562324;fill:#000000;">A1</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -2134,7 +2133,7 @@
          style="stroke-width:0.3562324">RA0</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
        x="227.00652"
        y="65.17746"
        id="text713"><tspan
@@ -2142,7 +2141,7 @@
          id="tspan711"
          x="227.00652"
          y="65.17746"
-         style="fill:#ff0000;stroke-width:0.3562324">A18</tspan></text>
+         style="fill:#000000;stroke-width:0.3562324;">A18</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
@@ -2178,7 +2177,7 @@
          style="stroke-width:0.3562324">RA0</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324;"
        x="226.76822"
        y="62.208881"
        id="text729"><tspan
@@ -2186,7 +2185,7 @@
          id="tspan727"
          x="226.76822"
          y="62.208881"
-         style="fill:#ff0000;stroke-width:0.3562324">A10</tspan></text>
+         style="fill:#000000;stroke-width:0.3562324;">A10</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
