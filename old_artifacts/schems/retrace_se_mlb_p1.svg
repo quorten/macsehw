@@ -59,9 +59,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6568542"
-     inkscape:cx="965.9065"
-     inkscape:cy="303.54945"
+     inkscape:zoom="1"
+     inkscape:cx="775.86661"
+     inkscape:cy="607.03708"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -91,14 +91,14 @@
     <image
        sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       style="display:none"
-       sodipodi:insensitive="true"
-       width="386.15598"
-       height="296.18311"
-       preserveAspectRatio="none"
-       id="image18"
+       y="-1.2478054"
        x="0.26458079"
-       y="-1.2478054" />
+       id="image18"
+       preserveAspectRatio="none"
+       height="296.18311"
+       width="386.15598"
+       sodipodi:insensitive="true"
+       style="display:none" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -2959,18 +2959,7 @@
          y="54.40144"
          x="289.21359"
          id="tspan1009"
-         sodipodi:role="line">C3.7M</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.42492962px;line-height:1;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
-       x="294.46802"
-       y="54.045204"
-       id="text1015"><tspan
-         sodipodi:role="line"
-         id="tspan1013"
-         x="294.46802"
-         y="54.045204"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.42492962px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.3562324">2</tspan></text>
+         sodipodi:role="line">C3.7MF</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
