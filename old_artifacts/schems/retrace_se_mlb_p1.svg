@@ -59,9 +59,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="776.19377"
-     inkscape:cy="677.40382"
+     inkscape:zoom="5.6568542"
+     inkscape:cx="965.9065"
+     inkscape:cy="303.54945"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -91,14 +91,14 @@
     <image
        sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       y="-1.2478054"
-       x="0.26458079"
-       id="image18"
-       preserveAspectRatio="none"
-       height="296.18311"
-       width="386.15598"
+       style="display:none"
        sodipodi:insensitive="true"
-       style="display:none" />
+       width="386.15598"
+       height="296.18311"
+       preserveAspectRatio="none"
+       id="image18"
+       x="0.26458079"
+       y="-1.2478054" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -15452,7 +15452,7 @@
          id="tspan3001"
          x="189.82475"
          y="240.22118"
-         style="stroke-width:0.3562324">ER</tspan></text>
+         style="stroke-width:0.3562324">BR</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 189.91381,238.52906 h 2.13739"
@@ -17104,7 +17104,7 @@
          id="tspan4520"
          x="243.29881"
          y="206.73326"
-         style="stroke-width:0.3562324">ER</tspan></text>
+         style="stroke-width:0.3562324">BR</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 243.17283,205.34784 h 2.23558"
@@ -17120,7 +17120,7 @@
          y="207.5834"
          x="253.24864"
          id="tspan4526"
-         sodipodi:role="line">ER</tspan></text>
+         sodipodi:role="line">BR</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path4530"
@@ -17231,7 +17231,7 @@
          y="253.53537"
          x="182.74464"
          id="tspan4568"
-         sodipodi:role="line">ER</tspan></text>
+         sodipodi:role="line">BR</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path4572"
