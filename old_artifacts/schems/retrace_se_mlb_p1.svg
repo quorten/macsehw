@@ -59,9 +59,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2"
-     inkscape:cx="904.11064"
-     inkscape:cy="711.41592"
+     inkscape:zoom="1"
+     inkscape:cx="776.19377"
+     inkscape:cy="677.40382"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -89,15 +89,16 @@
      inkscape:groupmode="layer"
      id="layer1">
     <image
+       sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       style="display:none"
        y="-1.2478054"
        x="0.26458079"
        id="image18"
        preserveAspectRatio="none"
        height="296.18311"
        width="386.15598"
-       sodipodi:insensitive="true" />
+       sodipodi:insensitive="true"
+       style="display:none" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -14833,14 +14834,19 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
-       x="161.63786"
-       y="85.21553"
+       x="161.75362"
+       y="83.512276"
        id="text2803"><tspan
          sodipodi:role="line"
          id="tspan2801"
-         x="161.63786"
-         y="85.21553"
-         style="stroke-width:0.3562324">RAMS ONLY</tspan></text>
+         x="161.75362"
+         y="83.512276"
+         style="stroke-width:0.3562324">1  ROW  OF</tspan><tspan
+         sodipodi:role="line"
+         x="161.75362"
+         y="85.17469"
+         style="stroke-width:0.3562324"
+         id="tspan4663">RAMS ONLY</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -24670,17 +24676,6 @@
          x="81.587639"
          id="tspan5692"
          sodipodi:role="line">1/4W, 5?V</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
-       x="161.52383"
-       y="83.631248"
-       id="text5702"><tspan
-         sodipodi:role="line"
-         id="tspan5700"
-         x="161.52383"
-         y="83.631248"
-         style="fill:#ff0000;stroke-width:0.3562324">1MB H.+ OF</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.6622889px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:0.26458332"
