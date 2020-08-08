@@ -100,11 +100,19 @@ only simple, single-pin interfaces.
 
 Peripheral device signals, input or output?
 
-* `*ENTD1K` is very likely an input signal, for PDS use.  Why?  The
+* `*EXT.DTK` is very likely an input signal, for PDS use.  Why?  The
   Macintosh Classic is essentially a stripped-down Macintosh SE that
   uses the same BBU.  In that schematic, pin 11 is indicated as
   connected to a pull-up resistor.  So, clearly this must be an input
   since it cannot be connected.
+
+  Actually, the full purpose is documented right here.  If this pin is
+  pulled low, then the system expansion card is responsible for
+  generating the `*DTACK` signal to indicate to the CPU that the data
+  transfer is complete.  The BBU puts the signal in a high-impedance
+  state.
+
+  20200808/https://web.archive.org/web/20190909060927/http://www.ccadams.org/se/pinouts.html
 
 * `*EAREN` is very likely an output signal (also for PDS use), for the
   reason it is not indicated in the Bomarc Macintosh Classic

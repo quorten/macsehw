@@ -60,16 +60,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="897.18755"
-     inkscape:cy="466.4755"
+     inkscape:cx="699.39436"
+     inkscape:cy="485.21248"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      units="in"
-     inkscape:window-width="1853"
-     inkscape:window-height="1025"
-     inkscape:window-x="67"
-     inkscape:window-y="27"
+     inkscape:window-width="1680"
+     inkscape:window-height="986"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:snap-global="false" />
   <metadata
@@ -91,14 +91,14 @@
     <image
        sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       style="display:none"
-       sodipodi:insensitive="true"
-       width="386.15598"
-       height="296.18311"
-       preserveAspectRatio="none"
-       id="image18"
+       y="-1.2478054"
        x="0.26458079"
-       y="-1.2478054" />
+       id="image18"
+       preserveAspectRatio="none"
+       height="296.18311"
+       width="386.15598"
+       sodipodi:insensitive="true"
+       style="display:none" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -691,9 +691,10 @@
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 166.471,116.17724 -1.38542,-1.25947 -0.2519,-21.536961 -17.00286,0.377842"
+       d="m 166.76866,116.45836 -1.68308,-1.54059 -0.2519,-21.536961 -17.00286,0.377842"
        id="path183"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
     <path
        inkscape:connector-curvature="0"
        id="path197"
@@ -16733,7 +16734,7 @@
          id="tspan4373"
          x="269.08649"
          y="118.34983"
-         style="stroke-width:0.3562324">ENTD1K</tspan></text>
+         style="stroke-width:0.3562324">EXTDTK</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -16744,7 +16745,7 @@
          id="tspan4377"
          x="277.7919"
          y="152.85518"
-         style="stroke-width:0.3562324">ENTD1K</tspan></text>
+         style="stroke-width:0.3562324">EXTDTK</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 278.05907,151.4525 h 6.05596"
@@ -16760,7 +16761,7 @@
          id="tspan4383"
          x="151.16843"
          y="92.939987"
-         style="stroke-width:0.3562324">ENTD1K</tspan></text>
+         style="stroke-width:0.3562324">EXTDTK</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 151.13694,91.397132 h 6.64371"
