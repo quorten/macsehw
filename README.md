@@ -27,7 +27,7 @@ Internet, they will have to be redrawn from the reverse engineered
 printed circuit board layout.
 
 Follow this link to [jump to the redrawn
-schematic](old_artifacts/schems/retrace_se_mlb_p1.pdf).
+schematic](old_artifacts/schems/retrace_se_mlb_p1.svg).
 
 There are lots of other independent projects with good pieces of
 information out and about on the Macintosh SE.  For the time being,
