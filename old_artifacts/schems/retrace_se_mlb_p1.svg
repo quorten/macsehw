@@ -60,8 +60,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="699.39436"
-     inkscape:cy="485.21248"
+     inkscape:cx="806.05004"
+     inkscape:cy="685.72518"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -91,14 +91,14 @@
     <image
        sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       y="-1.2478054"
-       x="0.26458079"
-       id="image18"
-       preserveAspectRatio="none"
-       height="296.18311"
-       width="386.15598"
+       style="display:none"
        sodipodi:insensitive="true"
-       style="display:none" />
+       width="386.15598"
+       height="296.18311"
+       preserveAspectRatio="none"
+       id="image18"
+       x="0.26458079"
+       y="-1.2478054" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 191.91762,72.034942 -22.977,0.178117 -2.1374,-1.246814 -0.17811,-27.251779 -2.49362,-2.493628 -48.4476,0.356234 -2.49363,2.493626 0.53435,16.208574 -1.42493,1.603046 0.57888,20.661472 2.53816,1.959279 14.78364,-0.267175"
@@ -8641,7 +8641,7 @@
          id="tspan6225"
          x="45.372791"
          y="17.938437"
-         style="stroke-width:0.3562324">1.  ALL RESISTANCE VALUES ARE IN OHMS, 1/4W, 5%</tspan></text>
+         style="stroke-width:0.3562324">1.  ALL RESISTANCE VALUES ARE IN OHMS, 1/6W, 5%</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
