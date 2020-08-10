@@ -116,7 +116,9 @@ Peripheral device signals, input or output?
 
 * `*EAREN` is very likely an output signal (also for PDS use), for the
   reason it is not indicated in the Bomarc Macintosh Classic
-  schematics, i.e. it could be disconnected entirely.
+  schematics, i.e. it could be disconnected entirely.  Also, note that
+  we don't need to actually implement this signal because it is marked
+  as "reserved" in the PDS slot documentation.
 
 * Output signals: `*SCCRD`, `*PWM`?, `*DACK`, `SND`,
   `VIDPG2`, `*VSYNC`, `*HSYNC`, `VIDOUT`.
