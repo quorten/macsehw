@@ -1,0 +1,3 @@
+[submodule "bigworld/macse30"]
+	path = bigworld/macse30
+	url = https://github.com/quorten/macse30mlb.git
