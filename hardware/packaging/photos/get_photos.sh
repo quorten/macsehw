@@ -4,6 +4,10 @@
 # has bandwidth limits, so let's try to keep away from those as much
 # as possible.
 
+# Google Drive parent directory URL: https://drive.google.com/drive/folders/1VzPV8MtS3qOpWC62HtaMCkKF6aeY0b5S?usp=sharing
+
+# Known good reference date: 2020-08-31
+
 curl -L -o DSC_4197.JPG 'https://drive.google.com/uc?export=download&id=1QMgk5Lmz55eJHtlUW-eGNABifHLEopRw'
 curl -L -o DSC_4198.JPG 'https://drive.google.com/uc?export=download&id=1zwqXcOMhNkUX6eXjXEemlIuyVLC5rUH9'
 curl -L -o DSC_4199.JPG 'https://drive.google.com/uc?export=download&id=1ORPoTRsPacqNXiOislspTpcdUdez806D'
