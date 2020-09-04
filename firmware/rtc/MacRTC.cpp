@@ -1,3 +1,9 @@
+/* Public Domain Release: CC0 1.0 Universal.
+
+   For more information, please see
+   <http://creativecommons.org/publicdomain/zero/1.0/>
+*/
+
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
