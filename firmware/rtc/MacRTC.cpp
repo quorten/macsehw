@@ -3,7 +3,17 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-#include "arduino_sdef.h"
+/********************************************************************/
+// Simplified Arduino.h definitions.
+typedef bool boolean;
+typedef uint8_t byte;
+
+#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+#define bitSet(value, bit) ((value) |= (1UL << (bit)))
+#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
+#define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet(value, bit) : bitClear(value, bit))
+// END simplified Arduino.h definitions.
+/********************************************************************/
 
 /****************************************
  *                                      *
@@ -21,7 +31,7 @@
  ****************************************/
 
 /*********************************************
- * ATMEL ATTINY85 / ARDUINO                  *
+ * ATMEL ATTINY85                            *
  *                                           *
  *                  +-\/-+                   *
  * Ain0 (D 5) PB5  1|    |8  Vcc             *
@@ -32,25 +42,31 @@
  *********************************************/
 
 const int      ONE_SEC_PIN = 5;   // A 1Hz square wave on PB5
-const int  RTC_ENABLE_PIN =  0;   // Active low chip enable on PB0
+const int  RTC_ENABLE_PIN  = 0;   // Active low chip enable on PB0
 const int  SERIAL_DATA_PIN = 1;   // Bi-directional serial data line on PB1
 const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
 
 #if NoXPRAM
 // Models earlier than the Plus had 20 bytes of PRAM
-const int PRAM_SIZE = 20;
+const int  PRAM_SIZE = 20;
+const int group1Base = 0x00;
+const int group2Base = 0x10;
 #else
 // Mac Plus used the xPRAM chip with 256 bytes
-const int PRAM_SIZE = 256;
+const int  PRAM_SIZE = 256;
+const int group1Base = 0x10;
+const int group2Base = 0x08;
 #endif
 
 volatile boolean lastSerClock = 0;
 volatile byte serialBitNum = 0;
 volatile byte address = 0;
+volatile byte xaddr = 0; // xPRAM extended address byte
 volatile byte serialData = 0;
 
 enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
-                       SENDING_DATA, RECEIVING_DATA };
+                       SENDING_DATA, RECEIVING_DATA,
+                       RECEIVING_XCMD_ADDR, RECEIVING_XCMD_DATA };
 volatile SerialStateType serialState = SERIAL_DISABLED;
 
 // Number of seconds since midnight, January 1, 1904.  Clock is
@@ -59,13 +75,23 @@ volatile SerialStateType serialState = SERIAL_DISABLED;
 volatile unsigned long seconds = 60 * 60 * 24 * (365 * 4 + 1) * 20;
 volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
 
-void setup() {
-  noInterrupts(); // Disable interrupts while we set things up
+#define shiftReadPB(output, bitNum, portBit) \
+  bitWrite(output,bitNum, (PINB&_BV(portBit)) ? 1 : 0)
 
-  pinModePB(ONE_SEC_PIN, OUTPUT);             // The 1Hz square wave (used, I think, for interrupts elsewhere in the system)
-  pinModePB(RTC_ENABLE_PIN, INPUT_PULLUP);    // The processor pulls this pin low when it wants access
-  pinModePB(SERIAL_CLOCK_PIN, INPUT_PULLUP);  // The serial clock is driven by the processor
-  pinModePB(SERIAL_DATA_PIN, INPUT_PULLUP);   // We'll need to switch this to output when sending data
+void setup() {
+  cli(); // Disable interrupts while we set things up
+
+  // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
+  DDRB |= ONE_SEC_PIN;
+  // INPUT_PULLUP: The processor pulls this pin low when it wants access
+  DDRB &= ~RTC_ENABLE_PIN;
+  PORTB |= RTC_ENABLE_PIN;
+  // INPUT_PULLUP: The serial clock is driven by the processor
+  DDRB &= ~SERIAL_CLOCK_PIN;
+  PORTB |= SERIAL_CLOCK_PIN;
+  // INPUT_PULLUP: We'll need to switch this to output when sending data
+  DDRB &= ~SERIAL_DATA_PIN;
+  PORTB |= SERIAL_DATA_PIN;
 
   wdt_disable();      // Disable watchdog
   bitSet(ACSR,ACD);   // Disable Analog Comparator, don't need it, saves power
@@ -83,17 +109,20 @@ void setup() {
   TCNT0 = 0;            // Clear the counter
   bitClear(GTCCR,TSM);  // Turns timers back on
 
-  interrupts(); //We're done setting up, enable those interrupts again
+  sei(); //We're done setting up, enable those interrupts again
 }
 
 void clearState() {
-    // Return the pin to input mode, set pullup resistor
-    pinModePB(SERIAL_DATA_PIN, INPUT_PULLUP);
-    serialState = SERIAL_DISABLED;
-    lastSerClock = 0;
-    serialBitNum = 0;
-    address = 0;
-    serialData = 0;
+  // Return the pin to input mode, set pullup resistor
+  cli();
+  DDRB &= ~SERIAL_DATA_PIN;
+  PORTB |= SERIAL_DATA_PIN;
+  sei();
+  serialState = SERIAL_DISABLED;
+  lastSerClock = 0;
+  serialBitNum = 0;
+  address = 0;
+  serialData = 0;
 }
 
 /*
@@ -114,7 +143,7 @@ void halfSecondInterrupt() {
 void handleRTCEnableInterrupt() {
   if(!(PINB&(1<<RTC_ENABLE_PIN))){ // Simulates a falling interrupt
     serialState = RECEIVING_COMMAND;
-//    enableRTC = true;
+    // enableRTC = true;
   }
 }
 
@@ -134,13 +163,17 @@ void loop() {
     // TODO FIXME: We need to implement an artificial delay between
     // the clock's rising edge and the update of the data line output
     // because of a bug in the ROM.  Is 10 microseconds a good wait
-    // time?
+    // time?  Or, here's what we can do.  We keep the old value for as
+    // long as the clock is high, and we only load the new value
+    // immediately once the clock goes low, i.e. that's how we handle
+    // the trailing edge event.
 
     if(serClockRising) {
       switch(serialState) {
 
+
       case RECEIVING_COMMAND:
-        bitWrite(address,7-serialBitNum,digitalReadPB(SERIAL_DATA_PIN));
+        shiftReadPB(address,7-serialBitNum,SERIAL_DATA_PIN);
         serialBitNum++;
         if(serialBitNum > 7) {
           boolean writeRequest = address&(1<<7);  // the MSB determines if it's a write request or not
@@ -157,19 +190,22 @@ void loop() {
             }
             serialState = SENDING_DATA;
             serialBitNum = 0;
-            pinModePB(SERIAL_DATA_PIN, OUTPUT); // Set the pin to output mode
+            // Set the pin to output mode
+            cli();
+            DDRB |= SERIAL_DATA_PIN;
+            sei();
           }
         }
         break;
 
       case RECEIVING_DATA:
-        bitWrite(serialData,7-serialBitNum,digitalReadPB(SERIAL_DATA_PIN));
+        shiftReadPB(serialData,7-serialBitNum,SERIAL_DATA_PIN);
         serialBitNum++;
         if(serialBitNum > 7) {
           if(address < 4) {
-            noInterrupts(); // Don't update the seconds counter while we're updating it, bad stuff could happen
+            cli(); // Don't update the seconds counter while we're updating it, bad stuff could happen
             seconds = (seconds & ~(((long)0xff)<<address)) | (((long)serialData)<<address);
-            interrupts();
+            sei();
           } else {
             pram[address] = serialData;
           }
@@ -178,11 +214,27 @@ void loop() {
         break;
 
       case SENDING_DATA:
-        digitalWritePB(SERIAL_DATA_PIN,bitRead(serialData,7-serialBitNum));
+        {
+          uint8_t bit = _BV(SERIAL_DATA_PIN);
+          uint8_t val = bitRead(serialData,7-serialBitNum);
+          cli();
+          if (val == 0)
+            PORTB &= ~bit;
+          else
+            PORTB |= bit;
+          sei();
+        }
         serialBitNum++;
         if(serialBitNum > 7) {
           clearState();
         }
+        break;
+
+      case RECEIVING_XCMD_ADDR:
+        break;
+
+      case RECEIVING_XCMD_DATA:
+        break;
       }
     }
   }
@@ -192,11 +244,11 @@ void loop() {
  * Actually attach the interrupt functions
  */
 ISR(PCINT0_vect) {
-    handleRTCEnableInterrupt();
+  handleRTCEnableInterrupt();
 }
 
 ISR(TIMER0_OVF) {
-    halfSecondInterrupt();
+  halfSecondInterrupt();
 }
 
 // Arduino main function.
