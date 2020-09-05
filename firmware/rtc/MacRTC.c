@@ -197,7 +197,6 @@ void halfSecondInterrupt(void) {
   }
   else
     TCNT0 += 7;
-
 }
 
 /*
@@ -278,11 +277,12 @@ void loop(void) {
   } else {
     /* Normally we only perform an action on the rising edge of the
        serial clock.  The main exception is cleanup at the last cycle
-       of serial output, there we wait until the falling edge before
-       switching the direction of the data pin back to an input.  */
+       of serial output, there we wait one full cycle and then until
+       the falling edge before switching the direction of the data pin
+       back to an input.  */
     if (serClockFalling &&
         serialState == SENDING_DATA &&
-        serialBitNum >= 8) {
+        serialBitNum >= 9) {
       clearState();
     } else if (serClockRising) {
       boolean writeRequest;
@@ -381,15 +381,19 @@ void loop(void) {
         break;
 
       case SENDING_DATA:
-        digitalWriteOD(SERIAL_DATA_PIN, bitRead(serialData, 7 - serialBitNum));
+        if (serialBitNum <= 7)
+          digitalWriteOD(SERIAL_DATA_PIN,
+                         bitRead(serialData, 7 - serialBitNum));
         serialBitNum++;
         /* if (serialBitNum <= 7)
           break; */
 
         /* NOTE: The last output cycle is treated specially, hold the
-           data line as an output until the falling edge of the serial
-           clock, then switch back to an input and reset the serial
-           communication state.  */
+           data line as an output for at least one full next cycle,
+           then until the falling edge of the serial clock, then
+           switch back to an input and reset the serial communication
+           state.  It's for bug compatibility with the ROM, but with a
+           little bit of sanity too.  */
         break;
 
 #if !defined(NoXPRAM) || !NoXPRAM
