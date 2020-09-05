@@ -109,12 +109,24 @@ volatile byte writeProtect = 0;
 #define shiftReadPB(output, bitNum, portBit) \
   bitWrite(output, bitNum, (PINB&_BV(portBit)) ? 1 : 0)
 
-void digitalWritePB(uint8_t pin, uint8_t val) {
+// Configure a pin to be an open-drain output, currently does nothing
+// as using digitalWriteOD() does all required setup and leaving the
+// pin as an input in the meantime is fine.
+#define configOutputOD(pin)
+
+// Digital write in an open-drain fashion: set as output-low for zero,
+// set as input-no-pullup for one.
+void digitalWriteOD(uint8_t pin, uint8_t val) {
   uint8_t bit = _BV(pin);
-  if (val == 0)
-    PORTB &= ~bit;
-  else
-    PORTB |= bit;
+  // cli();
+  if (val == 0) {
+    DDRB |= bit;
+    // PORTB &= ~bit;
+  } else {
+    DDRB &= ~bit;
+    // PORTB &= ~bit;
+  }
+  // sei();
 }
 
 void setup(void) {
@@ -122,17 +134,17 @@ void setup(void) {
 
   // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
   DDRB |= ONE_SEC_PIN;
-  // INPUT_PULLUP: The processor pulls this pin low when it wants access
+  // INPUT: The processor pulls this pin low when it wants access
   DDRB &= ~RTC_ENABLE_PIN;
-  PORTB |= RTC_ENABLE_PIN;
+  PORTB &= ~RTC_ENABLE_PIN;
   lastRTCEnable = PINB&(1<<RTC_ENABLE_PIN); // Initialize last value
-  // INPUT_PULLUP: The serial clock is driven by the processor
+  // INPUT: The serial clock is driven by the processor
   DDRB &= ~SERIAL_CLOCK_PIN;
-  PORTB |= SERIAL_CLOCK_PIN;
+  PORTB &= ~SERIAL_CLOCK_PIN;
   lastSerClock = PINB&(1<<SERIAL_CLOCK_PIN); // Initialize last value
-  // INPUT_PULLUP: We'll need to switch this to output when sending data
+  // INPUT: We'll need to switch this to output when sending data
   DDRB &= ~SERIAL_DATA_PIN;
-  PORTB |= SERIAL_DATA_PIN;
+  PORTB &= ~SERIAL_DATA_PIN;
 
   wdt_disable();       // Disable watchdog
   bitSet(ACSR, ACD);   // Disable Analog Comparator, don't need it, saves power
@@ -161,11 +173,11 @@ void setup(void) {
 }
 
 void clearState(void) {
-  // Return the pin to input mode, set pullup resistor
-  cli();
+  // Return the pin to input mode
+  // cli();
   DDRB &= ~SERIAL_DATA_PIN;
-  PORTB |= SERIAL_DATA_PIN;
-  sei();
+  // PORTB &= ~SERIAL_DATA_PIN;
+  // sei();
   serialState = SERIAL_DISABLED;
   serialBitNum = 0;
   address = 0;
@@ -223,10 +235,8 @@ void handleSerClockInterrupt(void) {
 
 /*
  * For 20-byte PRAM equivalent commands, compute the actual PRAM
- * address by modifying the `address` variable in-place.  Note that
- * `address` must have been already modified to remove the excess
- * bits.  A status code is returned for commands that need special
- * processing:
+ * address by modifying the `address` variable in-place.  A status
+ * code is returned for commands that need special processing:
  *
  * INVALID_CMD: Invalid command byte.
  * SECONDS_CMD: Special command: read seconds.
@@ -235,6 +245,9 @@ void handleSerClockInterrupt(void) {
  * SUCCESS_ADDR: Successful address computation.
  */
 uint8_t decodePramCmd(boolean writeRequest) {
+  // Discard the first bit and the last two bits, it's not pertinent
+  // to command interpretation.
+  address = (address&~(1<<7))>>2;
   if (address < 8) {
     // Little endian clock data byte
     return SECONDS_CMD;
@@ -301,9 +314,6 @@ void loop(void) {
           break;
         } else {
           boolean finished = false;
-          // Discard the first bit and the last two bits, it's not
-          // pertinent to command interpretation.
-          address = (address&~(1<<7))>>2;
           // Decode the command/address.
           switch (decodePramCmd(writeRequest)) {
           case SECONDS_CMD:
@@ -331,7 +341,7 @@ void loop(void) {
         serialState = SENDING_DATA;
         serialBitNum = 0;
         // Set the pin to output mode
-        DDRB |= SERIAL_DATA_PIN;
+        configOutputOD(SERIAL_DATA_PIN);
         break;
 
       case RECEIVING_DATA:
@@ -340,9 +350,6 @@ void loop(void) {
         if (serialBitNum <= 7)
           break;
 
-        // Discard the first bit and the last two bits, it's not
-        // pertinent to command interpretation.
-        address = (address&~(1<<7))>>2;
         // Decode the command/address.
         switch (decodePramCmd(writeRequest)) {
         case SECONDS_CMD:
@@ -374,7 +381,7 @@ void loop(void) {
         break;
 
       case SENDING_DATA:
-        digitalWritePB(SERIAL_DATA_PIN, bitRead(serialData, 7 - serialBitNum));
+        digitalWriteOD(SERIAL_DATA_PIN, bitRead(serialData, 7 - serialBitNum));
         serialBitNum++;
         /* if (serialBitNum <= 7)
           break; */
@@ -408,7 +415,7 @@ void loop(void) {
         serialState = SENDING_DATA;
         serialBitNum = 0;
         // Set the pin to output mode
-        DDRB |= SERIAL_DATA_PIN;
+        configOutputOD(SERIAL_DATA_PIN);
         break;
 
       case RECEIVING_XCMD_DATA:
