@@ -27,7 +27,7 @@ const struct avr_mmcu_vcd_trace_t _mytrace[] _MMCU_ =
 
 /********************************************************************/
 // Simplified Arduino.h definitions.
-typedef enum { false, true } bool;
+typedef enum { false, true } bool; // Compatibility with C++.
 typedef bool boolean;
 typedef uint8_t byte;
 
@@ -90,8 +90,12 @@ enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
 enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
                       WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
 
-volatile enum SerialStateType serialState = SERIAL_DISABLED;
+volatile boolean lastRTCEnable = 0;
 volatile boolean lastSerClock = 0;
+volatile boolean serClockRising = false;
+volatile boolean serClockFalling = false;
+
+volatile enum SerialStateType serialState = SERIAL_DISABLED;
 volatile byte serialBitNum = 0;
 volatile byte address = 0;
 volatile byte serialData = 0;
@@ -117,7 +121,7 @@ void digitalWritePB(uint8_t pin, uint8_t val) {
   sei();
 }
 
-void setup() {
+void setup(void) {
   cli(); // Disable interrupts while we set things up
 
   // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
@@ -125,9 +129,11 @@ void setup() {
   // INPUT_PULLUP: The processor pulls this pin low when it wants access
   DDRB &= ~RTC_ENABLE_PIN;
   PORTB |= RTC_ENABLE_PIN;
+  lastRTCEnable = PINB&(1<<RTC_ENABLE_PIN); // Initialize last value
   // INPUT_PULLUP: The serial clock is driven by the processor
   DDRB &= ~SERIAL_CLOCK_PIN;
   PORTB |= SERIAL_CLOCK_PIN;
+  lastSerClock = PINB&(1<<SERIAL_CLOCK_PIN); // Initialize last value
   // INPUT_PULLUP: We'll need to switch this to output when sending data
   DDRB &= ~SERIAL_DATA_PIN;
   PORTB |= SERIAL_DATA_PIN;
@@ -140,6 +146,7 @@ void setup() {
 
   bitSet(GIMSK, PCIE);   // Pin Change Interrupt Enable
   bitSet(PCMSK, PCINT0); // turn on RTC enable interrupt
+  bitSet(PCMSK, PCINT2); // turn on serial clock interrupt
 
   //set up timer
   bitSet(GTCCR, TSM);    // Turns off timers while we set it up
@@ -154,16 +161,16 @@ void setup() {
 #endif
 
   sei(); //We're done setting up, enable those interrupts again
+
 }
 
-void clearState() {
+void clearState(void) {
   // Return the pin to input mode, set pullup resistor
   cli();
   DDRB &= ~SERIAL_DATA_PIN;
   PORTB |= SERIAL_DATA_PIN;
   sei();
   serialState = SERIAL_DISABLED;
-  lastSerClock = 0;
   serialBitNum = 0;
   address = 0;
   serialData = 0;
@@ -173,22 +180,50 @@ void clearState() {
  * An interrupt to both increment the seconds counter and generate the
  * square wave
  */
-void halfSecondInterrupt() {
+void halfSecondInterrupt(void) {
   PINB = 1<<ONE_SEC_PIN;  // Flip the one-second pin
-  if(!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
+  if (!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
     seconds++;
+    // Make up for lost time, something around 6.4 cycles.
+    TCNT0 += 6;
   }
+  else
+    TCNT0 += 7;
+
 }
 
 /*
  * The actual serial communication can be done in the main loop, this
- * way the clock still gets incremented
+ * way the clock still gets incremented.
  */
-void handleRTCEnableInterrupt() {
-  if(!(PINB&(1<<RTC_ENABLE_PIN))){ // Simulates a falling interrupt
+void handleRTCEnableInterrupt(void) {
+  boolean curRTCEnable = PINB&(1<<RTC_ENABLE_PIN);
+  if (lastRTCEnable && !curRTCEnable){ // Simulates a falling interrupt
     serialState = RECEIVING_COMMAND;
     // enableRTC = true;
   }
+  /* Else if a rising edge to disable the RTC interrupts a serial
+     communication in progress, we still wake up to clear the serial
+     state then go back to sleep.  */
+  lastRTCEnable = curRTCEnable;
+}
+
+/*
+ * Same deal over here, the actual serial communication can be done in
+ * the main loop, this way the clock still gets incremented.
+ */
+void handleSerClockInterrupt(void) {
+  boolean curSerClock = PINB&(1<<SERIAL_CLOCK_PIN);
+  if (!lastSerClock && curSerClock) {
+    serClockRising = true;
+    serClockFalling = false;
+  } else if (lastSerClock && !curSerClock) {
+    serClockRising = false;
+    serClockFalling = true;
+  }
+  /* Else leave it up to the main loop code to clear the edge trigger
+     flags.  */
+  lastSerClock = curSerClock;
 }
 
 /*
@@ -227,29 +262,21 @@ uint8_t decodePramCmd(boolean writeRequest) {
   return SUCCESS_ADDR;
 }
 
-void loop() {
-  if((PINB&(1<<RTC_ENABLE_PIN))) {
+void loop(void) {
+  if ((PINB&(1<<RTC_ENABLE_PIN))) {
     clearState();
     set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
     sleep_mode();
   } else {
-    // Compute rising and falling edge trigger flags for the serial
-    // clock.
-    boolean curSerClock = PINB&(1<<SERIAL_CLOCK_PIN);
-    boolean serClockRising = !lastSerClock && curSerClock;
-    boolean serClockFalling = lastSerClock && !curSerClock;
-    lastSerClock = curSerClock;
-
     /* Normally we only perform an action on the rising edge of the
        serial clock.  The main exception is cleanup at the last cycle
        of serial output, there we wait until the falling edge before
        switching the direction of the data pin back to an input.  */
-
     if (serClockFalling &&
         serialState == SENDING_DATA &&
         serialBitNum >= 8) {
       clearState();
-    } else if(serClockRising) {
+    } else if (serClockRising) {
       boolean writeRequest;
       switch(serialState) {
       case RECEIVING_COMMAND:
@@ -412,6 +439,12 @@ void loop() {
         break;
       }
     }
+
+    // Go to sleep until the next serial clock rising or falling edge.
+    serClockRising = false;
+    serClockFalling = false;
+    set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
+    sleep_mode();
   }
 }
 
@@ -420,6 +453,7 @@ void loop() {
  */
 ISR(PCINT0_vect) {
   handleRTCEnableInterrupt();
+  handleSerClockInterrupt();
 }
 
 ISR(TIMER0_OVF_vect) {
@@ -431,7 +465,7 @@ int main(void) {
   setup();
 
   for (;;) {
-    //loop();
+    loop();
   }
 
   return 0;
