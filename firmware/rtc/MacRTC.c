@@ -113,12 +113,10 @@ volatile byte writeProtect = 0;
 
 void digitalWritePB(uint8_t pin, uint8_t val) {
   uint8_t bit = _BV(pin);
-  cli();
   if (val == 0)
     PORTB &= ~bit;
   else
     PORTB |= bit;
-  sei();
 }
 
 void setup(void) {
@@ -336,9 +334,7 @@ void loop(void) {
         serialState = SENDING_DATA;
         serialBitNum = 0;
         // Set the pin to output mode
-        cli();
         DDRB |= SERIAL_DATA_PIN;
-        sei();
         break;
 
       case RECEIVING_DATA:
@@ -415,9 +411,7 @@ void loop(void) {
         serialState = SENDING_DATA;
         serialBitNum = 0;
         // Set the pin to output mode
-        cli();
         DDRB |= SERIAL_DATA_PIN;
-        sei();
         break;
 
       case RECEIVING_XCMD_DATA:
