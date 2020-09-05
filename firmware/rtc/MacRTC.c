@@ -71,13 +71,11 @@ const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
 
 #if NoXPRAM
 // Models earlier than the Plus had 20 bytes of PRAM
-//const int  PRAM_SIZE = 20;
 #define PRAM_SIZE 20
 const int group1Base = 0x00;
 const int group2Base = 0x10;
 #else
 // Mac Plus used the xPRAM chip with 256 bytes
-//const int  PRAM_SIZE = 256;
 #define PRAM_SIZE 256
 const int group1Base = 0x10;
 const int group2Base = 0x08;
@@ -198,7 +196,6 @@ void handleRTCEnableInterrupt(void) {
   boolean curRTCEnable = PINB&(1<<RTC_ENABLE_PIN);
   if (lastRTCEnable && !curRTCEnable){ // Simulates a falling interrupt
     serialState = RECEIVING_COMMAND;
-    // enableRTC = true;
   }
   /* Else if a rising edge to disable the RTC interrupts a serial
      communication in progress, we still wake up to clear the serial
@@ -434,9 +431,12 @@ void loop(void) {
       }
     }
 
-    // Go to sleep until the next serial clock rising or falling edge.
+    // Clear the edge trigger flags now that the events have been
+    // processed.
     serClockRising = false;
     serClockFalling = false;
+
+    // Go to sleep until the next serial clock rising or falling edge.
     set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
     sleep_mode();
   }
