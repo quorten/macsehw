@@ -1,7 +1,13 @@
-/* Public Domain Release: CC0 1.0 Universal.
+/* Public Domain Dedication: CC0 1.0 Universal.
 
    For more information, please see
    <http://creativecommons.org/publicdomain/zero/1.0/>
+
+   Developed with reference to a Reddit posting and Mini vMac source.
+
+   * 2020-08-05: <https://www.reddit.com/r/VintageApple/comments/91e5cf/couldnt_find_a_replacement_for_the_rtcpram_chip/e2xqq60/>
+
+   * 2020-09-04: <https://www.gryphel.com/d/minivmac/minivmac-36.04/minivmac-36.04.src.tgz>
 */
 
 #include <avr/io.h>
@@ -64,25 +70,39 @@ const int group1Base = 0x10;
 const int group2Base = 0x08;
 #endif
 
-volatile boolean lastSerClock = 0;
-volatile byte serialBitNum = 0;
-volatile byte address = 0;
-volatile byte xaddr = 0; // xPRAM extended address byte
-volatile byte serialData = 0;
-
 enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
                        SENDING_DATA, RECEIVING_DATA,
                        RECEIVING_XCMD_ADDR, RECEIVING_XCMD_DATA };
-volatile SerialStateType serialState = SERIAL_DISABLED;
 
-// Number of seconds since midnight, January 1, 1904.  Clock is
-// initialized to January 1st, 1984?  Or is this done by the ROM when
-// the validity status is invalid?
-volatile unsigned long seconds = 60 * 60 * 24 * (365 * 4 + 1) * 20;
+enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
+                      WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
+
+volatile SerialStateType serialState = SERIAL_DISABLED;
+volatile boolean lastSerClock = 0;
+volatile byte serialBitNum = 0;
+volatile byte address = 0;
+volatile byte serialData = 0;
+
+// Number of seconds since midnight, January 1, 1904.  The serial
+// register interface exposes this data as little endian.  TODO
+// VERIFY: Clock is initialized to January 1st, 1984?  Or is this done
+// by the ROM when the validity status is invalid?
+volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
 volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
+volatile byte writeProtect = 0;
 
 #define shiftReadPB(output, bitNum, portBit) \
-  bitWrite(output,bitNum, (PINB&_BV(portBit)) ? 1 : 0)
+  bitWrite(output, bitNum, (PINB&_BV(portBit)) ? 1 : 0)
+
+void digitalWritePB(uint8_t pin, uint8_t val) {
+  uint8_t bit = _BV(pin);
+  cli();
+  if (val == 0)
+    PORTB &= ~bit;
+  else
+    PORTB |= bit;
+  sei();
+}
 
 void setup() {
   cli(); // Disable interrupts while we set things up
@@ -99,21 +119,21 @@ void setup() {
   DDRB &= ~SERIAL_DATA_PIN;
   PORTB |= SERIAL_DATA_PIN;
 
-  wdt_disable();      // Disable watchdog
-  bitSet(ACSR,ACD);   // Disable Analog Comparator, don't need it, saves power
-  bitSet(PRR,PRTIM1); // Disable Timer 1, only using Timer 0, Timer 1 uses around ten times as much current
-  bitSet(PRR,PRUSI);  // Disable Universal Serial Interface, using Apple's RTC serial interface on pins 6 and 7
-  bitSet(PRR,PRADC);  // Disable Analog/Digital Converter
+  wdt_disable();       // Disable watchdog
+  bitSet(ACSR, ACD);   // Disable Analog Comparator, don't need it, saves power
+  bitSet(PRR, PRTIM1); // Disable Timer 1, only using Timer 0, Timer 1 uses around ten times as much current
+  bitSet(PRR, PRUSI);  // Disable Universal Serial Interface, using Apple's RTC serial interface on pins 6 and 7
+  bitSet(PRR, PRADC);  // Disable Analog/Digital Converter
 
-  bitSet(GIMSK,PCIE);   // Pin Change Interrupt Enable
-  bitSet(PCMSK,PCINT0); // turn on RTC enable interrupt
+  bitSet(GIMSK, PCIE);   // Pin Change Interrupt Enable
+  bitSet(PCMSK, PCINT0); // turn on RTC enable interrupt
 
   //set up timer
-  bitSet(GTCCR,TSM);    // Turns off timers while we set it up
-  bitSet(TIMSK,TOIE0);  // Set Timer/Counter0 Overflow Interrupt Enable
-  TCCR0B = 0b111;       // Set prescaler, 32,768Hz/64 = 512Hz, fills up the 8-bit counter (256) once every half second
-  TCNT0 = 0;            // Clear the counter
-  bitClear(GTCCR,TSM);  // Turns timers back on
+  bitSet(GTCCR, TSM);    // Turns off timers while we set it up
+  bitSet(TIMSK, TOIE0);  // Set Timer/Counter0 Overflow Interrupt Enable
+  TCCR0B = 0b111;        // Set prescaler, 32,768Hz/64 = 512Hz, fills up the 8-bit counter (256) once every half second
+  TCNT0 = 0;             // Clear the counter
+  bitClear(GTCCR, TSM);  // Turns timers back on
 
   sei(); //We're done setting up, enable those interrupts again
 }
@@ -153,6 +173,42 @@ void handleRTCEnableInterrupt() {
   }
 }
 
+/*
+ * For 20-byte PRAM equivalent commands, compute the actual PRAM
+ * address by modifying the `address` variable in-place.  Note that
+ * `address` must have been already modified to remove the excess
+ * bits.  A status code is returned for commands that need special
+ * processing:
+ *
+ * INVALID_CMD: Invalid command byte.
+ * SECONDS_CMD: Special command: read seconds.
+ * WRTEST_CMD: Special command: test write register.
+ * WRPROT_CMD: Special command: write-protect register.
+ * SUCCESS_ADDR: Successful address computation.
+ */
+uint8_t decodePramCmd(boolean writeRequest) {
+  if (address < 8) {
+    // Little endian clock data byte
+    return SECONDS_CMD;
+  } else if (address < 12) {
+    // Group 2 register
+    address = (address&0x03) + group2Base;
+  } else if (address < 16) {
+    if (writeRequest) {
+      if (address == 12) // test write
+        return WRTEST_CMD;
+      if (address == 13) // write-protect
+      return WRPROT_CMD;
+    }
+    return INVALID_CMD;
+  } else {
+    // Group 1 register
+    address = (address&0x0f) + group1Base;
+  }
+
+  return SUCCESS_ADDR;
+}
+
 void loop() {
   if((PINB&(1<<RTC_ENABLE_PIN))) {
     clearState();
@@ -166,80 +222,175 @@ void loop() {
     boolean serClockFalling = lastSerClock && !curSerClock;
     lastSerClock = curSerClock;
 
-    // TODO FIXME: We need to implement an artificial delay between
-    // the clock's rising edge and the update of the data line output
-    // because of a bug in the ROM.  Is 10 microseconds a good wait
-    // time?  Or, here's what we can do.  We keep the old value for as
-    // long as the clock is high, and we only load the new value
-    // immediately once the clock goes low, i.e. that's how we handle
-    // the trailing edge event.
+    /* Normally we only perform an action on the rising edge of the
+       serial clock.  The main exception is cleanup at the last cycle
+       of serial output, there we wait until the falling edge before
+       switching the direction of the data pin back to an input.  */
 
-    if(serClockRising) {
+    if (serClockFalling &&
+        serialState == SENDING_DATA &&
+        serialBitNum >= 8) {
+      clearState();
+    } else if(serClockRising) {
+      boolean writeRequest;
       switch(serialState) {
-
-
       case RECEIVING_COMMAND:
-        shiftReadPB(address,7-serialBitNum,SERIAL_DATA_PIN);
+        shiftReadPB(address, 7 - serialBitNum, SERIAL_DATA_PIN);
         serialBitNum++;
-        if(serialBitNum > 7) {
-          boolean writeRequest = address&(1<<7);  // the MSB determines if it's a write request or not
-          address &= ~(1<<7); // Discard the first bit, it's not part of the address
+        if (serialBitNum <= 7)
+          break;
+
+        // The MSB determines if it's a write request or not.
+        writeRequest = !(address&(1<<7));
+        if ((address&0x78) == 0x38) {
+#if NoXPRAM
+          // Invalid command.
+          clearState();
+          break;
+#else
+          // This is an extended command, read the second address
+          // byte.
+          serialState = RECEIVING_XCMD_ADDR;
           serialBitNum = 0;
-          if(writeRequest) {
-            serialState = RECEIVING_DATA;
-            serialBitNum = 0;
-          } else {
-            if (address < 4) {
-              serialData = (seconds>>(8*address))&0xff;
-            } if(!(address&0b0110000)) { // Apparently this address range is off-limits for reading
-              serialData = pram[address];
-            }
-            serialState = SENDING_DATA;
-            serialBitNum = 0;
-            // Set the pin to output mode
-            cli();
-            DDRB |= SERIAL_DATA_PIN;
+          break;
+#endif
+        } else if (writeRequest) {
+          // Read the data byte before continuing.
+          serialState = RECEIVING_DATA;
+          serialBitNum = 0;
+          break;
+        } else {
+          boolean finished = false;
+          // Discard the first bit and the last two bits, it's not
+          // pertinent to command interpretation.
+          address = (address&~(1<<7))>>2;
+          // Decode the command/address.
+          switch (decodePramCmd(writeRequest)) {
+          case SECONDS_CMD:
+            // Read little endian clock data byte.
+            cli(); // Ensure that reads are atomic.
+            address = (address&0x03)<<3;
+            serialData = (seconds>>(address))&0xff;
             sei();
+            break;
+          case SUCCESS_ADDR:
+            serialData = pram[address];
+            break;
+          case INVALID_CMD:
+          default:
+            finished = true;
+            break;
+          }
+          if (finished) {
+            clearState();
+            break;
           }
         }
+
+        // If we didn't break out early, send the output byte.
+        serialState = SENDING_DATA;
+        serialBitNum = 0;
+        // Set the pin to output mode
+        cli();
+        DDRB |= SERIAL_DATA_PIN;
+        sei();
         break;
 
       case RECEIVING_DATA:
-        shiftReadPB(serialData,7-serialBitNum,SERIAL_DATA_PIN);
+        shiftReadPB(serialData, 7 - serialBitNum, SERIAL_DATA_PIN);
         serialBitNum++;
-        if(serialBitNum > 7) {
-          if(address < 4) {
-            cli(); // Don't update the seconds counter while we're updating it, bad stuff could happen
-            seconds = (seconds & ~(((long)0xff)<<address)) | (((long)serialData)<<address);
+        if (serialBitNum <= 7)
+          break;
+
+        // Discard the first bit and the last two bits, it's not
+        // pertinent to command interpretation.
+        address = (address&~(1<<7))>>2;
+        // Decode the command/address.
+        switch (decodePramCmd(writeRequest)) {
+        case SECONDS_CMD:
+          if (!writeProtect) {
+            // Write little endian clock data byte.
+            cli(); // Ensure that writes are atomic.
+            address = (address&0x03)<<3;
+            seconds &= ~(0xff<<(address));
+            seconds |= serialData<<(address);
             sei();
-          } else {
-            pram[address] = serialData;
           }
-          clearState();
+          break;
+        case WRPROT_CMD:
+          // Update the write-protect register.
+          writeProtect = (serialData & 0x80) ? 1 : 0;
+          break;
+        case SUCCESS_ADDR:
+          if (!writeProtect)
+            pram[address] = serialData;
+          break;
+        case WRTEST_CMD: // test write, do nothing
+        case INVALID_CMD:
+        default:
+          break;
         }
+
+        // Finished with the write command.
+        clearState();
         break;
 
       case SENDING_DATA:
-        {
-          uint8_t bit = _BV(SERIAL_DATA_PIN);
-          uint8_t val = bitRead(serialData,7-serialBitNum);
-          cli();
-          if (val == 0)
-            PORTB &= ~bit;
-          else
-            PORTB |= bit;
-          sei();
-        }
+        digitalWritePB(SERIAL_DATA_PIN, bitRead(serialData, 7 - serialBitNum));
         serialBitNum++;
-        if(serialBitNum > 7) {
-          clearState();
-        }
+        /* if (serialBitNum <= 7)
+          break; */
+
+        /* NOTE: The last output cycle is treated specially, hold the
+           data line as an output until the falling edge of the serial
+           clock, then switch back to an input and reset the serial
+           communication state.  */
         break;
 
+#if !defined(NoXPRAM) || !NoXPRAM
       case RECEIVING_XCMD_ADDR:
+        shiftReadPB(serialData, 7 - serialBitNum, SERIAL_DATA_PIN);
+        serialBitNum++;
+        if (serialBitNum <= 7)
+          break;
+
+        // The MSB determines if it's a write request or not.
+        writeRequest = !(address&(1<<7));
+        // Assemble the extended address.
+        address = ((address&0x07)<<5) | ((serialData&0x7c)>>2);
+
+        if (writeRequest) {
+          serialState = RECEIVING_XCMD_DATA;
+          serialBitNum = 0;
+          break;
+        }
+
+        // Read and send the PRAM register.
+        serialData = pram[address];
+        serialState = SENDING_DATA;
+        serialBitNum = 0;
+        // Set the pin to output mode
+        cli();
+        DDRB |= SERIAL_DATA_PIN;
+        sei();
         break;
 
       case RECEIVING_XCMD_DATA:
+        shiftReadPB(serialData, 7 - serialBitNum, SERIAL_DATA_PIN);
+        serialBitNum++;
+        if (serialBitNum <= 7)
+          break;
+
+        // Write the PRAM register.
+        pram[address] = serialData;
+        // Finished with the write command.
+        clearState();
+        break;
+#endif
+
+      default:
+        // Invalid command.
+        clearState();
         break;
       }
     }
@@ -253,7 +404,7 @@ ISR(PCINT0_vect) {
   handleRTCEnableInterrupt();
 }
 
-ISR(TIMER0_OVF) {
+ISR(TIMER0_OVF_vect) {
   halfSecondInterrupt();
 }
 
