@@ -119,7 +119,7 @@ volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
 volatile byte writeProtect = 0;
 
 #define shiftReadPB(output, bitNum, portBit) \
-  bitWrite(output, bitNum, (PINB&_BV(portBit)) ? 1 : 0)
+  bitWrite(output, bitNum, ((PINB&_BV(portBit))) ? 1 : 0)
 
 // Configure a pin to be an open-drain output, currently does nothing
 // as using digitalWriteOD() does all required setup and leaving the
@@ -257,7 +257,7 @@ void handleSerClockInterrupt(void) {
  */
 uint8_t decodePramCmd(boolean writeRequest) {
   // Discard the first bit and the last two bits, it's not pertinent
-  // to command interpretation.
+  // to address interpretation.
   address = (address&~(1<<7))>>2;
   if (address < 8) {
     // Little endian clock data byte
@@ -327,12 +327,12 @@ void loop(void) {
         } else {
           boolean finished = false;
           // Decode the command/address.
-          switch (decodePramCmd(writeRequest)) {
+          switch (decodePramCmd(false)) {
           case SECONDS_CMD:
             // Read little endian clock data byte.
             cli(); // Ensure that reads are atomic.
             address = (address&0x03)<<3;
-            serialData = (seconds>>(address))&0xff;
+            serialData = (seconds>>address)&0xff;
             sei();
             break;
           case SUCCESS_ADDR:
@@ -363,20 +363,20 @@ void loop(void) {
           break;
 
         // Decode the command/address.
-        switch (decodePramCmd(writeRequest)) {
+        switch (decodePramCmd(true)) {
         case SECONDS_CMD:
           if (!writeProtect) {
             // Write little endian clock data byte.
             cli(); // Ensure that writes are atomic.
             address = (address&0x03)<<3;
-            seconds &= ~(0xff<<(address));
-            seconds |= serialData<<(address);
+            seconds &= ~(0xff<<address);
+            seconds |= serialData<<address;
             sei();
           }
           break;
         case WRPROT_CMD:
           // Update the write-protect register.
-          writeProtect = (serialData & 0x80) ? 1 : 0;
+          writeProtect = ((serialData & 0x80)) ? 1 : 0;
           break;
         case SUCCESS_ADDR:
           if (!writeProtect)
@@ -421,6 +421,7 @@ void loop(void) {
         address = ((address&0x07)<<5) | ((serialData&0x7c)>>2);
 
         if (writeRequest) {
+          // Read the data byte before continuing.
           serialState = RECEIVING_XCMD_DATA;
           serialBitNum = 0;
           break;
