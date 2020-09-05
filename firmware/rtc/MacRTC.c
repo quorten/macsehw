@@ -15,8 +15,19 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
+#ifdef DO_SIMAVR
+#include "avr_mcu_section.h"
+AVR_MCU(32768, "attiny85");
+AVR_MCU_SIMAVR_COMMAND (& GPIOR0 );
+const struct avr_mmcu_vcd_trace_t _mytrace[] _MMCU_ =
+  {
+   { AVR_MCU_VCD_SYMBOL("PORTB5"), .what = (void*)&PORTB, .mask = _BV(5) },
+  };
+#endif
+
 /********************************************************************/
 // Simplified Arduino.h definitions.
+typedef enum { false, true } bool;
 typedef bool boolean;
 typedef uint8_t byte;
 
@@ -60,12 +71,14 @@ const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
 
 #if NoXPRAM
 // Models earlier than the Plus had 20 bytes of PRAM
-const int  PRAM_SIZE = 20;
+//const int  PRAM_SIZE = 20;
+#define PRAM_SIZE 20
 const int group1Base = 0x00;
 const int group2Base = 0x10;
 #else
 // Mac Plus used the xPRAM chip with 256 bytes
-const int  PRAM_SIZE = 256;
+//const int  PRAM_SIZE = 256;
+#define PRAM_SIZE 256
 const int group1Base = 0x10;
 const int group2Base = 0x08;
 #endif
@@ -77,7 +90,7 @@ enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
 enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
                       WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
 
-volatile SerialStateType serialState = SERIAL_DISABLED;
+volatile enum SerialStateType serialState = SERIAL_DISABLED;
 volatile boolean lastSerClock = 0;
 volatile byte serialBitNum = 0;
 volatile byte address = 0;
@@ -131,9 +144,14 @@ void setup() {
   //set up timer
   bitSet(GTCCR, TSM);    // Turns off timers while we set it up
   bitSet(TIMSK, TOIE0);  // Set Timer/Counter0 Overflow Interrupt Enable
-  TCCR0B = 0b111;        // Set prescaler, 32,768Hz/64 = 512Hz, fills up the 8-bit counter (256) once every half second
+  // NOTE: 0b111 external clock, 0b011, uses 1/64 prescaler on I/O clock.
+  TCCR0B = 0b011;        // Set prescaler, 32,768Hz/64 = 512Hz, fills up the 8-bit counter (256) once every half second
   TCNT0 = 0;             // Clear the counter
   bitClear(GTCCR, TSM);  // Turns timers back on
+
+#ifdef DO_SIMAVR
+  GPIOR0 = SIMAVR_CMD_VCD_START_TRACE;
+#endif
 
   sei(); //We're done setting up, enable those interrupts again
 }
@@ -413,7 +431,7 @@ int main(void) {
   setup();
 
   for (;;) {
-    loop();
+    //loop();
   }
 
   return 0;

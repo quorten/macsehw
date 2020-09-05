@@ -1,2 +1,3 @@
 Mac128kRTC.axf
 MacPlusRTC.axf
+avr_mcu_section.h
