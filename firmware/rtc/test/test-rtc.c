@@ -48,26 +48,6 @@
 
 */
 
-/*
-
-TODO: Break apart into modules as follows:
-
-* Raspberry Pi GPIO pin communications driver module.
-
-* simavr IRQ pin communications driver module.
-
-* VIA emulation module.
-
-* PRAM access C library module.
-
-* PRAM command line access module.
-
-* Apple II monitor functions module, tailored for PRAM interface.
-
-* simavr main setup and control module.
-
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -86,6 +66,9 @@ TODO: Break apart into modules as follows:
 #include "sim_gdb.h"
 #include "sim_vcd_file.h"
 
+/********************************************************************/
+/* Arduino definitions support module header */
+
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
@@ -99,7 +82,8 @@ typedef bool boolean;
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet(value, bit) : bitClear(value, bit))
 
-boolean simAvrStep(void);
+/********************************************************************/
+/* VIA emulation module header */
 
 #define rtcEnb 2
 #define rtcClk 1
@@ -114,20 +98,27 @@ const uint8_t vDirB = 1;
 const uint8_t irqEnb = 2; // Enable a particular interrupt
 const uint8_t irqFlags = 3; // Indicates which interrupt triggered
 
-// Note that the test bench's input is the RTC's output.  Input and
-// output here are specified from the perspective of the RTC.
-enum BenchIrqs { IRQ_SEC1, IRQ_CE, IRQ_CLK, IRQ_DATA_IN, IRQ_DATA_OUT };
-
-static const char * bench_irq_names[5] =
-  { "BENCH.SEC1", "BENCH.CE*", "BENCH.CLK",
-    "BENCH.DATA.IN", "BENCH.DATA.OUT*" };
-
 // VIA registers in memory
 uint8_t vBase[4];
 uint8_t const *VIA = vBase;
 
+/********************************************************************/
+/* `simavr` support module header */
+
+// Note that the test bench's input is the RTC's output.  Input and
+// output here are specified from the perspective of the RTC.
+enum BenchIrqs { IRQ_SEC1, IRQ_CE, IRQ_CLK, IRQ_DATA_IN, IRQ_DATA_OUT };
+
+// simavr variables
+avr_t *avr = NULL;
+avr_vcd_t vcd_file;
+avr_irq_t *bench_irqs = NULL;
+
+/********************************************************************/
+/* PRAM C library module header */
+
 // PRAM configuration, set to XPRAM by default
-int pram_size = 256;
+int pramSize = 256;
 int group1Base = 0x10;
 int group2Base = 0x08;
 
@@ -144,38 +135,33 @@ byte pram[256];
 const uint32_t macUnixDelta = 60UL * 60 * 24 *
   ((365 * 4 + 1) * 16 + (365 * 2 + 1));
 
+/********************************************************************/
+/* PRAM interactive command line module header */
+
 // Apple II monitor mode: 0 = disable, 1 = traditional PRAM, 2 =
 // XPRAM.  XPRAM monitor mode is only valid when the host PRAM is
 // configured likewise, of course.
 uint8_t monMode = 0;
 
-// simavr variables
-avr_t *avr = NULL;
-avr_vcd_t vcd_file;
-avr_irq_t *bench_irqs = NULL;
+/********************************************************************/
+/* VIA emulation module */
 
-// Configure whether the PRAM should be traditional 20-byte PRAM
-// (false) or XPRAM (true).
-void setPramType(boolean isXPram)
-{
-  if (isXPram) {
-    pram_size = 256;
-    group1Base = 0x10;
-    group2Base = 0x08;
-  } else {
-    pram_size = 20;
-    group1Base = 0x00;
-    group2Base = 0x10;
-  }
-}
+/* TODO: Program support for two "drivers" as follows:
 
-// Return true if the PRAM type is set to XPRAM, false otherwise.
-boolean getPramType(void)
-{
-  if (pram_size == 256)
-    return true;
-  return false;
-}
+   * Raspberry Pi GPIO pin communications driver
+
+   * simavr IRQ pin communications driver
+
+ */
+
+boolean simAvrStep(void);
+avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
+                                void *param);
+
+bool g_waitTimeUp = true;
+uint8_t g_timePoll = 0;
+
+#define viaBitRead(ptr, bit) (bitRead(*(ptr), (bit)))
 
 void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
 {
@@ -213,18 +199,6 @@ void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
     return;
   // Update our register value.
   bitWrite(*ptr, bit, bitvalue);
-}
-
-bool g_waitTimeUp = true;
-uint8_t g_timePoll = 0;
-
-avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
-                                void *param)
-{
-  g_waitTimeUp = true;
-  if (g_timePoll)
-    return avr->cycle + g_timePoll;
-  return 0;
 }
 
 /* Time our wait periods based off of a maximum 500 Hz (minimum 2 ms
@@ -315,6 +289,32 @@ void waitCycle(void)
   waitHalfCycle();
 }
 
+/********************************************************************/
+/* PRAM C library module */
+
+// Configure whether the PRAM should be traditional 20-byte PRAM
+// (false) or XPRAM (true).
+void setPramType(boolean isXPram)
+{
+  if (isXPram) {
+    pramSize = 256;
+    group1Base = 0x10;
+    group2Base = 0x08;
+  } else {
+    pramSize = 20;
+    group1Base = 0x00;
+    group2Base = 0x10;
+  }
+}
+
+// Return true if the PRAM type is set to XPRAM, false otherwise.
+boolean getPramType(void)
+{
+  if (pramSize == 256)
+    return true;
+  return false;
+}
+
 void serialBegin(void)
 {
   viaBitWrite(vBase + vDirB, rtcEnb, DIR_OUT);
@@ -359,7 +359,7 @@ byte recvByte(void)
     waitHalfCycle();
     viaBitWrite(vBase + vBufB, rtcClk, 0);
     waitQuarterCycle();
-    bit = bitRead(vBase[vBufB], rtcData);
+    bit = viaBitRead(vBase + vBufB, rtcData);
     serialData |= bit << (7 - bitNum);
     bitNum++;
   }
@@ -743,43 +743,6 @@ byte hostReadXMem(byte address)
   return pram[address];
 }
 
-// Set the Apple II monitor mode.
-void setMonMode(uint8_t newMonMode)
-{
-  monMode = newMonMode;
-}
-
-// Get the Apple II monitor mode.
-uint8_t getMonMode(void)
-{
-  return monMode;
-}
-
-/* Read/write to either traditional PRAM or XPRAM depending on the
-   Apple II monitor mode.  Addresses out of range return zero on read
-   and do nothing on write.  For reads, `data` is ignored.  Returns
-   data on successful reads, zero on unsuccessful reads, one on
-   successful writes, zero on unsuccessful writes.  */
-byte monMemAccess(uint16_t address, boolean writeRequest, byte data)
-{
-  if (monMode == 1) {
-    // Traditional PRAM
-    if (address > 0x1f)
-      return 0; // invalid address
-    return hostTradPramCmd(genCmd(address, writeRequest), data);
-  } else if (monMode == 2) {
-    // XPRAM
-    if (address > 0xff)
-      return 0; // invalid address
-    if (writeRequest)
-      return hostWriteXMem(address, data);
-    else
-      return hostReadXMem(address);
-  }
-  // else Monitor mode disabled, always return zero.
-  return 0;
-}
-
 // Load the host copy of the traditional PRAM from a file and update
 // the RTC device memory.  Also clears write-protect.  Returns true on
 // success, false on failure.
@@ -881,26 +844,20 @@ boolean fileDumpAllXMem(const char *filename)
   return true;
 }
 
-// Start recording VCD signal waveforms for RTC pins.  Only applicable
-// when running under simulation.
-void simRec(void)
-{
-    printf("Starting VCD trace\n");
-    avr_vcd_start(&vcd_file);
-}
+/********************************************************************/
+/* PRAM interactive command line module */
 
-// Stop recording VCD signal waveforms for RTC pins.  Only applicable
-// when running under simulation.
-void simNoRec(void)
-{
-    printf("Stopping VCD trace\n");
-    avr_vcd_stop(&vcd_file);
-}
+void simRec(void);
+void simNoRec(void);
+void setMonMode(uint8_t newMonMode);
+uint8_t getMonMode(void);
+byte monMemAccess(uint16_t address, boolean writeRequest, byte data);
+boolean execMonLine(char *lineBuf);
 
-/* So, THE COMMAND LINE interface plan.  Since every subroutine only
-   has zero to three arguments, all being numeric except for the file
-   commands that take a single string argument, I can use a very
-   simple command-line parser, space separation for arguments only, no
+/* Since every subroutine for command-line commands only has zero to
+   three arguments, all being numeric except for the file commands
+   that take a single string argument, I can use a very simple
+   command-line parser, space separation for arguments only, no
    quoting semantics.  */
 
 // Parse the desired number of 8-bit numbers expressed in hexidecimal
@@ -937,8 +894,6 @@ uint8_t parse8Bits(byte *output, uint8_t limit, char *parsePtr)
     fputs("Error: Argument syntax error\n", stderr); \
     return 0; \
   }
-
-boolean execMonLine(char *lineBuf);
 
 // Parse and execute a command line.  Return value contains bit flags:
 // Bit flag 1|0: Command succeeded/failed
@@ -1323,6 +1278,46 @@ boolean cmdLoop(void)
 }
 
 /********************************************************************/
+/* Miniature Apple II monitor module */
+/* Tailored for PRAM interface */
+
+// Set the Apple II monitor mode.
+void setMonMode(uint8_t newMonMode)
+{
+  monMode = newMonMode;
+}
+
+// Get the Apple II monitor mode.
+uint8_t getMonMode(void)
+{
+  return monMode;
+}
+
+/* Read/write to either traditional PRAM or XPRAM depending on the
+   Apple II monitor mode.  Addresses out of range return zero on read
+   and do nothing on write.  For reads, `data` is ignored.  Returns
+   data on successful reads, zero on unsuccessful reads, one on
+   successful writes, zero on unsuccessful writes.  */
+byte monMemAccess(uint16_t address, boolean writeRequest, byte data)
+{
+  if (monMode == 1) {
+    // Traditional PRAM
+    if (address > 0x1f)
+      return 0; // invalid address
+    return hostTradPramCmd(genCmd(address, writeRequest), data);
+  } else if (monMode == 2) {
+    // XPRAM
+    if (address > 0xff)
+      return 0; // invalid address
+    if (writeRequest)
+      return hostWriteXMem(address, data);
+    else
+      return hostReadXMem(address);
+  }
+  // else Monitor mode disabled, always return zero.
+  return 0;
+}
+
 /* NOTE: We're copying in some hexidecimal helper subroutines in here
    just because they are a little more convenient to use than the
    standard C library routines, even though it's a duplication of
@@ -1577,6 +1572,36 @@ void writehex(char *rch)
 }
 
 /********************************************************************/
+/* `simavr` support module */
+
+static const char * bench_irq_names[5] =
+  { "BENCH.SEC1", "BENCH.CE*", "BENCH.CLK",
+    "BENCH.DATA.IN", "BENCH.DATA.OUT*" };
+
+avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
+                                void *param)
+{
+  g_waitTimeUp = true;
+  if (g_timePoll)
+    return avr->cycle + g_timePoll;
+  return 0;
+}
+
+// Start recording VCD signal waveforms for RTC pins.  Only applicable
+// when running under simulation.
+void simRec(void)
+{
+    printf("Starting VCD trace\n");
+    avr_vcd_start(&vcd_file);
+}
+
+// Stop recording VCD signal waveforms for RTC pins.  Only applicable
+// when running under simulation.
+void simNoRec(void)
+{
+    printf("Stopping VCD trace\n");
+    avr_vcd_stop(&vcd_file);
+}
 
 void pin_change_notify(avr_irq_t *irq, uint32_t value, void *param)
 {
@@ -1600,7 +1625,7 @@ sig_int(int sign)
   exit(0);
 }
 
-int setupSimAvr(char *progName, const char *fname)
+int setupSimAvr(char *progName, const char *fname, boolean interactMode)
 {
   elf_firmware_t f;
 
@@ -1670,8 +1695,8 @@ int setupSimAvr(char *progName, const char *fname)
    *    VCD file initialization
    *    
    *    This will allow you to create a "wave" file and display it in
-   *    gtkwave Pressing "r" and "s" during the demo will start and
-   *    stop recording the pin changes
+   *    gtkwave.  Use the `sim-rec`/`sim-no-rec` commands to
+   *    start/stop recording pin changes.
    */
   avr_vcd_init(avr, "gtkwave_trace.vcd", &vcd_file, 10000 /* usec */);
 
@@ -1716,6 +1741,23 @@ int setupSimAvr(char *progName, const char *fname)
   // printf("Starting VCD trace\n");
   // avr_vcd_start(&vcd_file);
 
+  if (interactMode) {
+    // Configure non-blocking mode on standard input so that the
+    // simulator can still run when we're waiting for user input.
+    int fflags = fcntl(STDIN_FILENO, F_GETFL);
+    int result;
+    if (fflags == -1) {
+      perror("error getting stdin flags");
+      return 1;
+    }
+    fflags |= O_NONBLOCK;
+    result = fcntl(STDIN_FILENO, F_SETFL, fflags);
+    if (result == -1) {
+      perror("error setting stdin flags");
+      return 1;
+    }
+  }
+
   fputs( "\nSimulation launching:\n", stdout);
 
   signal(SIGINT, sig_int);
@@ -1737,70 +1779,14 @@ boolean simAvrStep(void)
   // NOTE: In the main loop, if we're using multiple threads and
   // message passing, we can check if we should send an I/O
   // peripheral IRQ message.
-
-  // NOTE: For timing sleeps on the host side, just count avr->cycle
-  // and use the frequency (32.768 lHz) to translate nanoseconds to
-  // cycles.
 }
 
 /********************************************************************/
+/* Automated test suite module */
 
-int main(int argc, char *argv[])
+int autoTestSuite(void)
 {
-  char *firmwareName = "";
-  boolean interactMode = false;
-  int retVal;
-
-  { // Parse command-line arguments.
-    unsigned i;
-    for (i = 1; i < argc; i++) {
-      if (strcmp(argv[i], "-h") == 0 ||
-          strcmp(argv[i], "--help") == 0) {
-        printf("Usage: %s [-i] FIRMWARE_FILE\n"
-               "\n"
-               "    -i  Run interactive mode\n"
-               "\n", argv[0]);
-        return 0;
-      } else if (strcmp(argv[i], "-i") == 0)
-        interactMode = true;
-      else
-        firmwareName = argv[i];
-    }
-  }
-  retVal = setupSimAvr(argv[0], firmwareName);
-  if (retVal != 0)
-    return retVal;
-
-  if (interactMode) {
-    // Interactive mode.
-    { // Configure non-blocking mode on standard input.
-      int fflags = fcntl(STDIN_FILENO, F_GETFL);
-      int result;
-      if (fflags == -1) {
-        perror("error getting stdin flags");
-        return 1;
-      }
-      fflags |= O_NONBLOCK;
-      result = fcntl(STDIN_FILENO, F_SETFL, fflags);
-      if (result == -1) {
-        perror("error setting stdin flags");
-        return 1;
-      }
-    }
-
-    fputs("Launching interactive console.\n"
-          "Type help for summary of commands.\n", stdout);
-    if (!cmdLoop()) {
-      avr_terminate(avr);
-      return 1;
-    }
-    avr_terminate(avr);
-    return 0;
-  }
-
-  // TODO: Implement non-interactive test suite.
-
-  /* Things to test:
+  /* TODO: Things to test:
 
      * Listen for 1-second ping, compare with host clock to verify
        second counting is working correctly.
@@ -1836,5 +1822,50 @@ int main(int argc, char *argv[])
 
    */
 
+  fputs("FAIL: No automated test suite implemented!\n", stdout);
   return 1;
+}
+
+/********************************************************************/
+/* `test-rtc` main function module */
+
+int main(int argc, char *argv[])
+{
+  char *firmwareName = "";
+  boolean interactMode = false;
+  int retVal;
+
+  { // Parse command-line arguments.
+    unsigned i;
+    for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-h") == 0 ||
+          strcmp(argv[i], "--help") == 0) {
+        printf("Usage: %s [-i] FIRMWARE_FILE\n"
+               "\n"
+               "    -i  Run interactive mode\n"
+               "\n", argv[0]);
+        return 0;
+      } else if (strcmp(argv[i], "-i") == 0)
+        interactMode = true;
+      else
+        firmwareName = argv[i];
+    }
+  }
+  retVal = setupSimAvr(argv[0], firmwareName, interactMode);
+  if (retVal != 0)
+    return retVal;
+
+  if (interactMode) {
+    fputs("Launching interactive console.\n"
+          "Type help for summary of commands.\n", stdout);
+    if (!cmdLoop()) {
+      avr_terminate(avr);
+      return 1;
+    }
+    avr_terminate(avr);
+    return 0;
+  }
+
+  // Run automated test suite.
+  return autoTestSuite();
 }
