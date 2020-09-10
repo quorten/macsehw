@@ -27,16 +27,6 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-#ifdef DO_SIMAVR
-#include "avr_mcu_section.h"
-AVR_MCU(32768, "attiny85");
-AVR_MCU_SIMAVR_COMMAND (& GPIOR0 );
-const struct avr_mmcu_vcd_trace_t _mytrace[] _MMCU_ =
-  {
-   { AVR_MCU_VCD_SYMBOL("PORTB5"), .what = (void*)&PORTB, .mask = _BV(5) },
-  };
-#endif
-
 /********************************************************************/
 // Simplified Arduino.h definitions.
 typedef enum { false, true } bool; // Compatibility with C++.
@@ -105,18 +95,22 @@ volatile boolean lastSerClock = 0;
 volatile boolean serClockRising = false;
 volatile boolean serClockFalling = false;
 
-volatile enum SerialStateType serialState = SERIAL_DISABLED;
+volatile byte serialState = SERIAL_DISABLED;
 volatile byte serialBitNum = 0;
 volatile byte address = 0;
 volatile byte serialData = 0;
 
-// Number of seconds since midnight, January 1, 1904.  The serial
-// register interface exposes this data as little endian.  TODO
-// VERIFY: Clock is initialized to January 1st, 1984?  Or is this done
-// by the ROM when the validity status is invalid?
+/* Number of seconds since midnight, January 1, 1904.  The serial
+   register interface exposes this data as little endian.
+  
+   TODO VERIFY: Clock is initialized to January 1st, 1984?  Or is this
+   done by the ROM when the validity status is invalid?
+  
+   TODO INVESTIGATE: Does `simavr` not initialize non-zero variables?
+   Or is this a quirk with `avr-gcc`?  */
 volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
-volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
 volatile byte writeProtect = 0;
+volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
 
 #define shiftReadPB(output, bitNum, portBit) \
   bitWrite(output, bitNum, ((PINB&_BV(portBit))) ? 1 : 0)
@@ -128,7 +122,8 @@ volatile byte writeProtect = 0;
 
 // Digital write in an open-drain fashion: set as output-low for zero,
 // set as input-no-pullup for one.
-void digitalWriteOD(uint8_t pin, uint8_t val) {
+void digitalWriteOD(uint8_t pin, uint8_t val)
+{
   uint8_t bit = _BV(pin);
   // cli();
   if (val == 0) {
@@ -141,22 +136,27 @@ void digitalWriteOD(uint8_t pin, uint8_t val) {
   // sei();
 }
 
-void setup(void) {
+void setup(void)
+{
   cli(); // Disable interrupts while we set things up
 
+  // TODO FIXME: Because `simavr` does not initialize non-zero global
+  // variables, we must repeat the initialization here.
+  seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
+
   // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
-  DDRB |= ONE_SEC_PIN;
+  DDRB |= (1<<ONE_SEC_PIN);
   // INPUT: The processor pulls this pin low when it wants access
-  DDRB &= ~RTC_ENABLE_PIN;
-  PORTB &= ~RTC_ENABLE_PIN;
+  DDRB &= ~(1<<RTC_ENABLE_PIN);
+  PORTB &= ~(1<<RTC_ENABLE_PIN);
   lastRTCEnable = PINB&(1<<RTC_ENABLE_PIN); // Initialize last value
   // INPUT: The serial clock is driven by the processor
-  DDRB &= ~SERIAL_CLOCK_PIN;
-  PORTB &= ~SERIAL_CLOCK_PIN;
+  DDRB &= ~(1<<SERIAL_CLOCK_PIN);
+  PORTB &= ~(1<<SERIAL_CLOCK_PIN);
   lastSerClock = PINB&(1<<SERIAL_CLOCK_PIN); // Initialize last value
   // INPUT: We'll need to switch this to output when sending data
-  DDRB &= ~SERIAL_DATA_PIN;
-  PORTB &= ~SERIAL_DATA_PIN;
+  DDRB &= ~(1<<SERIAL_DATA_PIN);
+  PORTB &= ~(1<<SERIAL_DATA_PIN);
 
   wdt_disable();       // Disable watchdog
   bitSet(ACSR, ACD);   // Disable Analog Comparator, don't need it, saves power
@@ -176,19 +176,16 @@ void setup(void) {
   TCNT0 = 0;             // Clear the counter
   bitClear(GTCCR, TSM);  // Turns timers back on
 
-#ifdef DO_SIMAVR
-  GPIOR0 = SIMAVR_CMD_VCD_START_TRACE;
-#endif
-
   sei(); //We're done setting up, enable those interrupts again
 
 }
 
-void clearState(void) {
+void clearState(void)
+{
   // Return the pin to input mode
   // cli();
-  DDRB &= ~SERIAL_DATA_PIN;
-  // PORTB &= ~SERIAL_DATA_PIN;
+  DDRB &= ~(1<<SERIAL_DATA_PIN);
+  // PORTB &= ~(1<<SERIAL_DATA_PIN);
   // sei();
   serialState = SERIAL_DISABLED;
   serialBitNum = 0;
@@ -200,7 +197,8 @@ void clearState(void) {
  * An interrupt to both increment the seconds counter and generate the
  * square wave
  */
-void halfSecondInterrupt(void) {
+void halfSecondInterrupt(void)
+{
   PINB = 1<<ONE_SEC_PIN;  // Flip the one-second pin
   if (!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
     seconds++;
@@ -215,7 +213,8 @@ void halfSecondInterrupt(void) {
  * The actual serial communication can be done in the main loop, this
  * way the clock still gets incremented.
  */
-void handleRTCEnableInterrupt(void) {
+void handleRTCEnableInterrupt(void)
+{
   boolean curRTCEnable = PINB&(1<<RTC_ENABLE_PIN);
   if (lastRTCEnable && !curRTCEnable){ // Simulates a falling interrupt
     serialState = RECEIVING_COMMAND;
@@ -230,7 +229,8 @@ void handleRTCEnableInterrupt(void) {
  * Same deal over here, the actual serial communication can be done in
  * the main loop, this way the clock still gets incremented.
  */
-void handleSerClockInterrupt(void) {
+void handleSerClockInterrupt(void)
+{
   boolean curSerClock = PINB&(1<<SERIAL_CLOCK_PIN);
   if (!lastSerClock && curSerClock) {
     serClockRising = true;
@@ -255,7 +255,8 @@ void handleSerClockInterrupt(void) {
  * WRPROT_CMD: Special command: write-protect register.
  * SUCCESS_ADDR: Successful address computation.
  */
-uint8_t decodePramCmd(boolean writeRequest) {
+uint8_t decodePramCmd(boolean writeRequest)
+{
   // Discard the first bit and the last two bits, it's not pertinent
   // to address interpretation.
   address = (address&~(1<<7))>>2;
@@ -281,7 +282,8 @@ uint8_t decodePramCmd(boolean writeRequest) {
   return SUCCESS_ADDR;
 }
 
-void loop(void) {
+void loop(void)
+{
   if ((PINB&(1<<RTC_ENABLE_PIN))) {
     clearState();
     set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
@@ -369,8 +371,8 @@ void loop(void) {
             // Write little endian clock data byte.
             cli(); // Ensure that writes are atomic.
             address = (address&0x03)<<3;
-            seconds &= ~(0xff<<address);
-            seconds |= serialData<<address;
+            seconds &= ~((unsigned long)0xff<<address);
+            seconds |= (unsigned long)serialData<<address;
             sei();
           }
           break;
@@ -424,6 +426,7 @@ void loop(void) {
           // Read the data byte before continuing.
           serialState = RECEIVING_XCMD_DATA;
           serialBitNum = 0;
+	  serialData = 0;
           break;
         }
 
@@ -442,7 +445,8 @@ void loop(void) {
           break;
 
         // Write the PRAM register.
-        pram[address] = serialData;
+	if (!writeProtect)
+	  pram[address] = serialData;
         // Finished with the write command.
         clearState();
         break;
@@ -469,17 +473,20 @@ void loop(void) {
 /*
  * Actually attach the interrupt functions
  */
-ISR(PCINT0_vect) {
+ISR(PCINT0_vect)
+{
   handleRTCEnableInterrupt();
   handleSerClockInterrupt();
 }
 
-ISR(TIMER0_OVF_vect) {
+ISR(TIMER0_OVF_vect)
+{
   halfSecondInterrupt();
 }
 
 // Arduino main function.
-int main(void) {
+int main(void)
+{
   setup();
 
   for (;;) {
