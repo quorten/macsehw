@@ -122,6 +122,8 @@ const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
      circuit board that breaks out the desired pins to through-hole
      and ignores/grounds the unnecessary pins.
 
+   * Because .
+
    * TODO: Determine the target standby power consumption.
 */
 
@@ -529,8 +531,8 @@ void loop(void)
           digitalWriteOD(SERIAL_DATA_PIN,
                          bitRead(serialData, 7 - serialBitNum));
         serialBitNum++;
-	if (serialBitNum >= 9)
-	  clearState();
+        if (serialBitNum >= 9)
+          clearState();
 
         /* NOTE: The last output cycle is treated specially if we act
            on the rising edge of the clock, hold the data line as an
@@ -540,10 +542,10 @@ void loop(void)
            bug compatibility with the ROM, but with a little bit of
            sanity too.
 
-	   However, for the time being, I've changed the code so all
-	   actuions are preformed on the falling edge of the clock.
-	   This seems to make things more consistent/robust given the
-	   documented errors in the Macintosh ROM.  */
+           However, for the time being, I've changed the code so all
+           actuions are preformed on the falling edge of the clock.
+           This seems to make things more consistent/robust given the
+           documented errors in the Macintosh ROM.  */
         break;
 
 #if !defined(NoXPRAM) || !NoXPRAM

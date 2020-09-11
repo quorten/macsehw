@@ -856,7 +856,7 @@ uint8_t getMonMode(void);
 byte monMemAccess(uint16_t address, bool8_t writeRequest, byte data);
 bool8_t execMonLine(char *lineBuf);
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
-		      bool8_t testXPram);
+                      bool8_t testXPram);
 
 /* Since every subroutine for command-line commands only has zero to
    three arguments, all being numeric except for the file commands
@@ -1800,7 +1800,7 @@ bool8_t simAvrStep(void)
 /* Automated test suite module */
 
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
-		      bool8_t testXPram)
+                      bool8_t testXPram)
 {
   uint8_t failCount = 0;
   uint8_t skipCount = 0;
@@ -1970,7 +1970,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       genSendWriteXCmd(0x30, newVal);
       actualVal = genSendReadXCmd(0x30);
       if (verbose)
-	printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+        printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
       result = (actualVal != newVal);
       fputs((result) ? "PASS:" : "FAIL:", stdout);
       fputs("XPRAM write nulled with write-protect enabled\n", stdout);
@@ -1988,7 +1988,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       genSendWriteXCmd(0x30, newVal);
       actualVal = genSendReadXCmd(0x30);
       if (verbose)
-	printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+        printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
       result = (actualVal == newVal);
       fputs((result) ? "PASS:" : "FAIL:", stdout);
       fputs("XPRAM write with write-protect disabled\n", stdout);
@@ -2010,13 +2010,13 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       groupVal = genSendReadCmd(0x10);
       xpramVal = genSendReadXCmd(0x10);
       if (verbose)
-	printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       result &= (groupVal == xpramVal);
       genSendWriteCmd(0x10, ~groupVal);
       groupVal = genSendReadCmd(0x10);
       xpramVal = genSendReadXCmd(0x10);
       if (verbose)
-	printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       result &= (groupVal == xpramVal);
       fputs((result) ? "PASS:" : "FAIL:", stdout);
       fputs("Group 1 and XPRAM memory overlap\n", stdout);
@@ -2032,13 +2032,13 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       groupVal = genSendReadCmd(0x08);
       xpramVal = genSendReadXCmd(0x08);
       if (verbose)
-	printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       result &= (groupVal == xpramVal);
       genSendWriteCmd(0x08, ~groupVal);
       groupVal = genSendReadCmd(0x08);
       xpramVal = genSendReadXCmd(0x08);
       if (verbose)
-	printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       result &= (groupVal == xpramVal);
       fputs((result) ? "PASS:" : "FAIL:", stdout);
       fputs("Group 2 and XPRAM memory overlap\n", stdout);
@@ -2158,29 +2158,29 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       // Draw and remove from a source address pool, this guarantees we
       // don't pick the same address twice.
       while (src_addrs_len < 256) {
-	src_addrs[src_addrs_len] = src_addrs_len;
-	src_addrs_len++;
+        src_addrs[src_addrs_len] = src_addrs_len;
+        src_addrs_len++;
       }
       while (rnd_len < 64) {
-	byte pick = rand() % src_addrs_len;
-	rnd_addrs[rnd_len] = src_addrs[pick];
-	src_addrs[pick] = src_addrs[--src_addrs_len];
-	rnd_data[rnd_len] = rand() & 0xff;
-	genSendWriteXCmd(rnd_addrs[rnd_len], rnd_data[rnd_len]);
-	rnd_len++;
+        byte pick = rand() % src_addrs_len;
+        rnd_addrs[rnd_len] = src_addrs[pick];
+        src_addrs[pick] = src_addrs[--src_addrs_len];
+        rnd_data[rnd_len] = rand() & 0xff;
+        genSendWriteXCmd(rnd_addrs[rnd_len], rnd_data[rnd_len]);
+        rnd_len++;
       }
       while (rnd_len > 0) {
-	// Pick an element randomly, read-verify it, then delete it from
-	// the list by overwriting it with the last element.
-	byte pick = rand() % rnd_len;
-	byte actualVal = genSendReadXCmd(rnd_addrs[pick]);
-	if (verbose)
-	  printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
-		 actualVal, rnd_data[pick]);
-	result &= (actualVal == rnd_data[pick]);
-	rnd_len--;
-	rnd_addrs[pick] = rnd_addrs[rnd_len];
-	rnd_data[pick] = rnd_data[rnd_len];
+        // Pick an element randomly, read-verify it, then delete it from
+        // the list by overwriting it with the last element.
+        byte pick = rand() % rnd_len;
+        byte actualVal = genSendReadXCmd(rnd_addrs[pick]);
+        if (verbose)
+          printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
+                 actualVal, rnd_data[pick]);
+        result &= (actualVal == rnd_data[pick]);
+        rnd_len--;
+        rnd_addrs[pick] = rnd_addrs[rnd_len];
+        rnd_data[pick] = rnd_data[rnd_len];
       }
       fputs((result) ? "PASS:" : "FAIL:", stdout);
       fputs("Random XPRAM register write/read\n", stdout);
@@ -2234,19 +2234,19 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     } else {
       setMonMode(2);
       for (i = 0; i < 256; i++)
-	expectedXPram[i] = rand() & 0xff;
+        expectedXPram[i] = rand() & 0xff;
       memcpy(pram, expectedXPram, 256);
       if (verbose) {
-	fputs("INFO:Expected data:\n", stdout);
-	execMonLine("0000.00ff\n");
+        fputs("INFO:Expected data:\n", stdout);
+        execMonLine("0000.00ff\n");
       }
       loadAllXMem();
       // Zero our host copy to be sure we don't compare stale data.
       memset(pram, 0, 256);
       dumpAllXMem();
       if (verbose) {
-	fputs("INFO:Actual data:\n", stdout);
-	execMonLine("0000.00ff\n");
+        fputs("INFO:Actual data:\n", stdout);
+        execMonLine("0000.00ff\n");
       }
       result = (memcmp(pram, expectedXPram, 256) == 0);
       fputs((result) ? "PASS:" : "FAIL:", stdout);
