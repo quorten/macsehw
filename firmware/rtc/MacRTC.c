@@ -74,6 +74,8 @@ typedef uint8_t byte;
  *                  +----+                   *
  *********************************************/
 
+const int       SOFT_XTAL1 = 4;   // (software) inverting amplifier input on PB4
+const int       SOFT_XTAL2 = 3;   // (software) inverting amplifier output on PB3
 const int      ONE_SEC_PIN = 5;   // A 1Hz square wave on PB5
 const int  RTC_ENABLE_PIN  = 0;   // Active low chip enable on PB0
 const int  SERIAL_DATA_PIN = 1;   // Bi-directional serial data line on PB1
@@ -122,7 +124,15 @@ const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
      circuit board that breaks out the desired pins to through-hole
      and ignores/grounds the unnecessary pins.
 
-   * Because .
+   * Because the ATTiny85 cannot use the 32.768 kHz crystal
+     oscillator, we configure the respective pins to some sane default
+     values, namely both sides as pull-up inputs.  This should put the
+     voltage on both sides of the crystal to equal, so the crystal
+     effectively not used or stressed.  However, if you're feeling
+     like an evil mad scientist, you can change one of the pins to be
+     an output and then proceed to programming a software-defined
+     inverting amplifier, possibly with the assistance of a few other
+     external passives.
 
    * TODO: Determine the target standby power consumption.
 */
@@ -164,39 +174,6 @@ const int group2Base = 0x08;
 #error "Invalid clock frequency selection"
 #endif
 
-enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
-                       SENDING_DATA, RECEIVING_DATA,
-                       RECEIVING_XCMD_ADDR, RECEIVING_XCMD_DATA };
-
-enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
-                      WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
-
-volatile boolean lastRTCEnable = 0;
-volatile boolean lastSerClock = 0;
-volatile boolean serClockRising = false;
-volatile boolean serClockFalling = false;
-
-volatile byte serialState = SERIAL_DISABLED;
-volatile byte serialBitNum = 0;
-volatile byte address = 0;
-volatile byte serialData = 0;
-
-/* Number of seconds since midnight, January 1, 1904.  The serial
-   register interface exposes this data as little endian.
-  
-   TODO VERIFY: Clock is initialized to January 1st, 1984?  Or is this
-   done by the ROM when the validity status is invalid?
-  
-   TODO INVESTIGATE: Does `simavr` not initialize non-zero variables?
-   Or is this a quirk with `avr-gcc`?  */
-volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
-volatile byte writeProtect = 0;
-volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
-
-// Extra timer precision book-keeping.
-volatile byte numOflows = 0;
-volatile byte fracRemain = 0;
-
 /* Explanation of the 1-second timer calculations.
 
    First divide the AVR core clock frequency by two since we count
@@ -230,6 +207,39 @@ volatile byte fracRemain = 0;
    as the remainder rather than 66.
 */
 
+enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
+                       SENDING_DATA, RECEIVING_DATA,
+                       RECEIVING_XCMD_ADDR, RECEIVING_XCMD_DATA };
+
+enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
+                      WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
+
+volatile boolean lastRTCEnable = 0;
+volatile boolean lastSerClock = 0;
+volatile boolean serClockRising = false;
+volatile boolean serClockFalling = false;
+
+volatile byte serialState = SERIAL_DISABLED;
+volatile byte serialBitNum = 0;
+volatile byte address = 0;
+volatile byte serialData = 0;
+
+/* Number of seconds since midnight, January 1, 1904.  The serial
+   register interface exposes this data as little endian.
+  
+   TODO VERIFY: Clock is initialized to January 1st, 1984?  Or is this
+   done by the ROM when the validity status is invalid?
+  
+   TODO INVESTIGATE: Does `simavr` not initialize non-zero variables?
+   Or is this a quirk with `avr-gcc`?  */
+volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
+volatile byte writeProtect = 0;
+volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
+
+// Extra timer precision book-keeping.
+volatile byte numOflows = 0;
+volatile byte fracRemain = 0;
+
 #define shiftReadPB(output, bitNum, portBit) \
   bitWrite(output, bitNum, ((PINB&_BV(portBit))) ? 1 : 0)
 
@@ -262,6 +272,12 @@ void setup(void)
   // variables, we must repeat the initialization here.
   seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
 
+  // INPUT_PULLUP: Set the crystal oscillator pins as such to sanely
+  // disable it.
+  DDRB &= ~(1<<SOFT_XTAL1);
+  PORTB |= 1<<SOFT_XTAL1;
+  DDRB &= ~(1<<SOFT_XTAL2);
+  PORTB |= 1<<SOFT_XTAL2;  
   // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
   DDRB |= (1<<ONE_SEC_PIN);
   // INPUT: The processor pulls this pin low when it wants access
