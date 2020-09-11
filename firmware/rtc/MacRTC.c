@@ -25,8 +25,8 @@
 // 8 MHz clock is recommended for a physical device.  For real-time
 // simulation, a slower 400 kHz clock is needed.
 #ifndef F_CPU
-#define F_CPU 8000000
-//#define F_CPU 400000 // DEBUG
+#define F_CPU 8000000UL
+//#define F_CPU 400000UL // DEBUG
 #endif
 
 #include <avr/io.h>
@@ -150,7 +150,7 @@ const int group2Base = 0x08;
 #endif
 
 // Timer constants
-#if F_CPU == 8000000
+#if F_CPU == 8000000UL
 #define PRESCALER_MASK 0b101 /* 1/1024 */
 #define LIM_OFLOWS 15
 #define LIM_REMAIN 66
@@ -160,7 +160,7 @@ const int group2Base = 0x08;
 #define DENOM_FRAC_REMAIN 4
 #define MASK_FRAC_REMAIN (DENOM_FRAC_REMAIN-1)
 
-#elif F_CPU == 400000
+#elif F_CPU == 400000UL
 #define PRESCALER_MASK 0b100 /* 1/256 */
 #define LIM_OFLOWS 3
 #define LIM_REMAIN 13
