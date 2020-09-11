@@ -76,6 +76,7 @@ typedef enum { false, true } bool;
 
 typedef uint8_t byte;
 typedef bool boolean;
+typedef uint8_t bool8_t;
 
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
@@ -154,7 +155,7 @@ uint8_t monMode = 0;
 
  */
 
-boolean simAvrStep(void);
+bool8_t simAvrStep(void);
 avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
                                 void *param);
 
@@ -213,67 +214,40 @@ void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
    silicon RTC.  */
 void waitQuarterCycle(void)
 {
+#ifdef RPI_DRIVER
   struct timespec tv = { 0, 500000 };
   struct timespec tvNext;
-#ifdef RPI_DRIVER
   do {
     if (clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &tvNext) == 0)
       break;
     tv.tv_nsec = tvNext.tv_nsec;
   } while (tv.tv_nsec > 0);
 #else
-  // For simavr, the simulator sleeps for the appropriate real time so
-  // long as the firmware calls the sleep function between cycles.
-
-  // So, with our numbers, calculate the number of cycles we need to
-  // simulate during this slseep period:  
-  // 0.0005 * 32768 = 5 * 32768 / 10000 = 32768 / 2000 = 16.384 ~= 16
-
-  // So, our approach now.  Set a target time, and keep stepping the
-  // simulator until the time is reached.
-  /* {
-    unsigned i = 16;
-    while (i > 0) {
-      if (!simAvrStep())
-        break;
-      i--;
-    }
-  } */
-  if (0) {
-    g_waitTimeUp = false;
-    avr_cycle_timer_register(avr, 16, notify_timeup, NULL);
-    while (!g_waitTimeUp) {
-      if (!simAvrStep())
-        break;
-    }
-  }
   // Unfortunately, if the AVR runs at 32.768 kHz, I've found from
   // simulation that serial communications are only reliable at an
   // abysmal 50 Hz serial clock speed.  Therefore, running at a higher
   // core speed and using a phase-locked loop on the crystal clock
   // frequency a must.
-  { // Use this alternative for slow simulation.
-    struct timespec tv, tvTarget;
-    // N.B. Over here we are using cycle timers mainly to prevent
-    // simulation waits stretching unbearably long.
-    g_timePoll = 16;
-    avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
-    clock_gettime(CLOCK_MONOTONIC, &tv);
-    tvTarget.tv_nsec = tv.tv_nsec + 500000 * 10;
-    tvTarget.tv_sec = tv.tv_sec;
-    if (tvTarget.tv_nsec >= 1000000000) {
-      tvTarget.tv_nsec -= 1000000000;
-      tvTarget.tv_sec++;
-    }
-    while (tv.tv_sec < tvTarget.tv_sec ||
-           (tv.tv_sec == tvTarget.tv_sec &&
-            tv.tv_nsec < tvTarget.tv_nsec)) {
-      if (!simAvrStep())
-        break;
-      clock_gettime(CLOCK_MONOTONIC, &tv);
-    }
-    g_timePoll = 0;
+  struct timespec tv, tvTarget;
+  // N.B. Over here we are using cycle timers mainly to prevent
+  // simulation waits stretching unbearably long.
+  g_timePoll = 16;
+  avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  tvTarget.tv_nsec = tv.tv_nsec + 500000;
+  tvTarget.tv_sec = tv.tv_sec;
+  if (tvTarget.tv_nsec >= 1000000000) {
+    tvTarget.tv_nsec -= 1000000000;
+    tvTarget.tv_sec++;
   }
+  while (tv.tv_sec < tvTarget.tv_sec ||
+         (tv.tv_sec == tvTarget.tv_sec &&
+          tv.tv_nsec < tvTarget.tv_nsec)) {
+    if (!simAvrStep())
+      break;
+    clock_gettime(CLOCK_MONOTONIC, &tv);
+  }
+  g_timePoll = 0;
 #endif
 }
 
@@ -289,12 +263,36 @@ void waitCycle(void)
   waitHalfCycle();
 }
 
+void waitOneSec(void)
+{
+#ifdef RPI_DRIVER
+  sleep(1);
+#else
+  struct timespec tv, tvTarget;
+  // N.B. Over here we are using cycle timers mainly to prevent
+  // simulation waits stretching unbearably long.
+  g_timePoll = 16;
+  avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  tvTarget.tv_nsec = tv.tv_nsec;
+  tvTarget.tv_sec = tv.tv_sec + 1;
+  while (tv.tv_sec < tvTarget.tv_sec ||
+         (tv.tv_sec == tvTarget.tv_sec &&
+          tv.tv_nsec < tvTarget.tv_nsec)) {
+    if (!simAvrStep())
+      break;
+    clock_gettime(CLOCK_MONOTONIC, &tv);
+  }
+  g_timePoll = 0;
+#endif
+}
+
 /********************************************************************/
 /* PRAM C library module */
 
 // Configure whether the PRAM should be traditional 20-byte PRAM
 // (false) or XPRAM (true).
-void setPramType(boolean isXPram)
+void setPramType(bool8_t isXPram)
 {
   if (isXPram) {
     pramSize = 256;
@@ -308,7 +306,7 @@ void setPramType(boolean isXPram)
 }
 
 // Return true if the PRAM type is set to XPRAM, false otherwise.
-boolean getPramType(void)
+bool8_t getPramType(void)
 {
   if (pramSize == 256)
     return true;
@@ -429,7 +427,7 @@ void clearWriteProtect(void)
    compared for equality to verify a consistent read.  If the read is
    inconsistent, this function will retry up to a maximum of 4 times
    before returning failure.  */
-boolean dumpTime(void)
+bool8_t dumpTime(void)
 {
   uint8_t retry = 0;
   uint32_t newTime1, newTime2;
@@ -447,9 +445,7 @@ boolean dumpTime(void)
     newTime2 |= sendReadCmd(0x98) << 16;
     newTime2 |= sendReadCmd(0x9c) << 24;
 
-    // TODO FIXME DEBUG USE ONLY: Quirk to work around running the
-    // serial communication clock too slowly.
-    if (true || newTime1 == newTime2) {
+    if (newTime1 == newTime2) {
       // TODO: Use mutex lock for time update.
       timeSecs = newTime1;
       return true;
@@ -575,7 +571,7 @@ void setCurTime(void)
 // Convenience function to generate a traditional PRAM command from
 // logical command address and write-request flag.  `addr` must not
 // exceed 0x1f.
-byte genCmd(byte addr, boolean writeRequest)
+byte genCmd(byte addr, bool8_t writeRequest)
 {
   return ((!writeRequest) << 7) | (addr << 2);
 }
@@ -623,7 +619,7 @@ void loadAllTradMem(void)
 // Generate an extended command from a byte address.  The first byte
 // to send is the most significant byte in the returned 16-bit
 // integer.
-uint16_t genXCmd(byte addr, boolean writeRequest)
+uint16_t genXCmd(byte addr, bool8_t writeRequest)
 {
   uint16_t xcmd = 0x3800 | ((addr & 0xe0) << 3) | ((addr & 0x1f) << 2);
   if (!writeRequest)
@@ -652,7 +648,8 @@ void dumpAllXMem(void)
   do {
     pram[i] = genSendReadXCmd(i);
     i++;
-  } while (i < 0xff);
+  } while (i != 0);
+  // N.B. We rely on overflow here to copy all 256 bytes.
 }
 
 // Clear write-protect and copy all XPRAM memory from host to RTC.
@@ -663,7 +660,8 @@ void loadAllXMem(void)
   do {
     genSendWriteXCmd(i, pram[i]);
     i++;
-  } while (i < 0xff);
+  } while (i != 0);
+  // N.B. We rely on overflow here to copy all 256 bytes.
 }
 
 /* For 20-byte equivalent PRAM commands, read or write the
@@ -675,7 +673,7 @@ void loadAllXMem(void)
    firmware.  */
 byte hostTradPramCmd(byte cmd, byte data)
 {
-  boolean writeRequest = !(cmd&(1<<7));
+  bool8_t writeRequest = !(cmd&(1<<7));
   // Discard the first bit and the last two bits, it's not pertinent
   // to address interpretation.
   byte address = (cmd&~(1<<7))>>2;
@@ -709,8 +707,12 @@ byte hostTradPramCmd(byte cmd, byte data)
         writeProtect = ((data & 0x80)) ? 1 : 0;
         // Fall through to send command to RTC.
       }
-      else
-        return 0; // invalid command
+      else {
+        // Addresses 14 and 15 are used for the encoding of the first
+        // byte of an extended command.  Therefore, interpretation as
+        // a traditional PRAM command is invalid.
+        return 0;
+      }
     } else
       return 0; // invalid command
   } else {
@@ -746,7 +748,7 @@ byte hostReadXMem(byte address)
 // Load the host copy of the traditional PRAM from a file and update
 // the RTC device memory.  Also clears write-protect.  Returns true on
 // success, false on failure.
-boolean fileLoadAllTradMem(const char *filename)
+bool8_t fileLoadAllTradMem(const char *filename)
 {
   FILE *fp = fopen(filename, "rb");
   int ch;
@@ -784,7 +786,7 @@ boolean fileLoadAllTradMem(const char *filename)
 
 // Save the host copy of the traditional PRAM to a file.  Returns true
 // on success, false on failure.
-boolean fileDumpAllTradMem(const char *filename)
+bool8_t fileDumpAllTradMem(const char *filename)
 {
   FILE *fp = fopen(filename, "wb");
   uint8_t i;
@@ -813,7 +815,7 @@ boolean fileDumpAllTradMem(const char *filename)
 // Load the host copy of the XPRAM from a file and update the RTC
 // device memory.  Also clears write-protect.  Returns true on
 // success, false on failure.
-boolean fileLoadAllXMem(const char *filename)
+bool8_t fileLoadAllXMem(const char *filename)
 {
   FILE *fp = fopen(filename, "rb");
   if (fp == NULL)
@@ -830,7 +832,7 @@ boolean fileLoadAllXMem(const char *filename)
 
 // Save the host copy of the XPRAM to a file.  Returns true on
 // success, false on failure.
-boolean fileDumpAllXMem(const char *filename)
+bool8_t fileDumpAllXMem(const char *filename)
 {
   FILE *fp = fopen(filename, "wb");
   if (fp == NULL)
@@ -851,8 +853,9 @@ void simRec(void);
 void simNoRec(void);
 void setMonMode(uint8_t newMonMode);
 uint8_t getMonMode(void);
-byte monMemAccess(uint16_t address, boolean writeRequest, byte data);
-boolean execMonLine(char *lineBuf);
+byte monMemAccess(uint16_t address, bool8_t writeRequest, byte data);
+bool8_t execMonLine(char *lineBuf);
+bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime);
 
 /* Since every subroutine for command-line commands only has zero to
    three arguments, all being numeric except for the file commands
@@ -900,7 +903,7 @@ uint8_t parse8Bits(byte *output, uint8_t limit, char *parsePtr)
 // Bit flag 2|0: Quit command encountered vs. continue
 uint8_t execCmdLine(char *lineBuf)
 {
-  boolean splitCmd = false;
+  bool8_t splitCmd = false;
   char *cmdName;
   char *parsePtr = lineBuf;
   SKIP_WHITESPACE(parsePtr);
@@ -959,6 +962,7 @@ uint8_t execCmdLine(char *lineBuf)
 "    file-dump-all-xmem filename\n"
 "    sim-rec -- start recording RTC pin signal waveforms\n"
 "    sim-no-rec -- stop recording RTC pin signal waveforms\n"
+"    auto-test-suite verbose simRealTime\n"
 "    q, quit -- exit the program\n"
 "\n"
 "Most commands are named after the corresponding library subroutines,\n"
@@ -1045,8 +1049,10 @@ uint8_t execCmdLine(char *lineBuf)
     clearWriteProtect();
     return 1;
   } else if (strcmp(cmdName, "dump-time") == 0) {
+    byte result;
     PARSE_8BIT_HEAD(0);
-    dumpTime();
+    result = dumpTime();
+    printf("0x%02x\n", result);
     return 1;
   } else if (strcmp(cmdName, "load-time") == 0) {
     PARSE_8BIT_HEAD(0);
@@ -1199,6 +1205,12 @@ uint8_t execCmdLine(char *lineBuf)
     PARSE_8BIT_HEAD(0);
     simNoRec();
     return 1;
+  } else if (strcmp(cmdName, "auto-test-suite") == 0) {
+    byte result;
+    PARSE_8BIT_HEAD(2);
+    result = autoTestSuite(params[0], params[1]);
+    printf("0x%02x\n", result);
+    return 1;
   } else if (strcmp(cmdName, "q") == 0 ||
              strcmp(cmdName, "quit") == 0) {
     return 3; // Time to quit.
@@ -1233,7 +1245,7 @@ uint8_t execCmdLine(char *lineBuf)
 }
 
 // Return false on exit with error, true on graceful exit.
-boolean cmdLoop(void)
+bool8_t cmdLoop(void)
 {
   uint8_t retVal = true;
   char lineBuf[512];
@@ -1298,7 +1310,7 @@ uint8_t getMonMode(void)
    and do nothing on write.  For reads, `data` is ignored.  Returns
    data on successful reads, zero on unsuccessful reads, one on
    successful writes, zero on unsuccessful writes.  */
-byte monMemAccess(uint16_t address, boolean writeRequest, byte data)
+byte monMemAccess(uint16_t address, bool8_t writeRequest, byte data)
 {
   if (monMode == 1) {
     // Traditional PRAM
@@ -1345,7 +1357,7 @@ void dumphex(unsigned short addr, unsigned short end_addr,
              unsigned char one_line);
 void writehex(char *rch);
 
-boolean execMonLine(char *lineBuf)
+bool8_t execMonLine(char *lineBuf)
 {
   char ch;
   g_monLineBuf = lineBuf;
@@ -1625,7 +1637,7 @@ sig_int(int sign)
   exit(0);
 }
 
-int setupSimAvr(char *progName, const char *fname, boolean interactMode)
+int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
 {
   elf_firmware_t f;
 
@@ -1634,7 +1646,9 @@ int setupSimAvr(char *progName, const char *fname, boolean interactMode)
     return 1;
   }
   strcpy(f.mmcu, "attiny85");
-  f.frequency = 32768;
+  //f.frequency = 8000000;
+  // DEBUG NOTE: I'm only able to do real-time simulation at 400 kHz.
+  f.frequency = 400000;
   
   printf("firmware %s f=%d mmcu=%s\n", fname, (int)f.frequency, f.mmcu);
 
@@ -1768,7 +1782,7 @@ int setupSimAvr(char *progName, const char *fname, boolean interactMode)
 
 // Run a single step of the AVR simulation, return true if the
 // simulation should continue, false if it should stop.
-boolean simAvrStep(void)
+bool8_t simAvrStep(void)
 {
   // Simulation main loop.
   int state = avr_run(avr);
@@ -1784,46 +1798,468 @@ boolean simAvrStep(void)
 /********************************************************************/
 /* Automated test suite module */
 
-int autoTestSuite(void)
+bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime)
 {
-  /* TODO: Things to test:
+  uint8_t failCount = 0;
+  uint8_t skipCount = 0;
+  const uint8_t numTests = 18;
 
-     * Listen for 1-second ping, compare with host clock to verify
-       second counting is working correctly.
+  // Use a non-deterministic seed for randomized tests... but print
+  // out the value just in case we want to go deterministic.
+  time_t seed = time(NULL);
+  printf("INFO:random seed = 0x%08x\n", seed);
+  srand(seed);
 
-     * Do a test write, just because we can.  Yes, even though it does
-       absolutely nothing.
+  if (!simRealTime) {
+    fputs("SKIP:", stdout);
+    fputs("1-second interrupt line\n", stdout);
+    skipCount++;
+  } else {
+    /* Listen for 1-second ping, compare with host clock to verify
+       second counting is working correctly.  */
+    bool8_t result = false;
+    uint8_t tries = 0;
+    // Retry up to one time simply because we might cross a one-second
+    // time boundary intermittently.
+    do {
+      // Check that the 1-second line interrupt is working as expected
+      // for three seconds.
+      uint32_t expectTimeSecs, actualTimeSecs;
+      expectTimeSecs = getTime();
+      waitOneSec(); expectTimeSecs++;
+      actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+      waitOneSec(); expectTimeSecs++;
+      actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+      waitOneSec(); expectTimeSecs++;
+      actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+    } while (!result && ++tries < 2);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("1-second interrupt line\n", stdout);
+    if (!result) failCount++;
+  }
 
-     * Test reading and writing all bytes of the clock time in seconds
+  { /* Do a test write, just because we can.  Yes, even though it does
+       absolutely nothing.  */
+    bool8_t result = false;
+    testWrite();
+    result = true;
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Test write\n", stdout);
+    if (!result) failCount++;
+  }
+
+  if (!simRealTime) {
+    fputs("SKIP:", stdout);
+    fputs("Read clock registers\n", stdout);
+    skipCount++;
+  } else {
+    /* Read the clock registers into host memory to sync our time.  */
+    bool8_t result = dumpTime();
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Read clock registers\n", stdout);
+    if (!result) failCount++;
+  }
+
+  if (!simRealTime) {
+    fputs("SKIP:", stdout);
+    fputs("Write and read clock time registers\n", stdout);
+    skipCount++;
+  } else {
+    /* Test writing and reading all bytes of the clock time in seconds
        register.  Code that doesn't properly cast to long can result
-       in inability to write the high-order bytes.
+       in inability to write the high-order bytes.  */
+    bool8_t result = false;
+    uint8_t tries = 0;
+    // Retry up to one time simply because we might cross a one-second
+    // time boundary intermittently.
+    do {
+      uint32_t testTimeSecs = 0x983b80d5;
+      uint32_t readTimeSecs;
+      setTime(testTimeSecs);
+      dumpTime();
+      readTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x", readTimeSecs, testTimeSecs);
+      result = (readTimeSecs == testTimeSecs);
+    } while (!result && ++tries < 2);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Write and read clock time registers\n", stdout);
+    if (!result) failCount++;
+  }
 
-     * Set/clear write-protect, test both traditional and XPRAM writes
-       and reads with write-protect set and clear.
+  { /* Set/clear write-protect, test seconds registers, traditional
+       PRAM, and XPRAM writes and reads with write-protect set and
+       clear.  */
+    bool8_t result = false;
+    byte oldVal, newVal, actualVal;
+    setWriteProtect();
+    oldVal = genSendReadCmd(0x07);
+    newVal = ~oldVal;
+    genSendWriteCmd(0x07, newVal);
+    actualVal = genSendReadCmd(0x07);
+    if (verbose)
+      printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    result = (actualVal != newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Clock register write nulled with write-protect enabled\n",
+          stdout);
+    if (!result) failCount++;
 
-     * Test for expected memory overlap behavior for memory regions
+    clearWriteProtect();
+    oldVal = genSendReadCmd(0x07);
+    newVal = ~oldVal;
+    genSendWriteCmd(0x07, newVal);
+    actualVal = genSendReadCmd(0x07);
+    if (verbose)
+      printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+    result = (actualVal == newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Clock register write with write-protect disabled\n", stdout);
+    if (!result) failCount++;
+
+    setWriteProtect();
+    oldVal = genSendReadCmd(0x08);
+    newVal = ~oldVal;
+    genSendWriteCmd(0x08, newVal);
+    actualVal = genSendReadCmd(0x08);
+    if (verbose)
+      printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    result = (actualVal != newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Traditional PRAM write nulled with write-protect enabled\n",
+          stdout);
+    if (!result) failCount++;
+
+    clearWriteProtect();
+    oldVal = genSendReadCmd(0x08);
+    newVal = ~oldVal;
+    genSendWriteCmd(0x08, newVal);
+    actualVal = genSendReadCmd(0x08);
+    if (verbose)
+      printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+    result = (actualVal == newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Traditional PRAM write with write-protect disabled\n", stdout);
+    if (!result) failCount++;
+
+    setWriteProtect();
+    oldVal = genSendReadXCmd(0x30);
+    newVal = ~oldVal;
+    genSendWriteXCmd(0x30, newVal);
+    actualVal = genSendReadXCmd(0x30);
+    if (verbose)
+      printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    result = (actualVal != newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("XPRAM write nulled with write-protect enabled\n", stdout);
+    if (!result) failCount++;
+
+    clearWriteProtect();
+    oldVal = genSendReadXCmd(0x30);
+    newVal = ~oldVal;
+    genSendWriteXCmd(0x30, newVal);
+    actualVal = genSendReadXCmd(0x30);
+    if (verbose)
+      printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+    result = (actualVal == newVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("XPRAM write with write-protect disabled\n", stdout);
+    if (!result) failCount++;
+  }
+
+  { /* Test for expected memory overlap behavior for memory regions
        sharaed in common in both traditional PRAM and XPRAM.  Only
-       applicable to XPRAM.
+       applicable to XPRAM.  */
+    bool8_t result = true;
+    byte groupVal, xpramVal;
+    groupVal = genSendReadCmd(0x10);
+    xpramVal = genSendReadXCmd(0x10);
+    if (verbose)
+      printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+    result &= (groupVal == xpramVal);
+    genSendWriteCmd(0x10, ~groupVal);
+    groupVal = genSendReadCmd(0x10);
+    xpramVal = genSendReadXCmd(0x10);
+    if (verbose)
+      printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+    result &= (groupVal == xpramVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Group 1 and XPRAM memory overlap\n", stdout);
+    if (!result) failCount++;
 
-     * Test that we can read the contents of the clock, wait a few
+    result = true;
+    groupVal = genSendReadCmd(0x08);
+    xpramVal = genSendReadXCmd(0x08);
+    if (verbose)
+      printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+    result &= (groupVal == xpramVal);
+    genSendWriteCmd(0x08, ~groupVal);
+    groupVal = genSendReadCmd(0x08);
+    xpramVal = genSendReadXCmd(0x08);
+    if (verbose)
+      printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+    result &= (groupVal == xpramVal);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Group 2 and XPRAM memory overlap\n", stdout);
+    if (!result) failCount++;
+  }
+
+  if (!simRealTime) {
+    fputs("SKIP:", stdout);
+    fputs("Consistent 1-second interrupt and clock reguister increment\n",
+          stdout);
+    skipCount++;
+  } else {
+    /* Test that we can read the contents of the clock, wait a few
        seconds, incrementing on the one-second interrupt, then read
        the clock register again.  The values should match
-       equivalently.
+       equivalently.  */
+    bool8_t result = false;
+    uint8_t tries = 0;
+    // Retry up to one time simply because we might cross a one-second
+    // time boundary intermittently.
+    do {
+      uint32_t expectTimeSecs, actualTimeSecs;
+      // Two one-second waits in succession, followed by a
+      // three-second wait.
+      dumpTime();
+      waitOneSec();
+      expectTimeSecs = getTime();
+      dumpTime(); actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+      waitOneSec();
+      expectTimeSecs = getTime();
+      dumpTime(); actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+      waitOneSec();
+      waitOneSec();
+      waitOneSec();
+      expectTimeSecs = getTime();
+      dumpTime(); actualTimeSecs = getTime();
+      if (verbose)
+        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      result = (expectTimeSecs == actualTimeSecs);
+      if (!result)
+        continue;
+    } while (!result && ++tries < 2);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Consistent 1-second interrupt and clock reguister increment\n",
+          stdout);
+    if (!result) failCount++;
+  }
 
-     * Read/write memory regions randomly and verify expected memory
-       behavior.
+  { /* Write/read memory regions randomly and verify expected memory
+       behavior.  */
+    bool8_t result = true;
+    /* Suitable traditional PRAM address range for testing, keep out
+       of the clock, write-protect, test write, and extended command
+       registers:
+       0x08 - 0x0b
+       0x10 - 0x1f
+       Total 20 bytes
 
-     * Load and dump and memory linearly, compare for expected memory
-       behavior.
+       Select 8 bytes at random for testing.
+    */
+    byte src_addrs[256];
+    uint16_t src_addrs_len = 0;
+    byte rnd_addrs[64], rnd_data[64];
+    byte rnd_len = 0;
+    byte i;
+    // Draw and remove from a source address pool, this guarantees we
+    // don't pick the same address twice.
+    while (src_addrs_len < 20) {
+      byte pick = 8 + src_addrs_len;
+      if (pick >= 0x0c)
+        pick += 4;
+      src_addrs[src_addrs_len++] = pick;
+    }
+    while (rnd_len < 8) {
+      byte pick = rand() % src_addrs_len;
+      rnd_addrs[rnd_len] = src_addrs[pick];
+      src_addrs[pick] = src_addrs[--src_addrs_len];
+      rnd_data[rnd_len] = rand() & 0xff;
+      genSendWriteCmd(rnd_addrs[rnd_len], rnd_data[rnd_len]);
+      rnd_len++;
+    }
+    while (rnd_len > 0) {
+      // Pick an element randomly, read-verify it, then delete it from
+      // the list by overwriting it with the last element.
+      byte pick = rand() % rnd_len;
+      byte actualVal = genSendReadCmd(rnd_addrs[pick]);
+      if (verbose)
+        printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
+               actualVal, rnd_data[pick]);
+      result &= (actualVal == rnd_data[pick]);
+      rnd_len--;
+      rnd_addrs[pick] = rnd_addrs[rnd_len];
+      rnd_data[pick] = rnd_data[rnd_len];
+    }
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Random traditional PRAM register write/read\n", stdout);
+    if (!result) failCount++;
 
-     * Send invalid communication bit sequence, de-select, re-select
+    result = true;
+    src_addrs_len = 0;
+    // Draw and remove from a source address pool, this guarantees we
+    // don't pick the same address twice.
+    while (src_addrs_len < 256) {
+      src_addrs[src_addrs_len] = src_addrs_len;
+      src_addrs_len++;
+    }
+    while (rnd_len < 64) {
+      byte pick = rand() % src_addrs_len;
+      rnd_addrs[rnd_len] = src_addrs[pick];
+      src_addrs[pick] = src_addrs[--src_addrs_len];
+      rnd_data[rnd_len] = rand() & 0xff;
+      genSendWriteXCmd(rnd_addrs[rnd_len], rnd_data[rnd_len]);
+      rnd_len++;
+    }
+    while (rnd_len > 0) {
+      // Pick an element randomly, read-verify it, then delete it from
+      // the list by overwriting it with the last element.
+      byte pick = rand() % rnd_len;
+      byte actualVal = genSendReadXCmd(rnd_addrs[pick]);
+      if (verbose)
+        printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
+               actualVal, rnd_data[pick]);
+      result &= (actualVal == rnd_data[pick]);
+      rnd_len--;
+      rnd_addrs[pick] = rnd_addrs[rnd_len];
+      rnd_data[pick] = rnd_data[rnd_len];
+    }
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Random XPRAM register write/read\n", stdout);
+    if (!result) failCount++;
+  }
+
+  { /* Load and dump and memory linearly, compare for expected memory
+       behavior.  */
+    bool8_t result = false;
+    uint8_t oldMonMode = getMonMode();
+    byte expectedXPram[256];
+    uint16_t i;
+
+    result = true;
+    setMonMode(2);
+    // Randomly initialize group 1 registers.
+    for (i = 0; i < 16; i++)
+      expectedXPram[group1Base+i] = rand() & 0xff;
+    // Randomly initialize group 2 registers.
+    for (i = 0; i < 4; i++)
+      expectedXPram[group2Base+i] = rand() & 0xff;
+    // Copy both groups to RTC.
+    memcpy(pram + group1Base, expectedXPram + group1Base, 16);
+    memcpy(pram + group2Base, expectedXPram + group2Base, 4);
+    if (verbose) {
+      fputs("INFO:Expected data:\n", stdout);
+      execMonLine("0008.001f\n");
+    }
+    loadAllTradMem();
+    // Zero our host copy to be sure we don't compare stale data.
+    memset(pram + group1Base, 0, 16);
+    memset(pram + group2Base, 0, 4);
+    dumpAllTradMem();
+    if (verbose) {
+      fputs("INFO:Actual data:\n", stdout);
+      execMonLine("0008.001f\n");
+    }
+    result &= (memcmp(pram + group1Base,
+                      expectedXPram + group1Base, 16) == 0);
+    result &= (memcmp(pram + group2Base,
+                      expectedXPram + group2Base, 4) == 0);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Load and dump traditional PRAM\n", stdout);
+    if (!result) failCount++;
+
+    setMonMode(2);
+    for (i = 0; i < 256; i++)
+      expectedXPram[i] = rand() & 0xff;
+    memcpy(pram, expectedXPram, 256);
+    if (verbose) {
+      fputs("INFO:Expected data:\n", stdout);
+      execMonLine("0000.00ff\n");
+    }
+    loadAllXMem();
+    // Zero our host copy to be sure we don't compare stale data.
+    memset(pram, 0, 256);
+    dumpAllXMem();
+    if (verbose) {
+      fputs("INFO:Actual data:\n", stdout);
+      execMonLine("0000.00ff\n");
+    }
+    result = (memcmp(pram, expectedXPram, 256) == 0);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Load and dump XPRAM\n", stdout);
+    if (!result) failCount++;
+
+    setMonMode(oldMonMode);
+  }
+
+  { /* Send invalid communication bit sequence, de-select, re-select
        chip, then send a valid communication sequence.  Verify that
-       chip can robustly recover from invalid communication sequences.
+       chip can robustly recover from invalid communication
+       sequences.
 
-   */
+       It turns out that the protocol is actually quite robust, the
+       only way to potentially cause an invalid communication state
+       would be to disable the chip-enable line before a communication
+       sequence is complete.  */
+    bool8_t result = false;
+    byte testVal;
+    genSendWriteCmd(0x10, 0xcd);
+    serialBegin();
+    { /* Fragmented sendByte() that would otherwise clobber the byte
+         we just wrote.  Send only 6 out of 8 bits.  */
+      uint8_t data = genCmd(0x10, true);
+      uint8_t bitNum = 0;
+      viaBitWrite(vBase + vDirB, rtcData, DIR_OUT);
+      while (bitNum <= 5) {
+        uint8_t bit = (data >> (7 - bitNum)) & 1;
+        bitNum++;
+        viaBitWrite(vBase + vBufB, rtcData, bit);
+        waitQuarterCycle();
+        viaBitWrite(vBase + vBufB, rtcClk, 1);
+        waitHalfCycle();
+        viaBitWrite(vBase + vBufB, rtcClk, 0);
+        waitQuarterCycle();
+      }
+    }
+    serialEnd();
+    testVal = genSendReadCmd(0x10);
+    if (verbose)
+      printf("INFO:0x%02x ?= 0x%02x\n", testVal, 0xcd);
+    result = (testVal == 0xcd);
+    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    fputs("Recovery from invalid communication\n", stdout);
+    if (!result) failCount++;
+  }
 
-  fputs("FAIL: No automated test suite implemented!\n", stdout);
-  return 1;
+  printf("\n%d passed, %d failed, %d skipped\n",
+         numTests - failCount - skipCount, failCount, skipCount);
+  return (failCount == 0);
 }
 
 /********************************************************************/
@@ -1832,7 +2268,7 @@ int autoTestSuite(void)
 int main(int argc, char *argv[])
 {
   char *firmwareName = "";
-  boolean interactMode = false;
+  bool8_t interactMode = false;
   int retVal;
 
   { // Parse command-line arguments.
@@ -1867,5 +2303,8 @@ int main(int argc, char *argv[])
   }
 
   // Run automated test suite.
-  return autoTestSuite();
+  fputs("Running automated test suite.\n", stdout);
+  retVal = !autoTestSuite(false, true);
+  avr_terminate(avr);
+  return retVal;
 }

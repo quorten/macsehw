@@ -22,6 +22,13 @@
    * 2020-09-04: <https://www.gryphel.com/d/minivmac/minivmac-36.04/minivmac-36.04.src.tgz>
 */
 
+// 8 MHz clock is recommended for a physical device.  For real-time
+// simulation, a slower 400 kHz clock is needed.
+#ifndef F_CPU
+#define F_CPU 8000000
+//#define F_CPU 400000 // DEBUG
+#endif
+
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -46,7 +53,8 @@ typedef uint8_t byte;
  * RTC chip in early Apple Macintosh    *
  * computers, using an ATtiny85.        *
  * Uses an external 32.768kHz crystal   *
- * on pins 2 and 3 as a clock source.   *
+ * on pins 2 and 3 as a clock source.*  *
+ * SEE ELECTRICAL SPECIFICATIONS.       *
  *            __  __                    *
  *     1SEC -|1 \/ 8|- VCC              *
  *    XTAL2 -|2    7|- RTC.CLK          *
@@ -71,6 +79,52 @@ const int  RTC_ENABLE_PIN  = 0;   // Active low chip enable on PB0
 const int  SERIAL_DATA_PIN = 1;   // Bi-directional serial data line on PB1
 const int SERIAL_CLOCK_PIN = 2;   // Serial clock input on PB2
 
+/* ELECTRICAL SPECIFICATIONS:
+
+   * When the Macintosh is powered off, the RTC is powered by the
+     clock battery.  The battery supply voltage is anywhere from 3.6V
+     to 3V, though depleted batteries can sink below 3V.
+
+   * When the Macintosh is powered on, a diode supplies power to the
+     RTC from the main logic board's power rails.  This means the RTC
+     runs off of 5V power during power-on operation.  If necessary, we
+     can take advantage of this to run the AVR core clock at 16 MHz.
+
+   * All dedicated input lines already have a pull-up resistor, so
+     there is no need to enable the AVR's internal pull-up resistors.
+
+   * The bi-directional serial data line is also wired to a pull-up
+     resistor.  This means we can use open-drain signaling to avoid
+     the risk of the output drivers getting burned out if both sides
+     inadvertently configure themseslves as outputs at the same time.
+
+   * What about the one-second interrupt pin?  Since this is wired to
+     a dedicated input line, it's okay to leave this as a "totem-pole"
+     buffered output.
+
+   * The serial data clock needs to be able to operate at a frequency
+     of at least 1 kHz, maybe up to 20 kHz.
+
+   * Because of the requirement on the serial clock speed, the AVR
+     core clock speed should be around 8 MHz, given that it can take
+     about 100 cycles to process one edge of the serial data clock.
+
+   * Because the AVR core clock speed needs to operate faster than the
+     32.768 kHz crystal oscillator clock frequency, the external clock
+     would ideally be used as the crystal oscillator input to an
+     asynchronous timer.  Unfortunately, the ATTiny85 does not have
+     the necessary circuitry or ASSR control register.
+
+     If you are willing to forgo the cosmetics of a pin-compatible DIP
+     package, you can instead use the ATTiny87 which has an AS0
+     asynchronous timer.  Though it has extra pins, it comes in a
+     smaller form factor, so you can just mount it on a custom adapter
+     circuit board that breaks out the desired pins to through-hole
+     and ignores/grounds the unnecessary pins.
+
+   * TODO: Determine the target standby power consumption.
+*/
+
 #if NoXPRAM
 // Models earlier than the Plus had 20 bytes of PRAM
 #define PRAM_SIZE 20
@@ -81,6 +135,31 @@ const int group2Base = 0x10;
 #define PRAM_SIZE 256
 const int group1Base = 0x10;
 const int group2Base = 0x08;
+#endif
+
+// Timer constants
+#if F_CPU == 8000000
+#define PRESCALER_MASK 0b101 /* 1/1024 */
+#define LIM_OFLOWS 15
+#define LIM_REMAIN 66
+#define NUMER_FRAC_REMAIN 1
+// `fracRemain` denominator is assumed to be a power-of-two, this
+// makes calculations more efficient.
+#define DENOM_FRAC_REMAIN 4
+#define MASK_FRAC_REMAIN (DENOM_FRAC_REMAIN-1)
+
+#elif F_CPU == 400000
+#define PRESCALER_MASK 0b100 /* 1/256 */
+#define LIM_OFLOWS 3
+#define LIM_REMAIN 13
+#define NUMER_FRAC_REMAIN 1
+// `fracRemain` denominator is assumed to be a power-of-two, this
+// makes calculations more efficient.
+#define DENOM_FRAC_REMAIN 4
+#define MASK_FRAC_REMAIN (DENOM_FRAC_REMAIN-1)
+
+#else
+#error "Invalid clock frequency selection"
 #endif
 
 enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
@@ -111,6 +190,43 @@ volatile byte serialData = 0;
 volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
 volatile byte writeProtect = 0;
 volatile byte pram[PRAM_SIZE] = {}; // PRAM initialized as zeroed data
+
+// Extra timer precision book-keeping.
+volatile byte numOflows = 0;
+volatile byte fracRemain = 0;
+
+/* Explanation of the 1-second timer calculations.
+
+   First divide the AVR core clock frequency by two since we count
+   half-second cycles.
+
+   8000000 / 2 = 4000000
+
+   Find quotient and remainder of timer frequency divider.
+
+   4000000 / 1024 = 3906 + 256/1024 = 3906 + 1/4
+
+   Now, divide by 256 to find out how many 8-bit timer overflows we
+   need to process.
+
+   3906 / 256 = 15 + 66/256
+
+   The remainder is the fractional overflow to process.  We achieve
+   this by setting the counter register to 256 - remainder after 15
+   overflows.  On the 16th overflow, we then just let the register
+   wrap to zero.
+
+   But we're not finished yet, we still have the other remainder to
+   adjust for.  Here's how we do it.
+
+   1/4 / 256 = (1/4)/256
+
+   Okay, so what does that mean?  That means we have 1/4 of a counter
+   tick to accumulate every half-second cycle in `fracRemain`.  After 4
+   half-second cycles, the error is one full counter tick to add to
+   the fractional overflow.  So, every 4 half-second cycles, we use 67
+   as the remainder rather than 66.
+*/
 
 #define shiftReadPB(output, bitNum, portBit) \
   bitWrite(output, bitNum, ((PINB&_BV(portBit))) ? 1 : 0)
@@ -171,8 +287,7 @@ void setup(void)
   //set up timer
   bitSet(GTCCR, TSM);    // Turns off timers while we set it up
   bitSet(TIMSK, TOIE0);  // Set Timer/Counter0 Overflow Interrupt Enable
-  // NOTE: 0b111 external clock, 0b011, uses 1/64 prescaler on I/O clock.
-  TCCR0B = 0b011;        // Set prescaler, 32,768Hz/64 = 512Hz, fills up the 8-bit counter (256) once every half second
+  TCCR0B = PRESCALER_MASK; // Set prescaler
   TCNT0 = 0;             // Clear the counter
   bitClear(GTCCR, TSM);  // Turns timers back on
 
@@ -197,16 +312,26 @@ void clearState(void)
  * An interrupt to both increment the seconds counter and generate the
  * square wave
  */
-void halfSecondInterrupt(void)
+void oflowInterrupt(void)
 {
-  PINB = 1<<ONE_SEC_PIN;  // Flip the one-second pin
-  if (!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
-    seconds++;
-    // Make up for lost time, something around 6.4 cycles.
-    TCNT0 += 6;
+  numOflows++;
+  if (numOflows == LIM_OFLOWS) {
+    // Configure a timer interrupt to handle the final remainder cycle
+    // wait.  We simply subtract the value from 256, which is the same
+    // as going negative two's complement and using 8-bit wrap-around.
+    fracRemain += NUMER_FRAC_REMAIN;
+    TCNT0 = (fracRemain >= DENOM_FRAC_REMAIN) ?
+      -(LIM_REMAIN + 1) : -LIM_REMAIN;
+    fracRemain &= MASK_FRAC_REMAIN;
+  } else if (numOflows == LIM_OFLOWS + 1) {
+    // Reset the timer-related flags now that we've reached a
+    // half-second.
+    numOflows = 0;
+    PINB = 1<<ONE_SEC_PIN;  // Flip the one-second pin
+    if (!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
+      seconds++;
+    }
   }
-  else
-    TCNT0 += 7;
 }
 
 /*
@@ -271,7 +396,9 @@ uint8_t decodePramCmd(boolean writeRequest)
       if (address == 12) // test write
         return WRTEST_CMD;
       if (address == 13) // write-protect
-      return WRPROT_CMD;
+        return WRPROT_CMD;
+      // Addresses 14 and 15 are used for the encoding of the first
+      // byte of an extended command.
     }
     return INVALID_CMD;
   } else {
@@ -426,7 +553,7 @@ void loop(void)
           // Read the data byte before continuing.
           serialState = RECEIVING_XCMD_DATA;
           serialBitNum = 0;
-	  serialData = 0;
+          serialData = 0;
           break;
         }
 
@@ -445,15 +572,15 @@ void loop(void)
           break;
 
         // Write the PRAM register.
-	if (!writeProtect)
-	  pram[address] = serialData;
+        if (!writeProtect)
+          pram[address] = serialData;
         // Finished with the write command.
         clearState();
         break;
 #endif
 
       default:
-        // Invalid command.
+        // Invalid state.
         clearState();
         break;
       }
@@ -481,7 +608,7 @@ ISR(PCINT0_vect)
 
 ISR(TIMER0_OVF_vect)
 {
-  halfSecondInterrupt();
+  oflowInterrupt();
 }
 
 // Arduino main function.
