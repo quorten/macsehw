@@ -416,16 +416,19 @@ void loop(void)
     set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
     sleep_mode();
   } else {
-    /* Normally we only perform an action on the rising edge of the
-       serial clock.  The main exception is cleanup at the last cycle
-       of serial output, there we wait one full cycle and then until
-       the falling edge before switching the direction of the data pin
+    /* Normally we only perform an action on the falling edge of the
+       serial clock.
+
+       If we instead program to use the rising edge for almost all
+       actions, we have an exception: Cleanup at the last cycle of
+       serial output, there we wait one full cycle and then until the
+       falling edge before switching the direction of the data pin
        back to an input.  */
-    if (serClockFalling &&
+    /* if (serClockFalling &&
         serialState == SENDING_DATA &&
         serialBitNum >= 9) {
       clearState();
-    } else if (serClockRising) {
+    } else */ if (serClockFalling) {
       boolean writeRequest;
       switch(serialState) {
       case RECEIVING_COMMAND:
@@ -526,15 +529,21 @@ void loop(void)
           digitalWriteOD(SERIAL_DATA_PIN,
                          bitRead(serialData, 7 - serialBitNum));
         serialBitNum++;
-        /* if (serialBitNum <= 7)
-          break; */
+	if (serialBitNum >= 9)
+	  clearState();
 
-        /* NOTE: The last output cycle is treated specially, hold the
-           data line as an output for at least one full next cycle,
-           then until the falling edge of the serial clock, then
-           switch back to an input and reset the serial communication
-           state.  It's for bug compatibility with the ROM, but with a
-           little bit of sanity too.  */
+        /* NOTE: The last output cycle is treated specially if we act
+           on the rising edge of the clock, hold the data line as an
+           output for at least one full next cycle, then until the
+           falling edge of the serial clock, then switch back to an
+           input and reset the serial communication state.  It's for
+           bug compatibility with the ROM, but with a little bit of
+           sanity too.
+
+	   However, for the time being, I've changed the code so all
+	   actuions are preformed on the falling edge of the clock.
+	   This seems to make things more consistent/robust given the
+	   documented errors in the Macintosh ROM.  */
         break;
 
 #if !defined(NoXPRAM) || !NoXPRAM
