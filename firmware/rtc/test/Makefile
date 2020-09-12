@@ -6,7 +6,7 @@ CFLAGS = -I $(HOME)/src/simavr/simavr/sim
 all: test-rtc
 
 test-rtc: test-rtc.c
-	gcc $(CFLAGS) -o $@ $< $(SIMAVR_LIB_DIR)/libsimavr.a -lelf -lrt
+	gcc $(CFLAGS) -o $@ $< $(SIMAVR_LIB_DIR)/libsimavr.a -lpthread -lelf -lrt
 
 clean:
 	rm -f test-rtc

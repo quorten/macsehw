@@ -1,3 +1,4 @@
 Mac128kRTC.axf
 MacPlusRTC.axf
 test/test-rtc
+gtkwave_trace.vcd

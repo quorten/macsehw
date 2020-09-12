@@ -58,6 +58,9 @@
 #define __USE_XOPEN
 #include <time.h>
 #include <signal.h>
+#include <pthread.h>
+#include <sys/mman.h>
+#include <sys/epoll.h>
 
 #include "sim_avr.h"
 #include "avr_ioport.h"
@@ -67,7 +70,7 @@
 #include "sim_vcd_file.h"
 
 /********************************************************************/
-/* Arduino definitions support module header */
+/* Simplified Arduino definitions support module header */
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -84,7 +87,360 @@ typedef uint8_t bool8_t;
 #define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet(value, bit) : bitClear(value, bit))
 
 /********************************************************************/
-/* VIA emulation module header */
+/* Miniature Apple II monitor module header */
+
+/* Apple II monitor mode: 0 = disable, 1 = traditional PRAM, 2 =
+   XPRAM.  XPRAM monitor mode is only valid when the host PRAM is
+   configured likewise, of course.  */
+uint8_t monMode = 0;
+
+/********************************************************************/
+/* `simavr` support module header */
+
+/* Note that the test bench's input is the RTC's output.  Input and
+   output here are specified from the perspective of the RTC.  */
+enum BenchIrqs { IRQ_SEC1, IRQ_CE, IRQ_CLK, IRQ_DATA_IN, IRQ_DATA_OUT };
+
+extern avr_t *avr;
+extern avr_irq_t *bench_irqs;
+
+/********************************************************************/
+/* Raspberry Pi GPIO module */
+
+/*
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
+*/
+
+unsigned int *gpio_mem;
+
+/* From BCM2835 data-sheet, p.91 */
+const unsigned GPREGS_BASE     = 0x7e200000;
+/* N.B. To avoid memory alignment issues, we change these to 32-bit
+   integer offsets.  */
+const unsigned GPFSEL_OFFSET   = 0x00 >> 2;
+const unsigned GPSET_OFFSET    = 0x1c >> 2;
+const unsigned GPCLR_OFFSET    = 0x28 >> 2;
+const unsigned GPLEV_OFFSET    = 0x34 >> 2;
+const unsigned GPEDS_OFFSET    = 0x40 >> 2;
+const unsigned GPREN_OFFSET    = 0x4c >> 2;
+const unsigned GPFEN_OFFSET    = 0x58 >> 2;
+const unsigned GPHEN_OFFSET    = 0x64 >> 2;
+const unsigned GPLEN_OFFSET    = 0x70 >> 2;
+const unsigned GPAREN_OFFSET   = 0x7c >> 2;
+const unsigned GPAFEN_OFFSET   = 0x88 >> 2;
+const unsigned GPPUD_OFFSET    = 0x94 >> 2;
+const unsigned GPPUDCLK_OFFSET = 0x98 >> 2;
+const unsigned char N = 4;
+
+enum {
+  GPFN_INPUT,
+  GPFN_OUTPUT,
+  GPFN_ALT5,
+  GPFN_ALT4,
+  GPFN_ALT0,
+  GPFN_ALT1,
+  GPFN_ALT2,
+  GPFN_ALT3,
+};
+
+enum {
+  GPUL_OFF,
+  GPUL_DOWN,
+  GPUL_UP,
+};
+
+int
+rpi_gpio_init (void)
+{
+  int result;
+  int fd = open ("/dev/gpiomem", O_RDWR | O_SYNC);
+  if (fd == -1)
+    return 0;
+  gpio_mem = mmap (NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (gpio_mem == (unsigned int*)-1)
+    return 0;
+  return 1;
+}
+
+void
+rpi_gpio_set_fn (unsigned char idx, unsigned char fn)
+{
+  unsigned word_idx = idx / 10;
+  unsigned int wordbuf = gpio_mem[GPFSEL_OFFSET+word_idx];
+  wordbuf &= ~(0x07 << ((idx % 10) * 3));
+  wordbuf |= (fn & 0x07) << ((idx % 10) * 3);
+  gpio_mem[GPFSEL_OFFSET+word_idx] = wordbuf;
+}
+
+void
+rpi_gpio_set_pull (unsigned char idx, unsigned char pull)
+{
+  unsigned int wordbuf;
+  unsigned i;
+  gpio_mem[GPPUD_OFFSET] = (unsigned int)pull & 0x03;
+  /* Wait at least 150 cycles.  */
+  for (i = 150; i > 0; i--);
+  wordbuf = 1 << idx;
+  gpio_mem[GPPUDCLK_OFFSET] = wordbuf;
+  /* Wait at least 150 cycles.  */
+  for (i = 150; i > 0; i--);
+  gpio_mem[GPPUD_OFFSET] = (unsigned int)GPUL_OFF;
+  gpio_mem[GPPUDCLK_OFFSET] = 0;
+}
+
+void
+rpi_gpio_set_pin (unsigned char idx, unsigned char val)
+{
+  /* N.B. Do not read the current value and use that to set the new
+     value else you get problems with random junk.  Only set/clear the
+     value you want to change.  */
+  if (val) { /* set the pin to 1 */
+    unsigned int wordbuf = gpio_mem[GPSET_OFFSET];
+    /* wordbuf |= 1 << idx; */
+    wordbuf = 1 << idx;
+    gpio_mem[GPSET_OFFSET] = wordbuf;
+  } else { /* clear the pin to zero */
+    unsigned int wordbuf = gpio_mem[GPCLR_OFFSET];
+    /* wordbuf |= 1 << idx; */
+    wordbuf = 1 << idx;
+    gpio_mem[GPCLR_OFFSET] = wordbuf;
+  }
+}
+
+unsigned char
+rpi_gpio_get_pin (unsigned char idx)
+{
+  unsigned int wordbuf = gpio_mem[GPLEV_OFFSET];
+  /* N.B. Interpret the values as follows.  The value of the pin is
+     the current flowing through the pull-up/down termination.  For
+     example:
+
+     * If you have pull-up termination, the value is one when the
+       switch is open, zero when the switch is closed.
+
+     * If you have pull-down termination, the value is zero when the
+       switch is open, one when the switch is closed.  */
+  return (wordbuf >> idx) & 1;
+}
+
+unsigned char
+rpi_gpio_get_pin_event (unsigned char idx)
+{
+  unsigned int wordbuf = gpio_mem[GPEDS_OFFSET];
+  return (wordbuf >> idx) & 1;
+}
+
+void
+rpi_gpio_clear_pin_event (unsigned char idx)
+{
+  gpio_mem[GPEDS_OFFSET] = 1 << idx;
+}
+
+/* Watch for rising edge.  */
+void
+rpi_gpio_watch_re (unsigned char idx)
+{
+  gpio_mem[GPREN_OFFSET] |= 1 << idx;
+}
+
+void
+rpi_gpio_unwatch_re (unsigned char idx)
+{
+  gpio_mem[GPREN_OFFSET] &= ~(1 << idx);
+}
+
+/* Watch for falling edge.  */
+void
+rpi_gpio_watch_fe (unsigned char idx)
+{
+  gpio_mem[GPFEN_OFFSET] |= 1 << idx;
+}
+
+void
+rpi_gpio_unwatch_fe (unsigned char idx)
+{
+  gpio_mem[GPFEN_OFFSET] &= ~(1 << idx);
+}
+
+/* Watch for asynchronous rising edge.  */
+void
+rpi_gpio_watch_async_re (unsigned char idx)
+{
+  gpio_mem[GPAREN_OFFSET] |= 1 << idx;
+}
+
+void
+rpi_gpio_unwatch_async_re (unsigned char idx)
+{
+  gpio_mem[GPAREN_OFFSET] &= ~(1 << idx);
+}
+
+/* Watch for asynchronous falling edge.  */
+void
+rpi_gpio_watch_async_fe (unsigned char idx)
+{
+  gpio_mem[GPAFEN_OFFSET] |= 1 << idx;
+}
+
+void
+rpi_gpio_unwatch_async_fe (unsigned char idx)
+{
+  gpio_mem[GPAFEN_OFFSET] &= ~(1 << idx);
+}
+
+/********************************************************************/
+/* Linux GPIO interrupts support module */
+
+/* Linux `epoll` is an ugly way to get GPIO interrupts into
+   user-space, but it works and it is relativelly old/stable.  Matter
+   of fact, Raspbian was first released without any Linux kernel
+   support for GPIO interrupts in user-space, despite the hardware
+   having the capability.  As soon as the software capability was
+   added in `epoll` and `gpio-keys`, those were the first of their
+   kind on that platform.  So, that's the word.
+
+   Only bothers with the Linux `sysfs` filesystem manipulation as much
+   as it is required to get interrupts into user-space.  Use
+   memory-mapped BCM2835 registers in your own code to configure the
+   rest for Raspberry Pi.
+
+   Only a single GPIO pin is supported for interrupt wait-and-notify.
+   To support more than one thread, though, we simply use a single
+   epfd_thread descriptor (likewise only a single wait-notify thread)
+   and then open and add one file descriptor per GPIO pin.  Adding
+   watches on all read pins can be particularly useful for producing
+   VCD files for poor man's oscilloscope analysis of Apple's custom
+   silicon RTC.
+*/
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <pthread.h>
+#include <sys/epoll.h>
+
+#include "arduino_sdef.h"
+*/
+
+int g_gpio_num;
+pthread_t g_epoll_thread;
+bool8_t g_thread_running = false;
+bool8_t g_thread_initial = true;
+int g_gpio_fd = -1;
+int epfd_thread = -1;
+
+void sec1Isr(void);
+
+void *lingpirq_poll_thread(void *thread_arg)
+{
+  struct epoll_event events;
+  char buf;
+
+  g_thread_running = true;
+  while (g_thread_running) {
+    int result = epoll_wait(epfd_thread, &events, 1, -1);
+    if (result > 0) {
+      lseek(events.data.fd, 0, SEEK_SET);
+      if (read(events.data.fd, &buf, 1) != 1) {
+        g_thread_running = false;
+        pthread_exit((void*)0);
+      }
+      if (g_thread_initial) // ignore first epoll trigger
+        g_thread_initial = false;
+      else
+        sec1Isr();
+    } else if (result == -1) {
+      if (errno == EINTR)
+        continue;
+      g_thread_running = false;
+      pthread_exit((void*)0);
+    }
+  }
+
+  pthread_exit((void*)0);
+}
+
+bool8_t lingpirq_setup(int gpio_num)
+{
+  struct epoll_event ev;
+
+  char cmd[64];
+  char filename[64];
+  g_gpio_num = gpio_num;
+  epfd_thread = -1;
+  snprintf(cmd, sizeof(cmd), "echo %d >/sys/class/gpio/export", g_gpio_num);
+  if (system(cmd) != 0)
+    return false; /* error */
+  snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d", g_gpio_num);
+
+  g_gpio_fd = open(filename, O_RDONLY | O_NONBLOCK);
+  if (g_gpio_fd < 0)
+    goto cleanup_fail; /* error */
+
+  // Create and configure an `epoll` for the GPIO file descriptor.
+  epfd_thread = epoll_create(1);
+  if (epfd_thread == -1)
+    goto cleanup_fail; /* error */
+  ev.events = EPOLLIN | EPOLLET | EPOLLPRI;
+  ev.data.fd = g_gpio_fd;
+  if (epoll_ctl(epfd_thread, EPOLL_CTL_ADD, g_gpio_fd, &ev) == -1)
+    goto cleanup_fail; /* error */
+
+  // Create the wait-and-notify thread.
+  if (pthread_create(&g_epoll_thread, NULL,
+                     lingpirq_poll_thread, (void*)0) != 0)
+    goto cleanup_fail; /* error */
+
+  return true; /* success */
+ cleanup_fail:
+  close(epfd_thread);
+  close(g_gpio_fd);
+  snprintf(cmd, sizeof(cmd), "echo %d >/sys/class/gpio/unexport", g_gpio_num);
+  system(cmd);
+  return false;
+}
+
+void lingpirq_cleanup(void)
+{
+  struct epoll_event ev;
+  char cmd[64];
+  ev.events = EPOLLIN | EPOLLET | EPOLLPRI;
+  ev.data.fd = g_gpio_fd;
+  close(g_gpio_fd);
+  epoll_ctl(epfd_thread, EPOLL_CTL_DEL, g_gpio_fd, &ev);
+  close(epfd_thread);
+
+  close(g_gpio_fd);
+  snprintf(cmd, sizeof(cmd), "echo %d >/sys/class/gpio/unexport", g_gpio_num);
+  system(cmd);
+}
+
+/********************************************************************/
+/* VIA emulation module */
+
+/* TODO: Program support for two "drivers" as follows:
+
+   * Raspberry Pi GPIO pin communications driver
+
+   * simavr IRQ pin communications driver
+
+ */
+
+/*
+#include <stdlib.h>
+#include <time.h>
+
+#include "arduino_sdef.h"
+#include "simavr-support.h"
+*/
+
+bool8_t simAvrStep(void);
+avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
+                                void *param);
 
 #define rtcEnb 2
 #define rtcClk 1
@@ -102,62 +458,6 @@ const uint8_t irqFlags = 3; // Indicates which interrupt triggered
 // VIA registers in memory
 uint8_t vBase[4];
 uint8_t const *VIA = vBase;
-
-/********************************************************************/
-/* `simavr` support module header */
-
-// Note that the test bench's input is the RTC's output.  Input and
-// output here are specified from the perspective of the RTC.
-enum BenchIrqs { IRQ_SEC1, IRQ_CE, IRQ_CLK, IRQ_DATA_IN, IRQ_DATA_OUT };
-
-// simavr variables
-avr_t *avr = NULL;
-avr_vcd_t vcd_file;
-avr_irq_t *bench_irqs = NULL;
-
-/********************************************************************/
-/* PRAM C library module header */
-
-// PRAM configuration, set to XPRAM by default
-int pramSize = 256;
-int group1Base = 0x10;
-int group2Base = 0x08;
-
-// Host copy of RTC chip memory.  Note that the write-protect register
-// cannot be read.
-uint32_t timeSecs = 0;
-byte writeProtect = 0;
-byte pram[256];
-
-// Delta between Macintosh time epoch and Unix time epoch.  Number of
-// seconds between 1904 and 1970 = 16 4-year cycles plus 1 regular
-// year plus one leap year.  Does not cross 100-year or 400-year
-// boundaries.
-const uint32_t macUnixDelta = 60UL * 60 * 24 *
-  ((365 * 4 + 1) * 16 + (365 * 2 + 1));
-
-/********************************************************************/
-/* PRAM interactive command line module header */
-
-// Apple II monitor mode: 0 = disable, 1 = traditional PRAM, 2 =
-// XPRAM.  XPRAM monitor mode is only valid when the host PRAM is
-// configured likewise, of course.
-uint8_t monMode = 0;
-
-/********************************************************************/
-/* VIA emulation module */
-
-/* TODO: Program support for two "drivers" as follows:
-
-   * Raspberry Pi GPIO pin communications driver
-
-   * simavr IRQ pin communications driver
-
- */
-
-bool8_t simAvrStep(void);
-avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
-                                void *param);
 
 bool g_waitTimeUp = true;
 uint8_t g_timePoll = 0;
@@ -289,6 +589,51 @@ void waitOneSec(void)
 
 /********************************************************************/
 /* PRAM C library module */
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+// Define for strptime():
+#define __USE_XOPEN
+#include <time.h>
+#include <pthread.h>
+
+#include "arduino_sdef.h"
+#include "via-emu.h"
+#include "simavr-support.h"
+*/
+
+// PRAM configuration, set to XPRAM by default
+int pramSize = 256;
+int group1Base = 0x10;
+int group2Base = 0x08;
+
+// Host copy of RTC chip memory.  Note that the write-protect register
+// cannot be read.
+volatile uint32_t timeSecs = 0;
+pthread_mutex_t timeSecsMutex;
+byte writeProtect = 0;
+byte pram[256];
+
+// Delta between Macintosh time epoch and Unix time epoch.  Number of
+// seconds between 1904 and 1970 = 16 4-year cycles plus 1 regular
+// year plus one leap year.  Does not cross 100-year or 400-year
+// boundaries.
+const uint32_t macUnixDelta = 60UL * 60 * 24 *
+  ((365 * 4 + 1) * 16 + (365 * 2 + 1));
+
+// Initialize the `timeSecs` mutex.
+void pramInit(void)
+{
+  pthread_mutex_init(&timeSecsMutex, NULL);
+}
+
+// Destroy the `timeSecs` mutex.
+void pramDestroy(void)
+{
+  pthread_mutex_destroy(&timeSecsMutex);
+}
 
 // Configure whether the PRAM should be traditional 20-byte PRAM
 // (false) or XPRAM (true).
@@ -446,8 +791,9 @@ bool8_t dumpTime(void)
     newTime2 |= sendReadCmd(0x9c) << 24;
 
     if (newTime1 == newTime2) {
-      // TODO: Use mutex lock for time update.
+      pthread_mutex_lock(&timeSecsMutex);
       timeSecs = newTime1;
+      pthread_mutex_unlock(&timeSecsMutex);
       return true;
     }
 
@@ -476,7 +822,9 @@ void loadTime(void)
 // RTC.  Also clears write-protect.
 void setTime(uint32_t newTimeSecs)
 {
+  pthread_mutex_lock(&timeSecsMutex);
   timeSecs = newTimeSecs;
+  pthread_mutex_unlock(&timeSecsMutex);
   loadTime();
 }
 
@@ -489,8 +837,9 @@ uint32_t getTime(void)
 // 1-second interrupt service routine, increment the current time.
 void sec1Isr(void)
 {
-  // TODO: Use mutex lock for time update.
+  pthread_mutex_lock(&timeSecsMutex);
   timeSecs++;
+  pthread_mutex_unlock(&timeSecsMutex);
 }
 
 // Convert Macintosh numeric time into ISO 8601 format (YYYY-MM-DD
@@ -848,6 +1197,19 @@ bool8_t fileDumpAllXMem(const char *filename)
 
 /********************************************************************/
 /* PRAM interactive command line module */
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+
+#include "arduino_sdef.h"
+#include "pram-lib.h"
+#include "a2mon-pram.h"
+#include "simavr-support.h"
+#include "auto-test-suite.h"
+*/
 
 void simRec(void);
 void simNoRec(void);
@@ -1294,6 +1656,13 @@ bool8_t cmdLoop(void)
 /* Miniature Apple II monitor module */
 /* Tailored for PRAM interface */
 
+/*
+#include <stdio.h>
+
+#include "arduino_sdef.h"
+#include "pram-lib.h"
+*/
+
 // Set the Apple II monitor mode.
 void setMonMode(uint8_t newMonMode)
 {
@@ -1587,9 +1956,32 @@ void writehex(char *rch)
 /********************************************************************/
 /* `simavr` support module */
 
+/*
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <signal.h>
+
+#include "sim_avr.h"
+#include "avr_ioport.h"
+#include "avr_timer.h"
+#include "sim_elf.h"
+#include "sim_gdb.h"
+#include "sim_vcd_file.h"
+
+#include "arduino_sdef.h"
+#include "pram-lib.h"
+*/
+
 static const char * bench_irq_names[5] =
   { "BENCH.SEC1", "BENCH.CE*", "BENCH.CLK",
     "BENCH.DATA.IN", "BENCH.DATA.OUT*" };
+
+// simavr variables
+avr_t *avr = NULL;
+avr_vcd_t vcd_file;
+avr_irq_t *bench_irqs = NULL;
 
 avr_cycle_count_t notify_timeup(avr_t *avr, avr_cycle_count_t when,
                                 void *param)
@@ -1635,6 +2027,7 @@ sig_int(int sign)
   printf("signal caught, simavr terminating\n");
   if (avr)
     avr_terminate(avr);
+  pramDestroy();
   exit(0);
 }
 
@@ -1799,6 +2192,40 @@ bool8_t simAvrStep(void)
 /********************************************************************/
 /* Automated test suite module */
 
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include "arduino_sdef.h"
+#include "via-emu.h"
+#include "pram-lib.h"
+#include "a2mon-pram.h"
+*/
+
+struct timespec g_tsStartTm;
+
+// Print the elapsed time in the test suite.
+void prTestTime(void)
+{
+  struct timespec tv, tvDiff;
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  tvDiff.tv_sec = tv.tv_sec - g_tsStartTm.tv_sec;
+  tvDiff.tv_nsec = tv.tv_nsec - g_tsStartTm.tv_nsec;
+  if (tvDiff.tv_nsec < 0) {
+    tvDiff.tv_sec--;
+    tvDiff.tv_nsec += 1000000000;
+  }
+  printf("[ %3d.%09d ] ", tvDiff.tv_sec, tvDiff.tv_nsec);
+}
+
+void prTsStat(const char *status)
+{
+  prTestTime();
+  fputs(status, stdout);
+}
+
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       bool8_t testXPram)
 {
@@ -1806,14 +2233,17 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
   uint8_t skipCount = 0;
   const uint8_t numTests = 18;
 
+  clock_gettime(CLOCK_MONOTONIC, &g_tsStartTm);
+
   // Use a non-deterministic seed for randomized tests... but print
   // out the value just in case we want to go deterministic.
   time_t seed = time(NULL);
-  printf("INFO:random seed = 0x%08x\n", seed);
+  prTsStat("INFO:");
+  printf("random seed = 0x%08x\n", seed);
   srand(seed);
 
   if (!simRealTime) {
-    fputs("SKIP:", stdout);
+    prTsStat("SKIP:");
     fputs("1-second interrupt line\n", stdout);
     skipCount++;
   } else {
@@ -1830,27 +2260,33 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       expectTimeSecs = getTime();
       waitOneSec(); expectTimeSecs++;
       actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
       waitOneSec(); expectTimeSecs++;
       actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
       waitOneSec(); expectTimeSecs++;
       actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("1-second interrupt line\n", stdout);
     if (!result) failCount++;
   }
@@ -1860,25 +2296,25 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     bool8_t result = false;
     testWrite();
     result = true;
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Test write\n", stdout);
     if (!result) failCount++;
   }
 
   if (!simRealTime) {
-    fputs("SKIP:", stdout);
+    prTsStat("SKIP:");
     fputs("Read clock registers\n", stdout);
     skipCount++;
   } else {
     /* Read the clock registers into host memory to sync our time.  */
     bool8_t result = dumpTime();
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Read clock registers\n", stdout);
     if (!result) failCount++;
   }
 
   if (!simRealTime) {
-    fputs("SKIP:", stdout);
+    prTsStat("SKIP:");
     fputs("Write and read clock time registers\n", stdout);
     skipCount++;
   } else {
@@ -1895,11 +2331,13 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       setTime(testTimeSecs);
       dumpTime();
       readTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x", readTimeSecs, testTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", readTimeSecs, testTimeSecs);
+      }
       result = (readTimeSecs == testTimeSecs);
     } while (!result && ++tries < 2);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Write and read clock time registers\n", stdout);
     if (!result) failCount++;
   }
@@ -1914,10 +2352,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     newVal = ~oldVal;
     genSendWriteCmd(0x07, newVal);
     actualVal = genSendReadCmd(0x07);
-    if (verbose)
-      printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    if (verbose) {
+      prTsStat("INFO:");
+      printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    }
     result = (actualVal != newVal);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Clock register write nulled with write-protect enabled\n",
           stdout);
     if (!result) failCount++;
@@ -1927,10 +2367,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     newVal = ~oldVal;
     genSendWriteCmd(0x07, newVal);
     actualVal = genSendReadCmd(0x07);
-    if (verbose)
-      printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+    if (verbose) {
+      prTsStat("INFO:");
+      printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
+    }
     result = (actualVal == newVal);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Clock register write with write-protect disabled\n", stdout);
     if (!result) failCount++;
 
@@ -1939,10 +2381,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     newVal = ~oldVal;
     genSendWriteCmd(0x08, newVal);
     actualVal = genSendReadCmd(0x08);
-    if (verbose)
-      printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    if (verbose) {
+      prTsStat("INFO:");
+      printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
+    }
     result = (actualVal != newVal);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Traditional PRAM write nulled with write-protect enabled\n",
           stdout);
     if (!result) failCount++;
@@ -1952,15 +2396,17 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     newVal = ~oldVal;
     genSendWriteCmd(0x08, newVal);
     actualVal = genSendReadCmd(0x08);
-    if (verbose)
-      printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+    if (verbose) {
+      prTsStat("INFO:");
+      printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
+    }
     result = (actualVal == newVal);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Traditional PRAM write with write-protect disabled\n", stdout);
     if (!result) failCount++;
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("XPRAM write nulled with write-protect enabled\n", stdout);
       skipCount++;
     } else {
@@ -1969,16 +2415,18 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       newVal = ~oldVal;
       genSendWriteXCmd(0x30, newVal);
       actualVal = genSendReadXCmd(0x30);
-      if (verbose)
-        printf("INFO:0x%02x ?!= 0x%02x\n", actualVal, newVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
+      }
       result = (actualVal != newVal);
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("XPRAM write nulled with write-protect enabled\n", stdout);
       if (!result) failCount++;
     }
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("XPRAM write with write-protect disabled\n", stdout);
       skipCount++;
     } else {
@@ -1987,10 +2435,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       newVal = ~oldVal;
       genSendWriteXCmd(0x30, newVal);
       actualVal = genSendReadXCmd(0x30);
-      if (verbose)
-        printf("INFO:0x%02x ?= 0x%02x\n", actualVal, newVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
+      }
       result = (actualVal == newVal);
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("XPRAM write with write-protect disabled\n", stdout);
       if (!result) failCount++;
     }
@@ -2003,51 +2453,59 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     byte groupVal, xpramVal;
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("Group 1 and XPRAM memory overlap\n", stdout);
       skipCount++;
     } else {
       groupVal = genSendReadCmd(0x10);
       xpramVal = genSendReadXCmd(0x10);
-      if (verbose)
-        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      }
       result &= (groupVal == xpramVal);
       genSendWriteCmd(0x10, ~groupVal);
       groupVal = genSendReadCmd(0x10);
       xpramVal = genSendReadXCmd(0x10);
-      if (verbose)
-        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      }
       result &= (groupVal == xpramVal);
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("Group 1 and XPRAM memory overlap\n", stdout);
       if (!result) failCount++;
     }
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("Group 2 and XPRAM memory overlap\n", stdout);
       skipCount++;
     } else {
       result = true;
       groupVal = genSendReadCmd(0x08);
       xpramVal = genSendReadXCmd(0x08);
-      if (verbose)
-        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      }
       result &= (groupVal == xpramVal);
       genSendWriteCmd(0x08, ~groupVal);
       groupVal = genSendReadCmd(0x08);
       xpramVal = genSendReadXCmd(0x08);
-      if (verbose)
-        printf("INFO: 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
+      }
       result &= (groupVal == xpramVal);
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("Group 2 and XPRAM memory overlap\n", stdout);
       if (!result) failCount++;
     }
   }
 
   if (!simRealTime) {
-    fputs("SKIP:", stdout);
+    prTsStat("SKIP:");
     fputs("Consistent 1-second interrupt and clock reguister increment\n",
           stdout);
     skipCount++;
@@ -2068,16 +2526,20 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       waitOneSec();
       expectTimeSecs = getTime();
       dumpTime(); actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
       waitOneSec();
       expectTimeSecs = getTime();
       dumpTime(); actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
@@ -2086,13 +2548,15 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       waitOneSec();
       expectTimeSecs = getTime();
       dumpTime(); actualTimeSecs = getTime();
-      if (verbose)
-        printf("INFO:0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%08x ?= 0x%08x\n", expectTimeSecs, actualTimeSecs);
+      }
       result = (expectTimeSecs == actualTimeSecs);
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Consistent 1-second interrupt and clock reguister increment\n",
           stdout);
     if (!result) failCount++;
@@ -2136,20 +2600,22 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       // the list by overwriting it with the last element.
       byte pick = rand() % rnd_len;
       byte actualVal = genSendReadCmd(rnd_addrs[pick]);
-      if (verbose)
-        printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
+      if (verbose) {
+        prTsStat("INFO:");
+        printf("0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
                actualVal, rnd_data[pick]);
+      }
       result &= (actualVal == rnd_data[pick]);
       rnd_len--;
       rnd_addrs[pick] = rnd_addrs[rnd_len];
       rnd_data[pick] = rnd_data[rnd_len];
     }
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Random traditional PRAM register write/read\n", stdout);
     if (!result) failCount++;
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("Random XPRAM register write/read\n", stdout);
       skipCount++;
     } else {
@@ -2174,15 +2640,17 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         // the list by overwriting it with the last element.
         byte pick = rand() % rnd_len;
         byte actualVal = genSendReadXCmd(rnd_addrs[pick]);
-        if (verbose)
-          printf("INFO:0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
+        if (verbose) {
+          prTsStat("INFO:");
+          printf("0x%02x: 0x%02x ?= 0x%02x\n", rnd_addrs[pick],
                  actualVal, rnd_data[pick]);
+        }
         result &= (actualVal == rnd_data[pick]);
         rnd_len--;
         rnd_addrs[pick] = rnd_addrs[rnd_len];
         rnd_data[pick] = rnd_data[rnd_len];
       }
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("Random XPRAM register write/read\n", stdout);
       if (!result) failCount++;
     }
@@ -2207,7 +2675,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     memcpy(pram + group1Base, expectedXPram + group1Base, 16);
     memcpy(pram + group2Base, expectedXPram + group2Base, 4);
     if (verbose) {
-      fputs("INFO:Expected data:\n", stdout);
+      prTsStat("INFO:Expected data:\n");
       execMonLine("0008.001f\n");
     }
     loadAllTradMem();
@@ -2216,19 +2684,19 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     memset(pram + group2Base, 0, 4);
     dumpAllTradMem();
     if (verbose) {
-      fputs("INFO:Actual data:\n", stdout);
+      prTsStat("INFO:Actual data:\n");
       execMonLine("0008.001f\n");
     }
     result &= (memcmp(pram + group1Base,
                       expectedXPram + group1Base, 16) == 0);
     result &= (memcmp(pram + group2Base,
                       expectedXPram + group2Base, 4) == 0);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Load and dump traditional PRAM\n", stdout);
     if (!result) failCount++;
 
     if (!testXPram) {
-      fputs("SKIP:", stdout);
+      prTsStat("SKIP:");
       fputs("Load and dump XPRAM\n", stdout);
       skipCount++;
     } else {
@@ -2237,7 +2705,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         expectedXPram[i] = rand() & 0xff;
       memcpy(pram, expectedXPram, 256);
       if (verbose) {
-        fputs("INFO:Expected data:\n", stdout);
+        prTsStat("INFO:Expected data:\n");
         execMonLine("0000.00ff\n");
       }
       loadAllXMem();
@@ -2245,11 +2713,11 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       memset(pram, 0, 256);
       dumpAllXMem();
       if (verbose) {
-        fputs("INFO:Actual data:\n", stdout);
+        prTsStat("INFO:Actual data:\n");
         execMonLine("0000.00ff\n");
       }
       result = (memcmp(pram, expectedXPram, 256) == 0);
-      fputs((result) ? "PASS:" : "FAIL:", stdout);
+      prTsStat((result) ? "PASS:" : "FAIL:");
       fputs("Load and dump XPRAM\n", stdout);
       if (!result) failCount++;
     }
@@ -2288,10 +2756,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     }
     serialEnd();
     testVal = genSendReadCmd(0x10);
-    if (verbose)
-      printf("INFO:0x%02x ?= 0x%02x\n", testVal, 0xcd);
+    if (verbose) {
+      prTsStat("INFO:");
+      printf("0x%02x ?= 0x%02x\n", testVal, 0xcd);
+    }
     result = (testVal == 0xcd);
-    fputs((result) ? "PASS:" : "FAIL:", stdout);
+    prTsStat((result) ? "PASS:" : "FAIL:");
     fputs("Recovery from invalid communication\n", stdout);
     if (!result) failCount++;
   }
@@ -2303,6 +2773,16 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
 
 /********************************************************************/
 /* `test-rtc` main function module */
+
+/*
+#include <stdio.h>
+#include <string.h>
+
+#include "arduino_sdef.h"
+#include "simavr-support.h"
+#include "cmdline.h"
+#include "auto-test-suite.h"
+*/
 
 int main(int argc, char *argv[])
 {
@@ -2326,6 +2806,7 @@ int main(int argc, char *argv[])
         firmwareName = argv[i];
     }
   }
+  pramInit();
   retVal = setupSimAvr(argv[0], firmwareName, interactMode);
   if (retVal != 0)
     return retVal;
@@ -2335,9 +2816,11 @@ int main(int argc, char *argv[])
           "Type help for summary of commands.\n", stdout);
     if (!cmdLoop()) {
       avr_terminate(avr);
+      pramDestroy();
       return 1;
     }
     avr_terminate(avr);
+    pramDestroy();
     return 0;
   }
 
@@ -2345,5 +2828,6 @@ int main(int argc, char *argv[])
   fputs("Running automated test suite.\n", stdout);
   retVal = !autoTestSuite(false, true, true);
   avr_terminate(avr);
+  pramDestroy();
   return retVal;
 }
