@@ -105,6 +105,19 @@ extern avr_t *avr;
 extern avr_irq_t *bench_irqs;
 
 /********************************************************************/
+/* Automated test suite module header */
+
+extern bool8_t g_suiteActive;
+
+void prTsStat(const char *status);
+void prTsResult(bool8_t result, const char *desc);
+#define PR_TS_INFO() { if (g_suiteActive) prTsStat("INFO:"); }
+bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
+                      bool8_t testXPram);
+uint8_t setSuiteMode(uint8_t mode);
+uint8_t getSuiteMode(void);
+
+/********************************************************************/
 /* Raspberry Pi GPIO module */
 
 /*
@@ -803,18 +816,30 @@ bool8_t dumpTime(void)
   return false;
 }
 
+// Accessor function to return the current host time copy.
+uint32_t getTime(void)
+{
+  uint32_t result;
+  pthread_mutex_lock(&timeSecsMutex);
+  result = timeSecs;
+  pthread_mutex_unlock(&timeSecsMutex);
+  return result;
+}
+
 // Clear write-protect and copy the time from host to RTC.
 void loadTime(void)
 {
+  uint32_t ourTimeSecs;
   byte serialData = 0;
+  ourTimeSecs = getTime();
   clearWriteProtect();
-  serialData = timeSecs & 0xff;
+  serialData = ourTimeSecs & 0xff;
   sendWriteCmd(0x00, serialData);
-  serialData = (timeSecs >> 8) & 0xff;
+  serialData = (ourTimeSecs >> 8) & 0xff;
   sendWriteCmd(0x04, serialData);
-  serialData = (timeSecs >> 16) & 0xff;
+  serialData = (ourTimeSecs >> 16) & 0xff;
   sendWriteCmd(0x08, serialData);
-  serialData = (timeSecs >> 24) & 0xff;
+  serialData = (ourTimeSecs >> 24) & 0xff;
   sendWriteCmd(0x0c, serialData);
 }
 
@@ -826,12 +851,6 @@ void setTime(uint32_t newTimeSecs)
   timeSecs = newTimeSecs;
   pthread_mutex_unlock(&timeSecsMutex);
   loadTime();
-}
-
-// Accessor function to return the current host time copy.
-uint32_t getTime(void)
-{
-  return timeSecs;
 }
 
 // 1-second interrupt service routine, increment the current time.
@@ -1201,6 +1220,7 @@ bool8_t fileDumpAllXMem(const char *filename)
 /*
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
@@ -1217,8 +1237,6 @@ void setMonMode(uint8_t newMonMode);
 uint8_t getMonMode(void);
 byte monMemAccess(uint16_t address, bool8_t writeRequest, byte data);
 bool8_t execMonLine(char *lineBuf);
-bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
-                      bool8_t testXPram);
 
 /* Since every subroutine for command-line commands only has zero to
    three arguments, all being numeric except for the file commands
@@ -1283,6 +1301,7 @@ uint8_t execCmdLine(char *lineBuf)
     fputs(
 "Summary of command-line commands:\n"
 "    ?, help -- show this help page\n"
+"    echo str\n"
 "    set-pram-type isXPram -- 0 for 20-byte PRAM, 1 for XPRAM (default)\n"
 "    get-pram-type\n"
 "    send-read-cmd cmd\n"
@@ -1326,6 +1345,8 @@ uint8_t execCmdLine(char *lineBuf)
 "    sim-rec -- start recording RTC pin signal waveforms\n"
 "    sim-no-rec -- stop recording RTC pin signal waveforms\n"
 "    auto-test-suite verbose simRealTime testXPram\n"
+"    set-suite-mode mode\n"
+"    get-suite-mode\n"
 "    q, quit -- exit the program\n"
 "\n"
 "Most commands are named after the corresponding library subroutines,\n"
@@ -1368,6 +1389,11 @@ uint8_t execCmdLine(char *lineBuf)
 "* The XOR checksum at the end (example X3114) is optional when writing\n"
 "  memory.\n"
 "\n";
+    return 1;
+  } else if (strcmp(cmdName,  "echo") == 0) {
+    PR_TS_INFO();
+    fputs(parsePtr, stdout);
+    putchar('\n');
     return 1;
   } else if (strcmp(cmdName,  "set-pram-type") == 0) {
     PARSE_8BIT_HEAD(1);
@@ -1574,6 +1600,16 @@ uint8_t execCmdLine(char *lineBuf)
     result = autoTestSuite(params[0], params[1], params[2]);
     printf("0x%02x\n", result);
     return 1;
+  } else if (strcmp(cmdName, "set-suite-mode") == 0) {
+    PARSE_8BIT_HEAD(1);
+    setSuiteMode(params[0]);
+    return 1;
+  } else if (strcmp(cmdName, "get-suite-mode") == 0) {
+    byte result;
+    PARSE_8BIT_HEAD(0);
+    result = getSuiteMode();
+    printf("0x%02x\n", result);
+    return 1;
   } else if (strcmp(cmdName, "q") == 0 ||
              strcmp(cmdName, "quit") == 0) {
     return 3; // Time to quit.
@@ -1607,21 +1643,51 @@ uint8_t execCmdLine(char *lineBuf)
   return 0;
 }
 
+// Split up semicolon-delimited command lines and execute each one.
+// The return value is the result of the last command.
+uint8_t execMultiCmdLine(char *lineBuf)
+{
+  uint8_t retVal = 1;
+  char *nextCmd = lineBuf;
+  char *delimPos;
+  while ((delimPos = strchr(nextCmd, ';')) != NULL) {
+    char saveChar = delimPos[1];
+    *delimPos = '\0';
+    // Reserve space for null character normally following chomped-off
+    // newline character.
+    delimPos[1] = '\0';
+    retVal = execCmdLine(nextCmd);
+    delimPos[1] = saveChar;
+    if ((retVal & 2) == 2)
+      return retVal; // Time to quit.
+    nextCmd = delimPos + 1;
+  }
+  /* Execute the last command.  For Apple II monitor mode
+     compatibility, semicolons are strictly intra-line separators, so
+     an empty command will still get passed to execCmdLine() for
+     interpretation.  */
+  retVal = execCmdLine(nextCmd);
+  return retVal;
+}
+
 // Return false on exit with error, true on graceful exit.
 bool8_t cmdLoop(void)
 {
   uint8_t retVal = true;
   char lineBuf[512];
   char *parsePtr;
+  bool8_t notScripted = isatty(STDIN_FILENO);
 
   // Print the prompt character.
-  putchar('*');
+  if (notScripted) putchar('*');
 
   while (1) {
 
     if (fgets(lineBuf, 512, stdin) == NULL) {
-      if (feof(stdin))
+      if (feof(stdin)) {
+        if (notScripted) putchar('\n');
         break; // End of file
+      }
       else if (errno == EWOULDBLOCK) {
         // Run one simulation step.
         if (!simAvrStep()) {
@@ -1641,12 +1707,12 @@ bool8_t cmdLoop(void)
     *parsePtr = '\0'; // Chomp off the newline character.
 
     // Dispatch on the command name.
-    retVal = execCmdLine(lineBuf);
+    retVal = execMultiCmdLine(lineBuf);
     if ((retVal & 2) == 2)
       return retVal & 1;
 
     // Print the prompt character.
-    putchar('*');
+    if (notScripted) putchar('*');
   }
 
   return retVal;
@@ -1859,6 +1925,7 @@ void dumphex(unsigned short addr, unsigned short end_addr,
   unsigned char xor_cksum[XOR_CK_LEN] = { 0, 0/*, 0, 0*/ };
   unsigned char xor_pos = 0;
 #endif
+  PR_TS_INFO();
   puthex(4, addr); putchar('-');
   /* TODO FIXME: I trid to fold the last iteration into here to reduce
      code, but that introduces a bug that does not properly handle
@@ -1887,6 +1954,7 @@ void dumphex(unsigned short addr, unsigned short end_addr,
         break;
       if (addr <= end_addr) {
         putchar('\n');
+        PR_TS_INFO();
         puthex(4, addr); putchar('-');
       }
     }
@@ -2204,6 +2272,7 @@ bool8_t simAvrStep(void)
 #include "a2mon-pram.h"
 */
 
+bool8_t g_suiteActive = false;
 struct timespec g_tsStartTm;
 
 // Print the elapsed time in the test suite.
@@ -2226,6 +2295,12 @@ void prTsStat(const char *status)
   fputs(status, stdout);
 }
 
+void prTsResult(bool8_t result, const char *desc)
+{
+  prTsStat((result) ? "PASS:" : "FAIL:");
+  fputs(desc, stdout);
+}
+
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       bool8_t testXPram)
 {
@@ -2233,6 +2308,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
   uint8_t skipCount = 0;
   const uint8_t numTests = 18;
 
+  g_suiteActive = true;
   clock_gettime(CLOCK_MONOTONIC, &g_tsStartTm);
 
   // Use a non-deterministic seed for randomized tests... but print
@@ -2286,8 +2362,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("1-second interrupt line\n", stdout);
+    prTsResult(result, "1-second interrupt line\n");
     if (!result) failCount++;
   }
 
@@ -2296,8 +2371,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     bool8_t result = false;
     testWrite();
     result = true;
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Test write\n", stdout);
+    prTsResult(result, "Test write\n");
     if (!result) failCount++;
   }
 
@@ -2308,8 +2382,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
   } else {
     /* Read the clock registers into host memory to sync our time.  */
     bool8_t result = dumpTime();
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Read clock registers\n", stdout);
+    prTsResult(result, "Read clock registers\n");
     if (!result) failCount++;
   }
 
@@ -2337,8 +2410,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       }
       result = (readTimeSecs == testTimeSecs);
     } while (!result && ++tries < 2);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Write and read clock time registers\n", stdout);
+    prTsResult(result, "Write and read clock time registers\n");
     if (!result) failCount++;
   }
 
@@ -2357,9 +2429,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal != newVal);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Clock register write nulled with write-protect enabled\n",
-          stdout);
+    prTsResult(result,
+               "Clock register write nulled with write-protect enabled\n");
     if (!result) failCount++;
 
     clearWriteProtect();
@@ -2372,8 +2443,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal == newVal);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Clock register write with write-protect disabled\n", stdout);
+    prTsResult(result,
+               "Clock register write with write-protect disabled\n");
     if (!result) failCount++;
 
     setWriteProtect();
@@ -2386,9 +2457,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal != newVal);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Traditional PRAM write nulled with write-protect enabled\n",
-          stdout);
+    prTsResult(result,
+               "Traditional PRAM write nulled with write-protect enabled\n");
     if (!result) failCount++;
 
     clearWriteProtect();
@@ -2401,8 +2471,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal == newVal);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Traditional PRAM write with write-protect disabled\n", stdout);
+    prTsResult(result,
+               "Traditional PRAM write with write-protect disabled\n");
     if (!result) failCount++;
 
     if (!testXPram) {
@@ -2420,8 +2490,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
       }
       result = (actualVal != newVal);
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("XPRAM write nulled with write-protect enabled\n", stdout);
+      prTsResult(result,
+                 "XPRAM write nulled with write-protect enabled\n");
       if (!result) failCount++;
     }
 
@@ -2440,8 +2510,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
       }
       result = (actualVal == newVal);
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("XPRAM write with write-protect disabled\n", stdout);
+      prTsResult(result,
+                 "XPRAM write with write-protect disabled\n");
       if (!result) failCount++;
     }
   }
@@ -2472,8 +2542,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       }
       result &= (groupVal == xpramVal);
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("Group 1 and XPRAM memory overlap\n", stdout);
+      prTsResult(result,
+                 "Group 1 and XPRAM memory overlap\n");
       if (!result) failCount++;
     }
 
@@ -2498,8 +2568,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       }
       result &= (groupVal == xpramVal);
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("Group 2 and XPRAM memory overlap\n", stdout);
+      prTsResult(result, "Group 2 and XPRAM memory overlap\n");
       if (!result) failCount++;
     }
   }
@@ -2556,9 +2625,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Consistent 1-second interrupt and clock reguister increment\n",
-          stdout);
+    prTsResult(result,
+               "Consistent interrupt and clock register increment\n");
     if (!result) failCount++;
   }
 
@@ -2610,8 +2678,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       rnd_addrs[pick] = rnd_addrs[rnd_len];
       rnd_data[pick] = rnd_data[rnd_len];
     }
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Random traditional PRAM register write/read\n", stdout);
+    prTsResult(result,
+               "Random traditional PRAM register write/read\n");
     if (!result) failCount++;
 
     if (!testXPram) {
@@ -2650,8 +2718,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         rnd_addrs[pick] = rnd_addrs[rnd_len];
         rnd_data[pick] = rnd_data[rnd_len];
       }
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("Random XPRAM register write/read\n", stdout);
+      prTsResult(result, "Random XPRAM register write/read\n");
       if (!result) failCount++;
     }
   }
@@ -2691,8 +2758,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       expectedXPram + group1Base, 16) == 0);
     result &= (memcmp(pram + group2Base,
                       expectedXPram + group2Base, 4) == 0);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Load and dump traditional PRAM\n", stdout);
+    prTsResult(result, "Load and dump traditional PRAM\n");
     if (!result) failCount++;
 
     if (!testXPram) {
@@ -2717,8 +2783,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         execMonLine("0000.00ff\n");
       }
       result = (memcmp(pram, expectedXPram, 256) == 0);
-      prTsStat((result) ? "PASS:" : "FAIL:");
-      fputs("Load and dump XPRAM\n", stdout);
+      prTsResult(result, "Load and dump XPRAM\n");
       if (!result) failCount++;
     }
 
@@ -2761,14 +2826,25 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", testVal, 0xcd);
     }
     result = (testVal == 0xcd);
-    prTsStat((result) ? "PASS:" : "FAIL:");
-    fputs("Recovery from invalid communication\n", stdout);
+    prTsResult(result, "Recovery from invalid communication\n");
     if (!result) failCount++;
   }
 
-  printf("\n%d passed, %d failed, %d skipped\n",
+  putchar('\n'); prTsStat("INFO:");
+  printf("%d passed, %d failed, %d skipped\n",
          numTests - failCount - skipCount, failCount, skipCount);
+  g_suiteActive = false;
   return (failCount == 0);
+}
+
+uint8_t setSuiteMode(uint8_t mode)
+{
+  g_suiteActive = mode;
+}
+
+uint8_t getSuiteMode(void)
+{
+  return g_suiteActive;
 }
 
 /********************************************************************/
@@ -2776,6 +2852,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
 
 /*
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "arduino_sdef.h"
@@ -2812,8 +2889,9 @@ int main(int argc, char *argv[])
     return retVal;
 
   if (interactMode) {
-    fputs("Launching interactive console.\n"
-          "Type help for summary of commands.\n", stdout);
+    fputs("Launching interactive console.\n", stdout);
+    if (isatty(STDIN_FILENO))
+      fputs("Type help for summary of commands.\n", stdout);
     if (!cmdLoop()) {
       avr_terminate(avr);
       pramDestroy();
