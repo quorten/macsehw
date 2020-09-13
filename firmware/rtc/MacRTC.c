@@ -334,11 +334,13 @@ void oflowInterrupt(void)
 {
   numOflows++;
   if (numOflows == LIM_OFLOWS) {
-    // Configure a timer interrupt to handle the final remainder cycle
-    // wait.  We simply subtract the value from 256, which is the same
-    // as going negative two's complement and using 8-bit wrap-around.
+    /* Configure a timer interrupt to handle the final remainder cycle
+       wait.  We simply subtract the value from 256, which is the same
+       as going negative two's complement and using 8-bit wrap-around.
+       Also, since the timer may have ticked a few cycles since
+       wrap-around, accumulate via `+=`.  */
     fracRemain += NUMER_FRAC_REMAIN;
-    TCNT0 = (fracRemain >= DENOM_FRAC_REMAIN) ?
+    TCNT0 += (fracRemain >= DENOM_FRAC_REMAIN) ?
       -(LIM_REMAIN + 1) : -LIM_REMAIN;
     fracRemain &= MASK_FRAC_REMAIN;
   } else if (numOflows == LIM_OFLOWS + 1) {
