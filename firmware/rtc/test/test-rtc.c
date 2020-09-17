@@ -648,6 +648,7 @@ void viaInit(void)
     rpi_gpio_set_fn(g_phyToGpio[PHY_CLK], GPFN_OUTPUT);
     rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_OUTPUT);
     // Setup GPIO IRQ for 1-second pin.
+    rpi_gpio_watch_re(g_phyToGpio[PHY_SEC1]);
     lingpirq_setup(g_phyToGpio[PHY_SEC1]);
   }
 }
@@ -663,6 +664,7 @@ void viaDestroy(void)
     rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_INPUT);
     rpi_gpio_set_pull(g_phyToGpio[PHY_DATA], GPUL_UP);
     // Cleanup GPIO IRQ for 1-second pin.
+    rpi_gpio_unwatch_re(g_phyToGpio[PHY_SEC1]);
     lingpirq_cleanup();
   }
 }
