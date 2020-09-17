@@ -110,11 +110,13 @@ extern avr_irq_t *bench_irqs;
 extern bool8_t g_suiteActive;
 
 void prTsStat(const char *status);
-void prTsResult(bool8_t result, const char *desc);
+void recTsResult(bool8_t result, const char *desc);
+void recTsSkip(const char *desc);
 #define PR_TS_INFO() { if (g_suiteActive) prTsStat("INFO:"); }
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       bool8_t testXPram);
-uint8_t setSuiteMode(uint8_t mode);
+void suiteStart(void);
+uint8_t suiteEnd(void);
 uint8_t getSuiteMode(void);
 
 /********************************************************************/
@@ -1303,6 +1305,8 @@ uint8_t getMonMode(void);
 byte monMemAccess(uint16_t address, bool8_t writeRequest, byte data);
 bool8_t execMonLine(char *lineBuf);
 
+uint8_t g_lastRetVal;
+
 /* Since every subroutine for command-line commands only has zero to
    three arguments, all being numeric except for the file commands
    that take a single string argument, I can use a very simple
@@ -1366,6 +1370,7 @@ uint8_t execCmdLine(char *lineBuf)
     fputs(
 "Summary of command-line commands:\n"
 "    ?, help -- show this help page\n"
+"    # comment\n"
 "    echo str\n"
 "    set-pram-type isXPram -- 0 for 20-byte PRAM, 1 for XPRAM (default)\n"
 "    get-pram-type\n"
@@ -1410,7 +1415,10 @@ uint8_t execCmdLine(char *lineBuf)
 "    sim-rec -- start recording RTC pin signal waveforms\n"
 "    sim-no-rec -- stop recording RTC pin signal waveforms\n"
 "    auto-test-suite verbose simRealTime testXPram\n"
-"    set-suite-mode mode\n"
+"    suite-start\n"
+"    suite-end\n"
+"    rec-ts-result desc\n"
+"    rec-ts-skip desc\n"
 "    get-suite-mode\n"
 "    q, quit -- exit the program\n"
 "\n"
@@ -1454,6 +1462,9 @@ uint8_t execCmdLine(char *lineBuf)
 "* The XOR checksum at the end (example X3114) is optional when writing\n"
 "  memory.\n"
 "\n";
+    return 1;
+  } else if (strcmp(cmdName,  "#") == 0) {
+    // Comment, ignore to end of line.
     return 1;
   } else if (strcmp(cmdName,  "echo") == 0) {
     PR_TS_INFO();
@@ -1507,7 +1518,7 @@ uint8_t execCmdLine(char *lineBuf)
     PARSE_8BIT_HEAD(0);
     result = dumpTime();
     printf("0x%02x\n", result);
-    return 1;
+    return result;
   } else if (strcmp(cmdName, "load-time") == 0) {
     PARSE_8BIT_HEAD(0);
     loadTime();
@@ -1638,26 +1649,28 @@ uint8_t execCmdLine(char *lineBuf)
   } else if (strcmp(cmdName, "file-load-all-trad-mem") == 0) {
     byte result = fileLoadAllTradMem(parsePtr);
     printf("0x%02x\n", result);
-    return 1;
+    return result;
   } else if (strcmp(cmdName, "file-dump-all-trad-mem") == 0) {
     byte result = fileDumpAllTradMem(parsePtr);
     printf("0x%02x\n", result);
-    return 1;
+    return result;
   } else if (strcmp(cmdName, "file-load-all-xmem") == 0) {
     byte result = fileLoadAllXMem(parsePtr);
     printf("0x%02x\n", result);
-    return 1;
+    return result;
   } else if (strcmp(cmdName, "file-dump-all-xmem") == 0) {
     byte result = fileDumpAllXMem(parsePtr);
     printf("0x%02x\n", result);
-    return 1;
+    return result;
   } else if (strcmp(cmdName, "sim-rec") == 0) {
     PARSE_8BIT_HEAD(0);
-    simRec();
+    if (!g_phyMode)
+      simRec();
     return 1;
   } else if (strcmp(cmdName, "sim-no-rec") == 0) {
     PARSE_8BIT_HEAD(0);
-    simNoRec();
+    if (!g_phyMode)
+      simNoRec();
     return 1;
   } else if (strcmp(cmdName, "auto-test-suite") == 0) {
     byte result;
@@ -1665,9 +1678,21 @@ uint8_t execCmdLine(char *lineBuf)
     result = autoTestSuite(params[0], params[1], params[2]);
     printf("0x%02x\n", result);
     return 1;
-  } else if (strcmp(cmdName, "set-suite-mode") == 0) {
-    PARSE_8BIT_HEAD(1);
-    setSuiteMode(params[0]);
+  } else if (strcmp(cmdName, "suite-start") == 0) {
+    PARSE_8BIT_HEAD(0);
+    suiteStart();
+    return 1;
+  } else if (strcmp(cmdName, "suite-end") == 0) {
+    byte result;
+    PARSE_8BIT_HEAD(0);
+    result = suiteEnd();
+    printf("0x%02x\n", result);
+    return 1;
+  } else if (strcmp(cmdName, "rec-ts-result") == 0) {
+    recTsResult(g_lastRetVal, parsePtr);
+    return 1;
+  } else if (strcmp(cmdName, "rec-ts-skip") == 0) {
+    recTsSkip(parsePtr);
     return 1;
   } else if (strcmp(cmdName, "get-suite-mode") == 0) {
     byte result;
@@ -1708,6 +1733,15 @@ uint8_t execCmdLine(char *lineBuf)
   return 0;
 }
 
+// Execute a command line with additional handling for test suite
+// result recording.
+uint8_t execTsCmdLine(char *lineBuf)
+{
+  uint8_t result = execCmdLine(lineBuf);
+  g_lastRetVal = result;
+  return result;
+}
+
 // Split up semicolon-delimited command lines and execute each one.
 // The return value is the result of the last command.
 uint8_t execMultiCmdLine(char *lineBuf)
@@ -1721,7 +1755,7 @@ uint8_t execMultiCmdLine(char *lineBuf)
     // Reserve space for null character normally following chomped-off
     // newline character.
     delimPos[1] = '\0';
-    retVal = execCmdLine(nextCmd);
+    retVal = execTsCmdLine(nextCmd);
     delimPos[1] = saveChar;
     if ((retVal & 2) == 2)
       return retVal; // Time to quit.
@@ -1729,9 +1763,9 @@ uint8_t execMultiCmdLine(char *lineBuf)
   }
   /* Execute the last command.  For Apple II monitor mode
      compatibility, semicolons are strictly intra-line separators, so
-     an empty command will still get passed to execCmdLine() for
+     an empty command will still get passed to `execTsCmdLine()` for
      interpretation.  */
-  retVal = execCmdLine(nextCmd);
+  retVal = execTsCmdLine(nextCmd);
   return retVal;
 }
 
@@ -2324,6 +2358,9 @@ bool8_t simAvrStep(void)
 
 bool8_t g_suiteActive = false;
 struct timespec g_tsStartTm;
+uint8_t g_passCount;
+uint8_t g_failCount;
+uint8_t g_skipCount;
 
 // Print the elapsed time in the test suite.
 void prTestTime(void)
@@ -2345,21 +2382,52 @@ void prTsStat(const char *status)
   fputs(status, stdout);
 }
 
-void prTsResult(bool8_t result, const char *desc)
+void recTsResult(bool8_t result, const char *desc)
 {
   prTsStat((result) ? "PASS:" : "FAIL:");
   fputs(desc, stdout);
+  putchar('\n');
+  if (result)
+    g_passCount++;
+  else
+    g_failCount++;
+}
+
+void recTsSkip(const char *desc)
+{
+  prTsStat("SKIP:");
+  fputs(desc, stdout);
+  putchar('\n');
+  g_skipCount++;
+}
+
+void suiteStart(void)
+{
+  g_suiteActive = true;
+  clock_gettime(CLOCK_MONOTONIC, &g_tsStartTm);
+  g_passCount = 0;
+  g_failCount = 0;
+  g_skipCount = 0;
+}
+
+bool8_t suiteEnd(void)
+{
+  putchar('\n'); prTsStat("INFO:");
+  printf("%d passed, %d failed, %d skipped\n",
+         g_passCount, g_failCount, g_skipCount);
+  g_suiteActive = false;
+  return (g_failCount == 0);
+}
+
+uint8_t getSuiteMode(void)
+{
+  return g_suiteActive;
 }
 
 bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       bool8_t testXPram)
 {
-  uint8_t failCount = 0;
-  uint8_t skipCount = 0;
-  const uint8_t numTests = 18;
-
-  g_suiteActive = true;
-  clock_gettime(CLOCK_MONOTONIC, &g_tsStartTm);
+  suiteStart();
 
   // Use a non-deterministic seed for randomized tests... but print
   // out the value just in case we want to go deterministic.
@@ -2368,11 +2436,9 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
   printf("random seed = 0x%08x\n", seed);
   srand(seed);
 
-  if (!simRealTime) {
-    prTsStat("SKIP:");
-    fputs("1-second interrupt line\n", stdout);
-    skipCount++;
-  } else {
+  if (!simRealTime)
+    recTsSkip("1-second interrupt line");
+  else {
     /* Listen for 1-second ping, compare with host clock to verify
        second counting is working correctly.  */
     bool8_t result = false;
@@ -2412,8 +2478,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    prTsResult(result, "1-second interrupt line\n");
-    if (!result) failCount++;
+    recTsResult(result, "1-second interrupt line");
   }
 
   { /* Do a test write, just because we can.  Yes, even though it does
@@ -2421,26 +2486,20 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     bool8_t result = false;
     testWrite();
     result = true;
-    prTsResult(result, "Test write\n");
-    if (!result) failCount++;
+    recTsResult(result, "Test write");
   }
 
-  if (!simRealTime) {
-    prTsStat("SKIP:");
-    fputs("Read clock registers\n", stdout);
-    skipCount++;
-  } else {
+  if (!simRealTime)
+    recTsSkip("Read clock registers");
+  else {
     /* Read the clock registers into host memory to sync our time.  */
     bool8_t result = dumpTime();
-    prTsResult(result, "Read clock registers\n");
-    if (!result) failCount++;
+    recTsResult(result, "Read clock registers");
   }
 
-  if (!simRealTime) {
-    prTsStat("SKIP:");
-    fputs("Write and read clock time registers\n", stdout);
-    skipCount++;
-  } else {
+  if (!simRealTime)
+    recTsSkip("Write and read clock time registers");
+  else {
     /* Test writing and reading all bytes of the clock time in seconds
        register.  Code that doesn't properly cast to long can result
        in inability to write the high-order bytes.  */
@@ -2460,8 +2519,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       }
       result = (readTimeSecs == testTimeSecs);
     } while (!result && ++tries < 2);
-    prTsResult(result, "Write and read clock time registers\n");
-    if (!result) failCount++;
+    recTsResult(result, "Write and read clock time registers");
   }
 
   { /* Set/clear write-protect, test seconds registers, traditional
@@ -2479,9 +2537,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal != newVal);
-    prTsResult(result,
-               "Clock register write nulled with write-protect enabled\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Clock register write nulled with write-protect enabled");
 
     clearWriteProtect();
     oldVal = genSendReadCmd(0x07);
@@ -2493,9 +2550,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal == newVal);
-    prTsResult(result,
-               "Clock register write with write-protect disabled\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Clock register write with write-protect disabled");
 
     setWriteProtect();
     oldVal = genSendReadCmd(0x08);
@@ -2507,9 +2563,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal != newVal);
-    prTsResult(result,
-               "Traditional PRAM write nulled with write-protect enabled\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Traditional PRAM write nulled with write-protect enabled");
 
     clearWriteProtect();
     oldVal = genSendReadCmd(0x08);
@@ -2521,15 +2576,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
     }
     result = (actualVal == newVal);
-    prTsResult(result,
-               "Traditional PRAM write with write-protect disabled\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Traditional PRAM write with write-protect disabled");
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("XPRAM write nulled with write-protect enabled\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("XPRAM write nulled with write-protect enabled");
+    else {
       setWriteProtect();
       oldVal = genSendReadXCmd(0x30);
       newVal = ~oldVal;
@@ -2540,16 +2592,13 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf("0x%02x ?!= 0x%02x\n", actualVal, newVal);
       }
       result = (actualVal != newVal);
-      prTsResult(result,
-                 "XPRAM write nulled with write-protect enabled\n");
-      if (!result) failCount++;
+      recTsResult(result,
+                  "XPRAM write nulled with write-protect enabled");
     }
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("XPRAM write with write-protect disabled\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("XPRAM write with write-protect disabled");
+    else {
       clearWriteProtect();
       oldVal = genSendReadXCmd(0x30);
       newVal = ~oldVal;
@@ -2560,9 +2609,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf("0x%02x ?= 0x%02x\n", actualVal, newVal);
       }
       result = (actualVal == newVal);
-      prTsResult(result,
-                 "XPRAM write with write-protect disabled\n");
-      if (!result) failCount++;
+      recTsResult(result,
+                  "XPRAM write with write-protect disabled");
     }
   }
 
@@ -2572,11 +2620,9 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
     bool8_t result = true;
     byte groupVal, xpramVal;
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("Group 1 and XPRAM memory overlap\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("Group 1 and XPRAM memory overlap");
+    else {
       groupVal = genSendReadCmd(0x10);
       xpramVal = genSendReadXCmd(0x10);
       if (verbose) {
@@ -2592,16 +2638,13 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       }
       result &= (groupVal == xpramVal);
-      prTsResult(result,
-                 "Group 1 and XPRAM memory overlap\n");
-      if (!result) failCount++;
+      recTsResult(result,
+                  "Group 1 and XPRAM memory overlap");
     }
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("Group 2 and XPRAM memory overlap\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("Group 2 and XPRAM memory overlap");
+    else {
       result = true;
       groupVal = genSendReadCmd(0x08);
       xpramVal = genSendReadXCmd(0x08);
@@ -2618,17 +2661,14 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         printf(" 0x%02x ?= 0x%02x\n", groupVal, xpramVal);
       }
       result &= (groupVal == xpramVal);
-      prTsResult(result, "Group 2 and XPRAM memory overlap\n");
-      if (!result) failCount++;
+      recTsResult(result, "Group 2 and XPRAM memory overlap");
     }
   }
 
-  if (!simRealTime) {
-    prTsStat("SKIP:");
-    fputs("Consistent 1-second interrupt and clock reguister increment\n",
-          stdout);
-    skipCount++;
-  } else {
+  if (!simRealTime)
+    recTsSkip("Consistent 1-second interrupt and clock register"
+              "increment");
+  else {
     /* Test that we can read the contents of the clock, wait a few
        seconds, incrementing on the one-second interrupt, then read
        the clock register again.  The values should match
@@ -2675,9 +2715,8 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       if (!result)
         continue;
     } while (!result && ++tries < 2);
-    prTsResult(result,
-               "Consistent interrupt and clock register increment\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Consistent interrupt and clock register increment");
   }
 
   { /* Write/read memory regions randomly and verify expected memory
@@ -2728,15 +2767,12 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       rnd_addrs[pick] = rnd_addrs[rnd_len];
       rnd_data[pick] = rnd_data[rnd_len];
     }
-    prTsResult(result,
-               "Random traditional PRAM register write/read\n");
-    if (!result) failCount++;
+    recTsResult(result,
+                "Random traditional PRAM register write/read");
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("Random XPRAM register write/read\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("Random XPRAM register write/read");
+    else {
       result = true;
       src_addrs_len = 0;
       // Draw and remove from a source address pool, this guarantees we
@@ -2768,8 +2804,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         rnd_addrs[pick] = rnd_addrs[rnd_len];
         rnd_data[pick] = rnd_data[rnd_len];
       }
-      prTsResult(result, "Random XPRAM register write/read\n");
-      if (!result) failCount++;
+      recTsResult(result, "Random XPRAM register write/read");
     }
   }
 
@@ -2808,14 +2843,11 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
                       expectedXPram + group1Base, 16) == 0);
     result &= (memcmp(pram + group2Base,
                       expectedXPram + group2Base, 4) == 0);
-    prTsResult(result, "Load and dump traditional PRAM\n");
-    if (!result) failCount++;
+    recTsResult(result, "Load and dump traditional PRAM");
 
-    if (!testXPram) {
-      prTsStat("SKIP:");
-      fputs("Load and dump XPRAM\n", stdout);
-      skipCount++;
-    } else {
+    if (!testXPram)
+      recTsSkip("Load and dump XPRAM");
+    else {
       setMonMode(2);
       for (i = 0; i < 256; i++)
         expectedXPram[i] = rand() & 0xff;
@@ -2833,8 +2865,7 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
         execMonLine("0000.00ff\n");
       }
       result = (memcmp(pram, expectedXPram, 256) == 0);
-      prTsResult(result, "Load and dump XPRAM\n");
-      if (!result) failCount++;
+      recTsResult(result, "Load and dump XPRAM");
     }
 
     setMonMode(oldMonMode);
@@ -2876,25 +2907,10 @@ bool8_t autoTestSuite(bool8_t verbose, bool8_t simRealTime,
       printf("0x%02x ?= 0x%02x\n", testVal, 0xcd);
     }
     result = (testVal == 0xcd);
-    prTsResult(result, "Recovery from invalid communication\n");
-    if (!result) failCount++;
+    recTsResult(result, "Recovery from invalid communication");
   }
 
-  putchar('\n'); prTsStat("INFO:");
-  printf("%d passed, %d failed, %d skipped\n",
-         numTests - failCount - skipCount, failCount, skipCount);
-  g_suiteActive = false;
-  return (failCount == 0);
-}
-
-uint8_t setSuiteMode(uint8_t mode)
-{
-  g_suiteActive = mode;
-}
-
-uint8_t getSuiteMode(void)
-{
-  return g_suiteActive;
+  return suiteEnd();
 }
 
 /********************************************************************/
@@ -2944,7 +2960,7 @@ int main(int argc, char *argv[])
       if (strcmp(argv[i], "-h") == 0 ||
           strcmp(argv[i], "--help") == 0) {
         printf(
-"Usage: %s [-i] [-r a,b,c,d] FIRMWARE_FILE\n"
+"Usage: %s [-i] [-r a,b,c,d] [FIRMWARE_FILE]\n"
 "\n"
 "    -i  Run interactive mode\n"
 "    -r  Physical hardware test mode (via Raspberry Pi).\n"
