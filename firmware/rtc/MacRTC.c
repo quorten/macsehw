@@ -38,6 +38,7 @@
 // Simplified Arduino.h definitions.
 typedef enum { false, true } bool; // Compatibility with C++.
 typedef bool boolean;
+typedef uint8_t bool8_t;
 typedef uint8_t byte;
 
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
@@ -211,13 +212,10 @@ enum SerialStateType { SERIAL_DISABLED, RECEIVING_COMMAND,
                        SENDING_DATA, RECEIVING_DATA,
                        RECEIVING_XCMD_ADDR, RECEIVING_XCMD_DATA };
 
-enum PramAddrResult { INVALID_CMD, SECONDS_CMD,
-                      WRTEST_CMD, WRPROT_CMD, SUCCESS_ADDR };
-
-volatile boolean lastRTCEnable = 0;
-volatile boolean lastSerClock = 0;
-volatile boolean serClockRising = false;
-volatile boolean serClockFalling = false;
+volatile bool8_t lastRTCEnable = 0;
+volatile bool8_t lastSerClock = 0;
+volatile bool8_t serClockRising = false;
+volatile bool8_t serClockFalling = false;
 
 volatile byte serialState = SERIAL_DISABLED;
 volatile byte serialBitNum = 0;
@@ -360,7 +358,7 @@ void oflowInterrupt(void)
  */
 void handleRTCEnableInterrupt(void)
 {
-  boolean curRTCEnable = PINB&(1<<RTC_ENABLE_PIN);
+  bool8_t curRTCEnable = PINB&(1<<RTC_ENABLE_PIN);
   if (lastRTCEnable && !curRTCEnable){ // Simulates a falling interrupt
     serialState = RECEIVING_COMMAND;
   }
@@ -376,7 +374,7 @@ void handleRTCEnableInterrupt(void)
  */
 void handleSerClockInterrupt(void)
 {
-  boolean curSerClock = PINB&(1<<SERIAL_CLOCK_PIN);
+  bool8_t curSerClock = PINB&(1<<SERIAL_CLOCK_PIN);
   if (!lastSerClock && curSerClock) {
     serClockRising = true;
     serClockFalling = false;
@@ -389,44 +387,66 @@ void handleSerClockInterrupt(void)
   lastSerClock = curSerClock;
 }
 
-/*
- * For 20-byte PRAM equivalent commands, compute the actual PRAM
- * address by modifying the `address` variable in-place.  A status
- * code is returned for commands that need special processing:
- *
- * INVALID_CMD: Invalid command byte.
- * SECONDS_CMD: Special command: read seconds.
- * WRTEST_CMD: Special command: test write register.
- * WRPROT_CMD: Special command: write-protect register.
- * SUCCESS_ADDR: Successful address computation.
- */
-uint8_t decodePramCmd(boolean writeRequest)
+/* For 20-byte PRAM equivalent commands, execute the PRAM command.
+   Return `false` on invalid commands.  */
+bool8_t execTradPramCmd(bool8_t writeRequest)
 {
-  // Discard the first bit and the last two bits, it's not pertinent
-  // to address interpretation.
-  address = (address&~(1<<7))>>2;
-  if (address < 8) {
+  // Discard the first bit and the last two address bits, it's not
+  // pertinent to address interpretation.  Also, use a local,
+  // non-volatile variable to save code size.
+  byte lAddress = (address&~(1<<7))>>2;
+  if (writeRequest && writeProtect &&
+      lAddress != 13) // 13 == update write-protect register
+    return true; // nothing to be done
+  if (lAddress < 8) {
     // Little endian clock data byte
-    return SECONDS_CMD;
-  } else if (address < 12) {
-    // Group 2 register
-    address = (address&0x03) + group2Base;
-  } else if (address < 16) {
+    cli(); // Ensure that reads/writes are atomic.
     if (writeRequest) {
-      if (address == 12) // test write
-        return WRTEST_CMD;
-      if (address == 13) // write-protect
-        return WRPROT_CMD;
-      // Addresses 14 and 15 are used for the encoding of the first
-      // byte of an extended command.
+      lAddress = (lAddress&0x03)<<3;
+      seconds &= ~((unsigned long)0xff<<lAddress);
+      seconds |= (unsigned long)serialData<<lAddress;
+    } else {
+      lAddress = (lAddress&0x03)<<3;
+      serialData = (seconds>>lAddress)&0xff;
+      // Fall through to send data to host.
     }
-    return INVALID_CMD;
+    sei();
+  } else if (lAddress < 12) {
+    // Group 2 register
+    lAddress = (lAddress&0x03) + group2Base;
+    if (writeRequest)
+      pram[lAddress] = serialData;
+    else {
+      serialData = pram[lAddress];
+      // Fall through to send data to host.
+    }
+  } else if (lAddress < 16) {
+    if (writeRequest) {
+      if (lAddress == 12) // test write, do nothing
+        ;
+      else if (lAddress == 13) {
+        // Update the write-protect register.
+        writeProtect = ((serialData & 0x80)) ? 1 : 0;
+      }
+      else {
+        // Addresses 14 and 15 are used for the encoding of the first
+        // byte of an extended command.  Therefore, interpretation as
+        // a traditional PRAM command is invalid.
+      }
+    } else
+      return false; // invalid command
   } else {
     // Group 1 register
-    address = (address&0x0f) + group1Base;
+    lAddress = (lAddress&0x0f) + group1Base;
+    if (writeRequest)
+      pram[lAddress] = serialData;
+    else {
+      serialData = pram[lAddress];
+      // Fall through to send data to host.
+    }
   }
 
-  return SUCCESS_ADDR;
+  return true;
 }
 
 void loop(void)
@@ -447,7 +467,7 @@ void loop(void)
         serialBitNum >= 9) {
       clearState();
     } else */ if (serClockFalling) {
-      boolean writeRequest;
+      bool8_t writeRequest;
       switch(serialState) {
       case RECEIVING_COMMAND:
         shiftReadPB(address, 7 - serialBitNum, SERIAL_DATA_PIN);
@@ -475,25 +495,8 @@ void loop(void)
           serialBitNum = 0;
           break;
         } else {
-          boolean finished = false;
-          // Decode the command/address.
-          switch (decodePramCmd(false)) {
-          case SECONDS_CMD:
-            // Read little endian clock data byte.
-            cli(); // Ensure that reads are atomic.
-            address = (address&0x03)<<3;
-            serialData = (seconds>>address)&0xff;
-            sei();
-            break;
-          case SUCCESS_ADDR:
-            serialData = pram[address];
-            break;
-          case INVALID_CMD:
-          default:
-            finished = true;
-            break;
-          }
-          if (finished) {
+          // Execute the command.
+          if (!execTradPramCmd(false)) {
             clearState();
             break;
           }
@@ -512,32 +515,8 @@ void loop(void)
         if (serialBitNum <= 7)
           break;
 
-        // Decode the command/address.
-        switch (decodePramCmd(true)) {
-        case SECONDS_CMD:
-          if (!writeProtect) {
-            // Write little endian clock data byte.
-            cli(); // Ensure that writes are atomic.
-            address = (address&0x03)<<3;
-            seconds &= ~((unsigned long)0xff<<address);
-            seconds |= (unsigned long)serialData<<address;
-            sei();
-          }
-          break;
-        case WRPROT_CMD:
-          // Update the write-protect register.
-          writeProtect = ((serialData & 0x80)) ? 1 : 0;
-          break;
-        case SUCCESS_ADDR:
-          if (!writeProtect)
-            pram[address] = serialData;
-          break;
-        case WRTEST_CMD: // test write, do nothing
-        case INVALID_CMD:
-        default:
-          break;
-        }
-
+        // Execute the command.
+        execTradPramCmd(true);
         // Finished with the write command.
         clearState();
         break;
