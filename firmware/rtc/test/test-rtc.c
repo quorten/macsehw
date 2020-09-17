@@ -1045,7 +1045,8 @@ byte hostTradPramCmd(byte cmd, byte data)
   // Discard the first bit and the last two bits, it's not pertinent
   // to address interpretation.
   byte address = (cmd&~(1<<7))>>2;
-  if (writeRequest && writeProtect)
+  if (writeRequest && writeProtect &&
+      address != 13) // 13 == update write-protect register
     return 0; // invalid command
   if (address < 8) {
     // Little endian clock data byte

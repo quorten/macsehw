@@ -226,10 +226,10 @@ volatile byte serialData = 0;
 
 /* Number of seconds since midnight, January 1, 1904.  The serial
    register interface exposes this data as little endian.
-  
+
    TODO VERIFY: Clock is initialized to January 1st, 1984?  Or is this
    done by the ROM when the validity status is invalid?
-  
+
    TODO INVESTIGATE: Does `simavr` not initialize non-zero variables?
    Or is this a quirk with `avr-gcc`?  */
 volatile unsigned long seconds = 60UL * 60 * 24 * (365 * 4 + 1) * 20;
@@ -433,8 +433,6 @@ void loop(void)
 {
   if ((PINB&(1<<RTC_ENABLE_PIN))) {
     clearState();
-    set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
-    sleep_mode();
   } else {
     /* Normally we only perform an action on the falling edge of the
        serial clock.
@@ -619,11 +617,12 @@ void loop(void)
     // processed.
     serClockRising = false;
     serClockFalling = false;
-
-    // Go to sleep until the next serial clock rising or falling edge.
-    set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
-    sleep_mode();
   }
+
+  // Go to sleep until the next RTC enable or serial clock
+  // rising/falling edge.
+  set_sleep_mode(0); // Sleep mode 0 == default, timers still running.
+  sleep_mode();
 }
 
 /*
