@@ -34,6 +34,19 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
+/* Fuse bit programming.  */
+#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || \
+  defined(__AVR_ATtiny85__)
+FUSES = {
+  // Use 8 MHz internal clock, not default 1 MHz internal clock.
+  .low = (LFUSE_DEFAULT | ~FUSE_CKDIV8),
+  // Disable the external RESET pin since it is used for the 1-second
+  // interrupt output.
+  .high = (HFUSE_DEFAULT & FUSE_RSTDISBL),
+  .extended = EFUSE_DEFAULT,
+};
+#endif
+
 /********************************************************************/
 // Simplified Arduino.h definitions.
 typedef enum { false, true } bool; // Compatibility with C++.
