@@ -448,6 +448,8 @@ void lingpirq_cleanup(void)
 #include <time.h>
 
 #include "arduino_sdef.h"
+#include "rpi-gpio.h"
+#include "lin-gpirq.h"
 #include "simavr-support.h"
 */
 
@@ -475,7 +477,26 @@ uint8_t const *VIA = vBase;
 bool g_waitTimeUp = true;
 uint8_t g_timePoll = 0;
 
-#define viaBitRead(ptr, bit) (bitRead(*(ptr), (bit)))
+enum PhyPins { PHY_SEC1, PHY_CE, PHY_CLK, PHY_DATA };
+
+// Physical hardware test mode (via Raspberry Pi).
+bool8_t g_phyMode = false;
+
+// Emulated RTC VIA connections to GPIO pin mappings.
+uint8_t g_phyToGpio[4] = { 0, 0, 0, 0 };
+
+uint8_t viaBitRead(uint8_t *ptr, uint8_t bit)
+{
+  if (g_phyMode) {
+    switch (bit) {
+    case rtcData:
+      return rpi_gpio_get_pin(g_phyToGpio[PHY_DATA]);
+    default:
+      return 0; // unrecognized signals read as zero
+    }
+  } // else
+  return bitRead(*(ptr), (bit));
+}
 
 void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
 {
@@ -488,27 +509,42 @@ void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
     // Send the signal to the actual hardware.
     switch (bit) {
     case rtcEnb:
-      avr_raise_irq(bench_irqs + IRQ_CE, bitvalue & 1);
+      if (g_phyMode)
+        rpi_gpio_set_pin(g_phyToGpio[PHY_CE], bitvalue & 1);
+      else
+        avr_raise_irq(bench_irqs + IRQ_CE, bitvalue & 1);
       break;
     case rtcClk:
-      avr_raise_irq(bench_irqs + IRQ_CLK, bitvalue & 1);
+      if (g_phyMode)
+        rpi_gpio_set_pin(g_phyToGpio[PHY_CLK], bitvalue & 1);
+      else
+        avr_raise_irq(bench_irqs + IRQ_CLK, bitvalue & 1);
       break;
     case rtcData:
-      avr_raise_irq(bench_irqs + IRQ_DATA_IN, bitvalue & 1);
+      if (g_phyMode)
+        rpi_gpio_set_pin(g_phyToGpio[PHY_DATA], bitvalue & 1);
+      else
+        avr_raise_irq(bench_irqs + IRQ_DATA_IN, bitvalue & 1);
       break;
     default:
       break; // unrecognized signals do nothing
     }
   } else if (ptr == vBase + vDirB) {
-    // TODO FIXME:
-
-    // The main special handling we do here is to set to the
-    // corresponding buffer bit to the input value as soon as we
-    // change to an input type.  With the `simavr` setup, we simply
-    // set to default logic value 1 and we will get an IRQ if we
-    // should do otherwise.
-    if (bitvalue == DIR_IN)
-      bitWrite(vBase[vBufB], bit, 1);
+    if (g_phyMode) {
+      // We only support changing the direction of the data pin.
+      if (bit == rtcData) {
+        uint8_t fn = (bitvalue == DIR_IN) ? GPFN_INPUT : GPFN_OUTPUT;
+        rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], fn);
+      }
+    } else {
+      // The main special handling we do here is to set to the
+      // corresponding buffer bit to the input value as soon as we
+      // change to an input type.  With the `simavr` setup, we simply
+      // set to default logic value 1 and we will get an IRQ if we
+      // should do otherwise.
+      if (bitvalue == DIR_IN)
+        bitWrite(vBase[vBufB], bit, 1);
+    }
   } else
     return;
   // Update our register value.
@@ -527,41 +563,41 @@ void viaBitWrite(uint8_t *ptr, uint8_t bit, uint8_t bitvalue)
    silicon RTC.  */
 void waitQuarterCycle(void)
 {
-#ifdef RPI_DRIVER
-  struct timespec tv = { 0, 500000 };
-  struct timespec tvNext;
-  do {
-    if (clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &tvNext) == 0)
-      break;
-    tv.tv_nsec = tvNext.tv_nsec;
-  } while (tv.tv_nsec > 0);
-#else
-  // Unfortunately, if the AVR runs at 32.768 kHz, I've found from
-  // simulation that serial communications are only reliable at an
-  // abysmal 50 Hz serial clock speed.  Therefore, running at a higher
-  // core speed and using a phase-locked loop on the crystal clock
-  // frequency a must.
-  struct timespec tv, tvTarget;
-  // N.B. Over here we are using cycle timers mainly to prevent
-  // simulation waits stretching unbearably long.
-  g_timePoll = 16;
-  avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
-  clock_gettime(CLOCK_MONOTONIC, &tv);
-  tvTarget.tv_nsec = tv.tv_nsec + 500000;
-  tvTarget.tv_sec = tv.tv_sec;
-  if (tvTarget.tv_nsec >= 1000000000) {
-    tvTarget.tv_nsec -= 1000000000;
-    tvTarget.tv_sec++;
-  }
-  while (tv.tv_sec < tvTarget.tv_sec ||
-         (tv.tv_sec == tvTarget.tv_sec &&
-          tv.tv_nsec < tvTarget.tv_nsec)) {
-    if (!simAvrStep())
-      break;
+  if (g_phyMode) {
+    struct timespec tv = { 0, 500000 };
+    struct timespec tvNext;
+    do {
+      if (clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &tvNext) == 0)
+        break;
+      tv.tv_nsec = tvNext.tv_nsec;
+    } while (tv.tv_nsec > 0);
+  } else {
+    // Unfortunately, if the AVR runs at 32.768 kHz, I've found from
+    // simulation that serial communications are only reliable at an
+    // abysmal 50 Hz serial clock speed.  Therefore, running at a
+    // higher core speed and using a phase-locked loop on the crystal
+    // clock frequency a must.
+    struct timespec tv, tvTarget;
+    // N.B. Over here we are using cycle timers mainly to prevent
+    // simulation waits stretching unbearably long.
+    g_timePoll = 16;
+    avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
     clock_gettime(CLOCK_MONOTONIC, &tv);
+    tvTarget.tv_nsec = tv.tv_nsec + 500000;
+    tvTarget.tv_sec = tv.tv_sec;
+    if (tvTarget.tv_nsec >= 1000000000) {
+      tvTarget.tv_nsec -= 1000000000;
+      tvTarget.tv_sec++;
+    }
+    while (tv.tv_sec < tvTarget.tv_sec ||
+           (tv.tv_sec == tvTarget.tv_sec &&
+            tv.tv_nsec < tvTarget.tv_nsec)) {
+      if (!simAvrStep())
+        break;
+      clock_gettime(CLOCK_MONOTONIC, &tv);
+    }
+    g_timePoll = 0;
   }
-  g_timePoll = 0;
-#endif
 }
 
 void waitHalfCycle(void)
@@ -578,26 +614,55 @@ void waitCycle(void)
 
 void waitOneSec(void)
 {
-#ifdef RPI_DRIVER
-  sleep(1);
-#else
-  struct timespec tv, tvTarget;
-  // N.B. Over here we are using cycle timers mainly to prevent
-  // simulation waits stretching unbearably long.
-  g_timePoll = 16;
-  avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
-  clock_gettime(CLOCK_MONOTONIC, &tv);
-  tvTarget.tv_nsec = tv.tv_nsec;
-  tvTarget.tv_sec = tv.tv_sec + 1;
-  while (tv.tv_sec < tvTarget.tv_sec ||
-         (tv.tv_sec == tvTarget.tv_sec &&
-          tv.tv_nsec < tvTarget.tv_nsec)) {
-    if (!simAvrStep())
-      break;
+  if (g_phyMode) {
+    sleep(1);
+  } else {
+    struct timespec tv, tvTarget;
+    // N.B. Over here we are using cycle timers mainly to prevent
+    // simulation waits stretching unbearably long.
+    g_timePoll = 16;
+    avr_cycle_timer_register(avr, g_timePoll, notify_timeup, NULL);
     clock_gettime(CLOCK_MONOTONIC, &tv);
+    tvTarget.tv_nsec = tv.tv_nsec;
+    tvTarget.tv_sec = tv.tv_sec + 1;
+    while (tv.tv_sec < tvTarget.tv_sec ||
+           (tv.tv_sec == tvTarget.tv_sec &&
+            tv.tv_nsec < tvTarget.tv_nsec)) {
+      if (!simAvrStep())
+        break;
+      clock_gettime(CLOCK_MONOTONIC, &tv);
+    }
+    g_timePoll = 0;
   }
-  g_timePoll = 0;
-#endif
+}
+
+void viaInit(void)
+{
+  if (g_phyMode) {
+    // Setup GPIO pins.
+    rpi_gpio_set_fn(g_phyToGpio[PHY_SEC1], GPFN_INPUT);
+    rpi_gpio_set_pull(g_phyToGpio[PHY_SEC1], GPUL_UP);
+    rpi_gpio_set_fn(g_phyToGpio[PHY_CE], GPFN_OUTPUT);
+    rpi_gpio_set_fn(g_phyToGpio[PHY_CLK], GPFN_OUTPUT);
+    rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_OUTPUT);
+    // Setup GPIO IRQ for 1-second pin.
+    lingpirq_setup(g_phyToGpio[PHY_SEC1]);
+  }
+}
+
+void viaDestroy(void)
+{
+  if (g_phyMode) {
+    // Cleanup GPIO pins, change to all pull-up inputs.
+    rpi_gpio_set_fn(g_phyToGpio[PHY_CE], GPFN_INPUT);
+    rpi_gpio_set_pull(g_phyToGpio[PHY_CE], GPUL_UP);
+    rpi_gpio_set_fn(g_phyToGpio[PHY_CLK], GPFN_INPUT);
+    rpi_gpio_set_pull(g_phyToGpio[PHY_CLK], GPUL_UP);
+    rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_INPUT);
+    rpi_gpio_set_pull(g_phyToGpio[PHY_DATA], GPUL_UP);
+    // Cleanup GPIO IRQ for 1-second pin.
+    lingpirq_cleanup();
+  }
 }
 
 /********************************************************************/
@@ -1221,7 +1286,6 @@ bool8_t fileDumpAllXMem(const char *filename)
 /*
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
@@ -1672,12 +1736,11 @@ uint8_t execMultiCmdLine(char *lineBuf)
 }
 
 // Return false on exit with error, true on graceful exit.
-bool8_t cmdLoop(void)
+bool8_t cmdLoop(bool8_t notScripted)
 {
   uint8_t retVal = true;
   char lineBuf[512];
   char *parsePtr;
-  bool8_t notScripted = isatty(STDIN_FILENO);
 
   // Print the prompt character.
   if (notScripted) putchar('*');
@@ -2030,7 +2093,6 @@ void writehex(char *rch)
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <signal.h>
 
 #include "sim_avr.h"
 #include "avr_ioport.h"
@@ -2088,16 +2150,6 @@ void pin_change_notify(avr_irq_t *irq, uint32_t value, void *param)
     if (bitRead(vBase[vDirB], rtcData) == DIR_IN)
       bitWrite(vBase[vBufB], rtcData, !value);
   }
-}
-
-static void
-sig_int(int sign)
-{
-  printf("signal caught, simavr terminating\n");
-  if (avr)
-    avr_terminate(avr);
-  pramDestroy();
-  exit(0);
 }
 
 int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
@@ -2236,9 +2288,6 @@ int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
   }
 
   fputs( "\nSimulation launching:\n", stdout);
-
-  signal(SIGINT, sig_int);
-  signal(SIGTERM, sig_int);
 
   return 0;
 }
@@ -2853,14 +2902,35 @@ uint8_t getSuiteMode(void)
 
 /*
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 #include "arduino_sdef.h"
+#include "via-emu.h"
 #include "simavr-support.h"
 #include "cmdline.h"
 #include "auto-test-suite.h"
 */
+
+void mainCleanup(void)
+{
+  viaDestroy();
+  if (!g_phyMode) {
+    if (avr)
+      { avr_terminate(avr); avr = NULL; }
+  }
+  pramDestroy();
+}
+
+static void
+sig_int(int sign)
+{
+  printf("signal caught, terminating\n");
+  mainCleanup();
+  exit(0);
+}
 
 int main(int argc, char *argv[])
 {
@@ -2873,40 +2943,64 @@ int main(int argc, char *argv[])
     for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-h") == 0 ||
           strcmp(argv[i], "--help") == 0) {
-        printf("Usage: %s [-i] FIRMWARE_FILE\n"
-               "\n"
-               "    -i  Run interactive mode\n"
-               "\n", argv[0]);
+        printf(
+"Usage: %s [-i] [-r a,b,c,d] FIRMWARE_FILE\n"
+"\n"
+"    -i  Run interactive mode\n"
+"    -r  Physical hardware test mode (via Raspberry Pi).\n"
+"        Configure SEC1,CE*,CLK,DATA to the given BCM GPIO pin numbers.\n"
+"\n", argv[0]);
         return 0;
       } else if (strcmp(argv[i], "-i") == 0)
         interactMode = true;
-      else
+      else if (strcmp(argv[i], "-r") == 0) {
+        i++;
+        if (i >= argc) {
+          fprintf(stderr, "%s: Missing command line argument.\n", argv[0]);
+          return 1;
+        }
+        g_phyMode = true;
+        sscanf(argv[i], "%d,%d,%d,%d",
+               g_phyToGpio + PHY_SEC1, g_phyToGpio + PHY_CE,
+               g_phyToGpio + PHY_CLK, g_phyToGpio + PHY_DATA);
+        if (g_phyToGpio[PHY_SEC1] == 0 ||
+            g_phyToGpio[PHY_CE] == 0 ||
+            g_phyToGpio[PHY_CLK] == 0 ||
+            g_phyToGpio[PHY_DATA] == 0) {
+          fprintf(stderr, "%s: Invalid pin configuration.\n", argv[0]);
+          return 1;
+        }
+      } else
         firmwareName = argv[i];
     }
   }
+
+  signal(SIGINT, sig_int);
+  signal(SIGTERM, sig_int);
+
   pramInit();
-  retVal = setupSimAvr(argv[0], firmwareName, interactMode);
+  viaInit();
+  if (!g_phyMode)
+    retVal = setupSimAvr(argv[0], firmwareName, interactMode);
   if (retVal != 0)
     return retVal;
 
   if (interactMode) {
+    bool8_t notScripted = isatty(STDIN_FILENO);
     fputs("Launching interactive console.\n", stdout);
-    if (isatty(STDIN_FILENO))
+    if (notScripted)
       fputs("Type help for summary of commands.\n", stdout);
-    if (!cmdLoop()) {
-      avr_terminate(avr);
-      pramDestroy();
+    if (!cmdLoop(notScripted)) {
+      mainCleanup();
       return 1;
     }
-    avr_terminate(avr);
-    pramDestroy();
+    mainCleanup();
     return 0;
   }
 
   // Run automated test suite.
   fputs("Running automated test suite.\n", stdout);
   retVal = !autoTestSuite(false, true, true);
-  avr_terminate(avr);
-  pramDestroy();
+  mainCleanup();
   return retVal;
 }
