@@ -15,7 +15,7 @@
    viewBox="0 0 1905 952.50003"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="box-layout.svg">
   <defs
      id="defs2">
@@ -91,18 +91,18 @@
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.1767767"
-     inkscape:cx="3788.8484"
-     inkscape:cy="1801.8052"
+     inkscape:zoom="0.125"
+     inkscape:cx="3322.6168"
+     inkscape:cy="1605.6741"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer3"
      showgrid="false"
      units="in"
      inkscape:pagecheckerboard="false"
-     inkscape:window-width="1853"
-     inkscape:window-height="1025"
-     inkscape:window-x="67"
-     inkscape:window-y="27"
+     inkscape:window-width="1364"
+     inkscape:window-height="700"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:snap-nodes="false"
      inkscape:snap-global="true" />
@@ -114,17 +114,29 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="Void">
+    <rect
+       y="-2.0809968e-05"
+       x="0"
+       height="952.5"
+       width="1905"
+       id="rect4496"
+       style="display:inline;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+  </g>
   <g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Edge cuts and scores"
      style="display:inline">
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect10"
        width="485.03839"
        height="508"
@@ -136,9 +148,9 @@
        height="508"
        width="485.03839"
        id="rect12"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect14"
        width="383.43839"
        height="508"
@@ -150,9 +162,9 @@
        height="508"
        width="383.43839"
        id="rect16"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect18"
        width="8.0771999"
        height="508"
@@ -164,16 +176,16 @@
        height="508"
        width="8.0771999"
        id="rect20"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect22"
        width="8.0771999"
        height="508"
        x="919.02283"
        y="222.25003" />
     <path
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        d="m 1811.7311,222.25003 50.8,15.875 v 476.25 l -50.8,15.875 z"
        id="rect24"
        inkscape:connector-curvature="0"
@@ -184,16 +196,16 @@
        height="508"
        width="8.0771999"
        id="rect26"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
        y="730.25"
        x="42.46888"
        height="195.73241"
        width="485.03839"
        id="rect28"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect30"
        width="485.03839"
        height="195.73241"
@@ -205,16 +217,16 @@
        height="195.73241"
        width="383.43839"
        id="rect32"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect34"
        width="383.43839"
        height="195.73241"
        x="1420.2156"
        y="730.25" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect38"
        width="485.03839"
        height="195.73241"
@@ -226,9 +238,9 @@
        height="195.73241"
        width="485.03839"
        id="rect40"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <rect
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect42"
        width="383.43839"
        height="195.73241"
@@ -240,7 +252,7 @@
        height="195.73241"
        width="383.43839"
        id="rect44"
-       style="fill:#c9b07c;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.35599998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
   </g>
   <g
      inkscape:label="Photo reference"
@@ -248,71 +260,71 @@
      id="layer1"
      style="display:none">
     <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4197.JPG"
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4197.JPG"
        xlink:href="photos/DSC_4197.JPG"
-       clip-path="url(#clipPath92)"
-       transform="matrix(-0.01521172,-1.9950783,1.9950783,-0.01521172,-189.26521,-535.40541)"
-       width="417.23734"
-       height="276.35199"
-       preserveAspectRatio="none"
-       id="image919"
+       y="90.121643"
        x="-715.10675"
-       y="90.121643" />
+       id="image919"
+       preserveAspectRatio="none"
+       height="276.35199"
+       width="417.23734"
+       transform="matrix(-0.01521172,-1.9950783,1.9950783,-0.01521172,-189.26521,-535.40541)"
+       clip-path="url(#clipPath92)" />
     <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4198.JPG"
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4198.JPG"
        xlink:href="photos/DSC_4198.JPG"
-       clip-path="url(#clipPath98)"
-       transform="matrix(-0.00569982,-1.9313204,1.9313204,-0.00569982,262.21458,-441.16543)"
-       width="417.23734"
-       height="276.35199"
-       preserveAspectRatio="none"
-       id="image930"
+       y="558.81207"
        x="-687.89246"
-       y="558.81207" />
+       id="image930"
+       preserveAspectRatio="none"
+       height="276.35199"
+       width="417.23734"
+       transform="matrix(-0.00569982,-1.9313204,1.9313204,-0.00569982,262.21458,-441.16543)"
+       clip-path="url(#clipPath98)" />
     <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4199.JPG"
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4199.JPG"
        xlink:href="photos/DSC_4199.JPG"
-       clip-path="url(#clipPath110)"
-       transform="matrix(-0.02270158,-1.9840478,1.9840478,-0.02270158,-1191.606,-410.04749)"
-       width="417.23734"
-       height="276.35199"
-       preserveAspectRatio="none"
-       id="image941"
+       y="1041.1096"
        x="-699.98773"
-       y="1041.1096" />
-    <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4200.JPG"
-       xlink:href="photos/DSC_4200.JPG"
-       clip-path="url(#clipPath1097)"
-       transform="matrix(-0.09027511,-1.8030845,1.8030845,-0.09027511,-547.48846,-276.39587)"
-       width="417.23734"
+       id="image941"
+       preserveAspectRatio="none"
        height="276.35199"
-       preserveAspectRatio="none"
-       id="image46"
+       width="417.23734"
+       transform="matrix(-0.02270158,-1.9840478,1.9840478,-0.02270158,-1191.606,-410.04749)"
+       clip-path="url(#clipPath110)" />
+    <image
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4200.JPG"
+       xlink:href="photos/DSC_4200.JPG"
+       y="542.18115"
        x="-684.86865"
-       y="542.18115" />
-    <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4202.JPG"
-       xlink:href="photos/DSC_4202.JPG"
-       y="741.63416"
-       x="-29.025724"
-       id="image1110"
+       id="image46"
        preserveAspectRatio="none"
-       height="525.2962"
-       width="793.0943"
+       height="276.35199"
+       width="417.23734"
+       transform="matrix(-0.09027511,-1.8030845,1.8030845,-0.09027511,-547.48846,-276.39587)"
+       clip-path="url(#clipPath1097)" />
+    <image
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4202.JPG"
+       xlink:href="photos/DSC_4202.JPG"
+       clip-path="url(#clipPath1136)"
        transform="rotate(176.22419,746.98499,979.04581)"
-       clip-path="url(#clipPath1136)" />
-    <image
-       sodipodi:absref="/home/members/src/macse-box/photos/DSC_4202.JPG"
-       xlink:href="photos/DSC_4202.JPG"
        width="793.0943"
        height="525.2962"
        preserveAspectRatio="none"
-       id="image1132"
-       x="840.09192"
-       y="798.99237"
+       id="image1110"
+       x="-29.025724"
+       y="741.63416" />
+    <image
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/photos/DSC_4202.JPG"
+       xlink:href="photos/DSC_4202.JPG"
+       transform="rotate(-3.77581,-1242.8863,14767.42)"
        clip-path="url(#clipPath1140)"
-       transform="rotate(-3.77581,-1242.8863,14767.42)" />
+       y="798.99237"
+       x="840.09192"
+       id="image1132"
+       preserveAspectRatio="none"
+       height="525.2962"
+       width="793.0943" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -6559,23 +6571,23 @@
          y="685.9126"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Apple Garamond';-inkscape-font-specification:'Apple Garamond, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.27673057">.</tspan></text>
     <image
-       sodipodi:absref="/home/members/src/macse-box/mac_halftone.png"
-       xlink:href="mac_halftone.png"
-       y="410.31281"
-       x="1179.4458"
-       id="image1096"
-       preserveAspectRatio="none"
-       height="230.62094"
-       width="195.37321" />
-    <image
-       sodipodi:absref="/home/members/src/macse-box/mac_halftone.png"
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/mac_halftone.png"
        xlink:href="mac_halftone.png"
        width="195.37321"
        height="230.62094"
        preserveAspectRatio="none"
-       id="image1099"
+       id="image1096"
+       x="1179.4458"
+       y="410.31281" />
+    <image
+       sodipodi:absref="/home/andrew/Downloads/mac/macsehw/hardware/packaging/mac_halftone.png"
+       xlink:href="mac_halftone.png"
+       y="407.69357"
        x="292.12799"
-       y="407.69357" />
+       id="image1099"
+       preserveAspectRatio="none"
+       height="230.62094"
+       width="195.37321" />
     <path
        style="fill:none;stroke:#c00000;stroke-width:8.9958334;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 1147.8948,801.29061 54.5041,66.01354"
