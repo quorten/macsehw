@@ -7,4 +7,7 @@
 # original photos, the current image was just hacked together via some
 # GUI photo editing.
 
+# NOTE: Processing from original photo:
+# Crop to: upper left corner 1737,2087 size 1164x1374
+
 curl -L -o mac_halftone.png 'https://drive.google.com/uc?export=download&id=1YTshjBSWvq5P5nKhFLGIlJpkzA0Tcunp'
