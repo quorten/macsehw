@@ -318,8 +318,8 @@ rpi_gpio_unwatch_async_fe (unsigned char idx)
 
    Only bothers with the Linux `sysfs` filesystem manipulation as much
    as it is required to get interrupts into user-space.  Use
-   memory-mapped BCM2835 registers in your own code to configure the
-   rest for Raspberry Pi.
+   memory-mapped BCM2835 registers in your own code as much as
+   possible for the rest on Raspberry Pi.
 
    Only a single GPIO pin is supported for interrupt wait-and-notify.
    To support more than one thread, though, we simply use a single
@@ -352,9 +352,11 @@ void sec1Isr(void);
 
 void *lingpirq_poll_thread(void *thread_arg)
 {
+  int old_type;
   struct epoll_event events;
   char buf;
 
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_type);
   g_thread_running = true;
   while (g_thread_running) {
     int result = epoll_wait(epfd_thread, &events, 1, -1);
@@ -379,19 +381,32 @@ void *lingpirq_poll_thread(void *thread_arg)
   pthread_exit((void*)0);
 }
 
-bool8_t lingpirq_setup(int gpio_num)
+// If `falling_edge` is `false`, then use the rising edge instead.
+bool8_t lingpirq_setup(int gpio_num, bool8_t falling_edge)
 {
   struct epoll_event ev;
 
   char cmd[64];
   char filename[64];
   g_gpio_num = gpio_num;
+  g_gpio_fd = -1;
   epfd_thread = -1;
   snprintf(cmd, sizeof(cmd), "echo %d >/sys/class/gpio/export", g_gpio_num);
   if (system(cmd) != 0)
     return false; /* error */
-  snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d", g_gpio_num);
+  // "direction" is one of the following: "out", "in"
+  // "edge" is one of the following: "none", "rising", "falling", "both"
+  snprintf(cmd, sizeof(cmd), "echo %s >/sys/class/gpio/gpio%d/direction",
+           "in", g_gpio_num);
+  if (system(cmd) != 0)
+    goto cleanup_fail; /* error */
+  snprintf(cmd, sizeof(cmd), "echo %s >/sys/class/gpio/gpio%d/edge",
+           (falling_edge) ? "falling" : "rising", g_gpio_num);
+  if (system(cmd) != 0)
+    goto cleanup_fail; /* error */
 
+  snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/value",
+           g_gpio_num);
   g_gpio_fd = open(filename, O_RDONLY | O_NONBLOCK);
   if (g_gpio_fd < 0)
     goto cleanup_fail; /* error */
@@ -421,8 +436,12 @@ bool8_t lingpirq_setup(int gpio_num)
 
 void lingpirq_cleanup(void)
 {
+  void *thread_retval;
   struct epoll_event ev;
   char cmd[64];
+  pthread_cancel(g_epoll_thread);
+  pthread_join(g_epoll_thread, &thread_retval);
+  g_thread_running = false;
   ev.events = EPOLLIN | EPOLLET | EPOLLPRI;
   ev.data.fd = g_gpio_fd;
   close(g_gpio_fd);
@@ -436,14 +455,6 @@ void lingpirq_cleanup(void)
 
 /********************************************************************/
 /* VIA emulation module */
-
-/* TODO: Program support for two "drivers" as follows:
-
-   * Raspberry Pi GPIO pin communications driver
-
-   * simavr IRQ pin communications driver
-
- */
 
 /*
 #include <stdlib.h>
@@ -638,19 +649,22 @@ void waitOneSec(void)
   }
 }
 
-void viaInit(void)
+bool8_t viaInit(void)
 {
   if (g_phyMode) {
     // Setup GPIO pins.
-    rpi_gpio_set_fn(g_phyToGpio[PHY_SEC1], GPFN_INPUT);
-    rpi_gpio_set_pull(g_phyToGpio[PHY_SEC1], GPUL_UP);
+    if (!rpi_gpio_init())
+      return false;
     rpi_gpio_set_fn(g_phyToGpio[PHY_CE], GPFN_OUTPUT);
     rpi_gpio_set_fn(g_phyToGpio[PHY_CLK], GPFN_OUTPUT);
     rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_OUTPUT);
     // Setup GPIO IRQ for 1-second pin.
-    rpi_gpio_watch_re(g_phyToGpio[PHY_SEC1]);
-    lingpirq_setup(g_phyToGpio[PHY_SEC1]);
+    if (!lingpirq_setup(g_phyToGpio[PHY_SEC1], false))
+      return false;
+    // Configure pull up/down here since `sysfs` can't do it.  (?)
+    rpi_gpio_set_pull(g_phyToGpio[PHY_SEC1], GPUL_UP);
   }
+  return true;
 }
 
 void viaDestroy(void)
@@ -664,7 +678,6 @@ void viaDestroy(void)
     rpi_gpio_set_fn(g_phyToGpio[PHY_DATA], GPFN_INPUT);
     rpi_gpio_set_pull(g_phyToGpio[PHY_DATA], GPUL_UP);
     // Cleanup GPIO IRQ for 1-second pin.
-    rpi_gpio_unwatch_re(g_phyToGpio[PHY_SEC1]);
     lingpirq_cleanup();
   }
 }
@@ -2997,7 +3010,11 @@ int main(int argc, char *argv[])
   signal(SIGTERM, sig_int);
 
   pramInit();
-  viaInit();
+  if (!viaInit()) {
+    fprintf(stderr, "%s: Failed to initialize VIA emulation.\n", argv[0]);
+    fprintf(stderr, "%s: Check for driver GPIO reservations.\n", argv[0]);
+    return 1;
+  }
   if (!g_phyMode)
     retVal = setupSimAvr(argv[0], firmwareName, interactMode);
   if (retVal != 0)
