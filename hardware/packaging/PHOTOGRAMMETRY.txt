@@ -1,0 +1,19 @@
+0.51 ~= 19 inches
+0.39 => 15 inches
+0.19 => 7 inches
+
+Camera height:
+
+1.56 => 58 inches => 5 feet, height = 6 feet
+
+Nikon D7000, Nikon DX format sensor size (i.e. APS-C format).  The
+EXIF data claims there was a 50mm prime lens (>>DATA<<) attached.
+HOWEVER, because we're not at infinity focus, the close focus effect
+approximately halves the field of view.  Otherwise I can't get the
+unproject perspective to work out correctly from the photos for the
+foam blocks.  That calculates to a horizontal field of view of 14
+degrees, and using the box dimensions to scale the proportions, the
+lens aperture was about 5 feet from the ground, which means that you
+must be about 6 feet tall standing up straight.  That all sounds like
+sane values.
+
