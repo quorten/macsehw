@@ -10,10 +10,105 @@ a huge number of pins, its purpose can be summarized as follows.
   generate the 8 MHz, 3.7 MHz, and 2 MHz clock signals as output.
 
 * Provide a single address bus interface to ROM, RAM, and I/O devices,
-  including simple digital I/O pins.
+  including simple digital I/O pins.  Namely, for the ROM, RAM, SCC,
+  VIA, and IWM, it uses a simple method of checking which of the upper
+  four address lines is set and then driving the corresponding chip
+  select pins.
+
+    * 0 (0x000000-0x3fffff): Select RAM.
+    * 1 (0x400000-0x7fffff): Select ROM, SCSI, or boot-time RAM overlay.
+    * 2 (0x800000-0xbfffff): Select SCC.
+    * 3 (0xc00000-0xffffff): Select IWM or VIA.
+
+  In particular, the zones are further subdivided as follows,
+  according to MESS/MAME source code:
+
+    * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
+    * 0x400000 - 0x4fffff: ROM
+    * 0x580000 - 0x5fffff: 5380 NCR/Symbios SCSI peripherals chip
+    * 0x600000 - 0x6fffff: RAM, boot-time overlay only
+    * 0x800000 - 0x9fffff: Zilog 8530 SCC (Serial Control Chip) Read
+    * 0xa00000 - 0xbfffff: Zilog 8530 SCC (Serial Control Chip) Write
+    * 0xc00000 - 0xdfffff: IWM (Integrated Woz Machine; floppy)
+    * 0xe80000 - 0xefffff: Rockwell 6522 VIA
+    * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
+    * 0xfffff0 - 0xffffff: Auto Vector
+
+* Control the RAM and ROM switches to expose the ROM overlay at
+  0x000000 and RAM at 0x600000 at startup.
+
+* Set the ROM/RAM control signals depending on the particular address
+  requested, i.e. `*EN245`, `*ROMEN`, `*RAS`, `*CAS0L`, `*CAS0H`,
+  `*CAS1L`, `*CAS1H`, `RAM R/*W`.  `*PMCYC` is apparently used to
+  totally disable DRAM row and column access strobes only during
+  startup.  The F257 chips are used to select separate address
+  portions for the DRAM row and column access strobes.  The LS245
+  chips are used to disable DRAM access during ROM access.
+
+  DRAM is accessed by sending the row access strobe first, the column
+  access strobe second.
+
+  Also, note that the address multiplexing is configured as follows:
+
+  Row access strobe: A1, A11, A12, A13, A14, A15, A16, RA7*, A18, RA9*.
+  Column access strobe: A2, A3, A4, A5, A6, A7, A8, RA7*, A10, RA9*.
+
+  RA7 and RA9 are controlled directly by the BBU rather than being
+  wired through the F257 address multiplexers.  Now, the devil is in
+  the details here because the exact control mechanism depends on how
+  much RAM is installed.
+
+  If only 64K RAM SIMMs are installed (which is an unsupported
+  configuration), then RA7 is either A10 (row) or A9 (column).  If
+  there are two rows of DRAM SIMMs, A17 is used to determine which one
+  to use.  It could be possible that one of the unused, unlabeled BBU
+  pins controls this setting.  With the minimum configuration of one
+  row of DRAM SIMMs, this means you can configure a Macintosh SE with
+  only 128K of RAM.  Hilarious!
+
+  If only 256K RAM SIMMs are installed, then RA7 is either A17 (row)
+  or A9 (column).  RA9 is not used.  If there are two rows of DRAM
+  SIMMs, A19 is used to determine which one to use.
+
+  If 1MB RAM SIMMs are installed, then RA7 is either A17 (row) or A9
+  (column).  RA9 is either A20 (row) or A19 (column).  If there are
+  two rows of DRAM SIMMs, A21 is used to determine which one to use.
+
+  Since RAM accesses are always on even bytes in 16-bit quantities, A0
+  is implied to be zero and therefore also is not available on the
+  CPU.
+
+* So, wow.  Here's a list of all possible Macintosh SE RAM
+  configurations.
+
+  128K (double undocumented), 256K (double undocumented), 512K
+  (undocumented), 1 MB, 2 MB, 4 MB.
+
+* Refresh the DRAM by periodically reading some arbitrary memory from
+  every available row.  Unlike the Apple II, the contiguous
+  organization of the screen, sound, and PWM disk speed buffers does
+  not allow for these periodic functions to double as automatic DRAM
+  refresh.  How does this need play together with the PDS card's
+  ability to request priority access over `DTACK`?  Maybe the refresh
+  circuitry still continues to function, but without driving DTACK for
+  the duration that the PDS card requests driving the signal.
+
+  However, one interesting trick is that the address multiplexers are
+  configured to access alternating DRAM rows when reading consecutive
+  addresses rather than all coming from a single DRAM row.  I am not
+  sure of the motivation behind this, but it seems like it could have
+  been extended so that reading consecutive memory addresses would
+  provide automatic DRAM memory refresh, thus allowing the video
+  circuitry to double in this role without providing the drawbacks of
+  nonlinear video memory to software.
 
 * Scan the CRT by driving the primary digital control signals
-  (`*VSYNC`, `*HSYNC`, `VIDOUT`).
+  (`*VSYNC`, `*HSYNC`, `VIDOUT`).  Read directly from RAM buffers as
+  required, and use `*DTACK` to prevent the CPU from accessing RAM at
+  the same time.
+
+* Generate the PWM signals for sound output and disk drive speed
+  control.  Read directly from RAM buffers as required.
 
 There might be additional processing functions it may provide as a
 convenience between the CPU and the various other hardware chips, but
@@ -44,7 +139,7 @@ only simple, single-pin interfaces.
 ## More explanation on pin functions
 
 * `RA0` - `RA9`: Address-multiplexed pins intended to connect directly
-  to the address lines on the RAM SIMMs.
+  to the address lines on the RAM SIMMs, outputs.
 
 * `RA9` is only controlled when the `MBRAM` input is TRUE, i.e. +5V.
   This indicates that 1 MB RAM SIMMs are being used.  Otherwise, it is
@@ -53,7 +148,8 @@ only simple, single-pin interfaces.
 
 * When `ROW2` input is TRUE, i.e. +5V, it indicates that both RAM SIMM
   rows are in use.  Otherwise, only the first row of RAM SIMM is used
-  and high addresses are marked as bus errors.
+  and high addresses are marked as bus errors.  And, `CAS1L` and
+  `CAS1H` are not driven.
 
 * If both `MBRAM` and `ROW2` are TRUE, i.e. +5V, it is also possible
   for the BBU to detect a 2.5 MB RAM configuration and adjust bus
@@ -62,7 +158,8 @@ only simple, single-pin interfaces.
 * `RDO0` - `RDO15` are bidirectional data signals, they are the
   primary means by which single-pin I/O devices and the like are
   mapped into the address space that can be directly accessed by the
-  CPU, in conjunction with the address inputs.
+  CPU, in conjunction with the address inputs.  Namely, the BBU reads
+  and writes to RAM, and the CPU accesses that RAM on its own time.
 
 * I do not know if the C8M and C3.7M clock signals are inputs or
   outputs.  The master clock crystal is C16M, 16 MHz, generated by the
@@ -81,10 +178,11 @@ only simple, single-pin interfaces.
 * All peripheral/device chip select/enable signals are output signals.
 
 * MC68000 output signals directly connected to the BBU are BBU input
-  signals.
+  signals.  Namely: `*LDS`, `*UDS`, `R/*W`, `*AS`.
 
 * Output signals that connect to MC68000 inputs: `*DTACK`, `*BERR`,
-  `*IPL0`, `*IPL1`, `*IPL2`, `*VPA`.
+  `*IPL0`, `*IPL1`, `*IPL2`, `*VPA`.  Or are the interrupt signals BBU
+  inputs?
 
 * Is `*RES` an input only?  I would assume so, assuming there is
   another, dedicated circuit to control hard board resets.  Note that
@@ -121,13 +219,11 @@ Peripheral device signals, input or output?
   as "reserved" in the PDS slot documentation.
 
 * Output signals: `*SCCRD`, `*PWM`?, `*DACK`, `SND`,
-  `VIDPG2`, `*VSYNC`, `*HSYNC`, `VIDOUT`.
+  `*VSYNC`, `*HSYNC`, `VIDOUT`.
 
 * Output SELECT signals: `IWM`, `*SCCEN`. `VIA.CS1`.
 
-* Output RESET signals: `SNDRES`.
-
-* Input signals: `SCSIDRQ`, `VIAIRQ`.
+* Input signals: `VIDPG2`, `SNDRES`, `SCSIDRQ`, `VIAIRQ`.
 
 ----------
 
