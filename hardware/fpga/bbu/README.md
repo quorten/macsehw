@@ -9,6 +9,14 @@ a huge number of pins, its purpose can be summarized as follows.
 * Take the master 16 MHz clock as input and divided it down to
   generate the 8 MHz, 3.7 MHz, and 2 MHz clock signals as output.
 
+  Note that these are the specific frequencies used: 15.667200 MHz,
+  7.8336 MHz, 3.672 MHz, and 1.9584 MHz.
+
+  Also, note that this is the routing of the source 16 MHz clock
+  signal.  (1) 16 MHz master clock crystal -> (2) GLU chip, logically
+  ANDs master clock with GLU `*OE` to disable whole system clock under
+  certain circumstances), (3) BBU chip.
+
 * Provide a single address bus interface to ROM, RAM, and I/O devices,
   including simple digital I/O pins.  Namely, for the ROM, RAM, SCC,
   VIA, and IWM, it uses a simple method of checking which of the upper
@@ -33,6 +41,12 @@ a huge number of pins, its purpose can be summarized as follows.
     * 0xe80000 - 0xefffff: Rockwell 6522 VIA
     * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
     * 0xfffff0 - 0xffffff: Auto Vector
+
+  Note that all of these address ranges specified can be handled by
+  only checking the upper 5 bits of the address (A19-A23), which route
+  directly into the BBU from the main address bus.  Well, except for
+  the last one, but our BBU doens't need to do any specially handling
+  for the sake of that zone.
 
 * Control the RAM and ROM switches to expose the ROM overlay at
   0x000000 and RAM at 0x600000 at startup.
@@ -102,6 +116,9 @@ a huge number of pins, its purpose can be summarized as follows.
   circuitry to double in this role without providing the drawbacks of
   nonlinear video memory to software.
 
+  Unfortunately, this scheme also complicates reusing the same DRAM
+  row for performance improvements.
+
 * Scan the CRT by driving the primary digital control signals
   (`*VSYNC`, `*HSYNC`, `VIDOUT`).  Read directly from RAM buffers as
   required, and use `*DTACK` to prevent the CPU from accessing RAM at
@@ -109,6 +126,16 @@ a huge number of pins, its purpose can be summarized as follows.
 
 * Generate the PWM signals for sound output and disk drive speed
   control.  Read directly from RAM buffers as required.
+
+* Handle SCSI DMA transfers, if the mode is enabled by the ROM.
+  However, as I understand it, the Macintosh SE ROM does not actually
+  support SCSI DMA transfer, even though the hardware is capable of
+  supporting it.
+
+* Please note: For pin numbering, use this datasheet for reference
+  with the schematic and the physical board layout.
+
+  20201018/http://www.assmann-wsw.com/fileadmin/datasheets/ASS_0981_CO.pdf
 
 There might be additional processing functions it may provide as a
 convenience between the CPU and the various other hardware chips, but
@@ -190,6 +217,9 @@ only simple, single-pin interfaces.
   So, if the MC68000 CPU executes a `RESET` instruction, that won't
   just reset all peripheral devices, but it will also reset the CPU
   itself.
+
+  Note that the BBU needs a RESET input pin for its own sake since it
+  includes sequential logic to scan the CRT and sound buffers.
 
 * I'm assuming `*PMCYC` is an output signal?  It only connects to the
   PDS slot and the F257 chips.
