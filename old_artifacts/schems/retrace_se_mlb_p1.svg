@@ -15,7 +15,7 @@
    viewBox="0 0 431.8 279.4"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="0.47 r22583"
    sodipodi:docname="retrace_se_mlb_p1.svg">
   <defs
      id="defs2">
@@ -60,17 +60,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
-     inkscape:cx="964.40257"
-     inkscape:cy="791.37357"
+     inkscape:cx="557.65536"
+     inkscape:cy="504.99582"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      units="in"
-     inkscape:window-width="1680"
-     inkscape:window-height="986"
+     inkscape:window-width="1268"
+     inkscape:window-height="768"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1"
+     inkscape:window-maximized="0"
      inkscape:snap-global="false" />
   <metadata
      id="metadata5">
@@ -91,14 +91,14 @@
      sodipodi:insensitive="true"
      style="display:none">
     <image
-       sodipodi:absref="/home/members/src/macsehw/old_artifacts/schems/se_mlb_p1_proc.png"
+       sodipodi:absref="/home/andrew/XG/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       width="386.15598"
-       height="296.18311"
-       preserveAspectRatio="none"
-       id="image18"
+       y="-1.2478054"
        x="0.26458079"
-       y="-1.2478054" />
+       id="image18"
+       preserveAspectRatio="none"
+       height="296.18311"
+       width="386.15598" />
   </g>
   <g
      inkscape:label="Layer 1"
@@ -2995,15 +2995,14 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="292.77591"
        y="64.910294"
        id="text1029"><tspan
          sodipodi:role="line"
          id="tspan1027"
          x="292.77591"
-         y="64.910294"
-         style="stroke-width:0.3562324">IDW</tspan></text>
+         y="64.910294">IOW</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 292.5978,63.529893 h 2.89438"
@@ -6630,92 +6629,84 @@
          style="stroke-width:0.3562324">VCC</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="156.11185"
        y="249.58679"
        id="text1214"><tspan
          sodipodi:role="line"
          id="tspan1212"
          x="156.11185"
-         y="249.58679"
-         style="stroke-width:0.3562324">RDO8</tspan></text>
+         y="249.58679">RDQ8</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="156.14333"
        y="247.35123"
        id="text1218"><tspan
          sodipodi:role="line"
          id="tspan1216"
          x="156.14333"
-         y="247.35123"
-         style="stroke-width:0.3562324">RDO9</tspan></text>
+         y="247.35123">RDQ9</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.92293"
        y="245.24159"
        id="text1222"><tspan
          sodipodi:role="line"
          id="tspan1220"
          x="155.92293"
-         y="245.24159"
-         style="stroke-width:0.3562324">RDO10</tspan></text>
+         y="245.24159">RDQ10</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.79698"
        y="243.03752"
        id="text1226"><tspan
          sodipodi:role="line"
          id="tspan1224"
          x="155.79698"
-         y="243.03752"
-         style="stroke-width:0.3562324">RDO11</tspan></text>
+         y="243.03752">RDQ11</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.79698"
        y="240.67603"
        id="text1230"><tspan
          sodipodi:role="line"
          id="tspan1228"
          x="155.79698"
-         y="240.67603"
-         style="stroke-width:0.3562324">RDO12</tspan></text>
+         y="240.67603">RDQ12</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.48212"
        y="238.72386"
        id="text1234"><tspan
          sodipodi:role="line"
          id="tspan1232"
          x="155.48212"
-         y="238.72386"
-         style="stroke-width:0.3562324">RDO13</tspan></text>
+         y="238.72386">RDQ13</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.51361"
        y="236.4568"
        id="text1238"><tspan
          sodipodi:role="line"
          id="tspan1236"
          x="155.51361"
-         y="236.4568"
-         style="stroke-width:0.3562324">RDO14</tspan></text>
+         y="236.4568">RDQ14</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.5136"
        y="234.12677"
        id="text1242"><tspan
          sodipodi:role="line"
          id="tspan1240"
          x="155.5136"
-         y="234.12677"
-         style="stroke-width:0.3562324">RDO15</tspan></text>
+         y="234.12677">RDQ15</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -7428,92 +7419,84 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.58192"
        y="197.51781"
        id="text1360"><tspan
          sodipodi:role="line"
          id="tspan1358"
          x="155.58192"
-         y="197.51781"
-         style="stroke-width:0.3562324">RDO0</tspan></text>
+         y="197.51781">RDQ0</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.76004"
        y="195.2023"
        id="text1364"><tspan
          sodipodi:role="line"
          id="tspan1362"
          x="155.76004"
-         y="195.2023"
-         style="stroke-width:0.3562324">RDO1</tspan></text>
+         y="195.2023">RDQ1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.58192"
        y="192.84225"
        id="text1368"><tspan
          sodipodi:role="line"
          id="tspan1366"
          x="155.58192"
-         y="192.84225"
-         style="stroke-width:0.3562324">RDO2</tspan></text>
+         y="192.84225">RDQ2</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.84909"
        y="190.88298"
        id="text1372"><tspan
          sodipodi:role="line"
          id="tspan1370"
          x="155.84909"
-         y="190.88298"
-         style="stroke-width:0.3562324">RDO3</tspan></text>
+         y="190.88298">RDQ3</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.67097"
        y="188.65651"
        id="text1376"><tspan
          sodipodi:role="line"
          id="tspan1374"
          x="155.67097"
-         y="188.65651"
-         style="stroke-width:0.3562324">RDO4</tspan></text>
+         y="188.65651">RDQ4</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.89363"
        y="186.56364"
        id="text1380"><tspan
          sodipodi:role="line"
          id="tspan1378"
          x="155.89363"
-         y="186.56364"
-         style="stroke-width:0.3562324">RDO5</tspan></text>
+         y="186.56364">RDQ5</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="156.07175"
        y="184.47081"
        id="text1384"><tspan
          sodipodi:role="line"
          id="tspan1382"
          x="156.07175"
-         y="184.47081"
-         style="stroke-width:0.3562324">RDO6</tspan></text>
+         y="184.47081">RDQ6</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="155.80457"
        y="182.06619"
        id="text1388"><tspan
          sodipodi:role="line"
          id="tspan1386"
          x="155.80457"
-         y="182.06619"
-         style="stroke-width:0.3562324">RDO7</tspan></text>
+         y="182.06619">RDQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -12675,92 +12658,84 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.2356"
        y="135.63609"
        id="text2403"><tspan
          sodipodi:role="line"
          id="tspan2401"
          x="110.2356"
-         y="135.63609"
-         style="stroke-width:0.3562324">RDO15</tspan></text>
+         y="135.63609">RDQ15</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.33005"
        y="133.43201"
        id="text2407"><tspan
          sodipodi:role="line"
          id="tspan2405"
          x="110.33005"
-         y="133.43201"
-         style="stroke-width:0.3562324">RDO14</tspan></text>
+         y="133.43201">RDQ14</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.33005"
        y="131.13348"
        id="text2411"><tspan
          sodipodi:role="line"
          id="tspan2409"
          x="110.33005"
-         y="131.13348"
-         style="stroke-width:0.3562324">RDO13</tspan></text>
+         y="131.13348">RDQ13</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.10963"
        y="129.02386"
        id="text2415"><tspan
          sodipodi:role="line"
          id="tspan2413"
          x="110.10963"
-         y="129.02386"
-         style="stroke-width:0.3562324">RDO12</tspan></text>
+         y="129.02386">RDQ12</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.10963"
        y="126.94572"
        id="text2419"><tspan
          sodipodi:role="line"
          id="tspan2417"
          x="110.10963"
-         y="126.94572"
-         style="stroke-width:0.3562324">RDO11</tspan></text>
+         y="126.94572">RDQ11</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.10963"
        y="124.67867"
        id="text2423"><tspan
          sodipodi:role="line"
          id="tspan2421"
          x="110.10963"
-         y="124.67867"
-         style="stroke-width:0.3562324">RDO10</tspan></text>
+         y="124.67867">RDQ10</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="110.10963"
        y="122.53757"
        id="text2427"><tspan
          sodipodi:role="line"
          id="tspan2425"
          x="110.10963"
-         y="122.53757"
-         style="stroke-width:0.3562324">RDO9</tspan></text>
+         y="122.53757">RDQ9</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="109.88924"
        y="120.33349"
        id="text2431"><tspan
          sodipodi:role="line"
          id="tspan2429"
          x="109.88924"
-         y="120.33349"
-         style="stroke-width:0.3562324">RDO8</tspan></text>
+         y="120.33349">RDQ8</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 149.53111,237.21248 11.90201,-0.12589 1.8892,1.38543"
@@ -12815,92 +12790,84 @@
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="105.30861"
        y="102.93809"
        id="text2455"><tspan
          sodipodi:role="line"
          id="tspan2453"
          x="105.30861"
-         y="102.93809"
-         style="stroke-width:0.3562324">RDO0</tspan></text>
+         y="102.93809">RDQ0</tspan></text>
     <text
        id="text2459"
        y="105.20908"
        x="105.30861"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="105.20908"
          x="105.30861"
          id="tspan2457"
-         sodipodi:role="line">RDO1</tspan></text>
+         sodipodi:role="line">RDQ1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="105.30861"
        y="107.34647"
        id="text2463"><tspan
          sodipodi:role="line"
          id="tspan2461"
          x="105.30861"
-         y="107.34647"
-         style="stroke-width:0.3562324">RDO2</tspan></text>
+         y="107.34647">RDQ2</tspan></text>
     <text
        id="text2467"
        y="109.57293"
        x="105.39767"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="109.57293"
          x="105.39767"
          id="tspan2465"
-         sodipodi:role="line">RDO3</tspan></text>
+         sodipodi:role="line">RDQ3</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="105.57578"
        y="111.75485"
        id="text2471"><tspan
          sodipodi:role="line"
          id="tspan2469"
          x="105.57578"
-         y="111.75485"
-         style="stroke-width:0.3562324">RDO4</tspan></text>
+         y="111.75485">RDQ4</tspan></text>
     <text
        id="text2475"
        y="113.98131"
        x="105.48673"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="113.98131"
          x="105.48673"
          id="tspan2473"
-         sodipodi:role="line">RDO5</tspan></text>
+         sodipodi:role="line">RDQ5</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="105.53126"
        y="116.20776"
        id="text2479"><tspan
          sodipodi:role="line"
          id="tspan2477"
          x="105.53126"
-         y="116.20776"
-         style="stroke-width:0.3562324">RDO6</tspan></text>
+         y="116.20776">RDQ6</tspan></text>
     <text
        id="text2483"
        y="118.2561"
        x="105.66485"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="118.2561"
          x="105.66485"
          id="tspan2481"
-         sodipodi:role="line">RDO7</tspan></text>
+         sodipodi:role="line">RDQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -17915,37 +17882,34 @@
          style="stroke-width:0.3562324">NC</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.157318"
        y="140.3425"
        id="text4832"><tspan
          sodipodi:role="line"
          id="tspan4830"
          x="84.157318"
-         y="140.3425"
-         style="stroke-width:0.3562324">DO5</tspan></text>
+         y="140.3425">DQ5</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="83.845604"
        y="131.34764"
        id="text4836"><tspan
          sodipodi:role="line"
          id="tspan4834"
          x="83.845604"
-         y="131.34764"
-         style="stroke-width:0.3562324">DO4</tspan></text>
+         y="131.34764">DQ4</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="83.756554"
        y="124.44563"
        id="text4840"><tspan
          sodipodi:role="line"
          id="tspan4838"
          x="83.756554"
-         y="124.44563"
-         style="stroke-width:0.3562324">DO3</tspan></text>
+         y="124.44563">DQ3</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -17959,15 +17923,14 @@
          style="stroke-width:0.3562324">VSS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.290909"
        y="147.42262"
        id="text4848"><tspan
          sodipodi:role="line"
          id="tspan4846"
          x="84.290909"
-         y="147.42262"
-         style="stroke-width:0.3562324">DO6</tspan></text>
+         y="147.42262">DQ6</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -17986,15 +17949,14 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="83.578438"
        y="117.85532"
        id="text4858"><tspan
          sodipodi:role="line"
          id="tspan4856"
          x="83.578438"
-         y="117.85532"
-         style="stroke-width:0.3562324">DO2</tspan></text>
+         y="117.85532">DQ2</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -18008,26 +17970,24 @@
          style="stroke-width:0.3562324">VSS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="83.444855"
        y="108.68234"
        id="text4866"><tspan
          sodipodi:role="line"
          id="tspan4864"
          x="83.444855"
-         y="108.68234"
-         style="stroke-width:0.3562324">DO1</tspan></text>
+         y="108.68234">DQ1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="83.444855"
        y="102.00298"
        id="text4870"><tspan
          sodipodi:role="line"
          id="tspan4868"
          x="83.444855"
-         y="102.00298"
-         style="stroke-width:0.3562324">DO0</tspan></text>
+         y="102.00298">DQ0</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -18052,15 +18012,14 @@
          style="stroke-width:0.3562324">NC</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.246376"
        y="151.96458"
        id="text3393"><tspan
          sodipodi:role="line"
          id="tspan3391"
          x="84.246376"
-         y="151.96458"
-         style="stroke-width:0.3562324">DO7</tspan></text>
+         y="151.96458">DQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -18412,35 +18371,32 @@
        id="text3491"
        y="140.31102"
        x="67.05999"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="140.31102"
          x="67.05999"
          id="tspan3489"
-         sodipodi:role="line">DO5</tspan></text>
+         sodipodi:role="line">DQ5</tspan></text>
     <text
        id="text3495"
        y="131.31615"
        x="66.748283"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="131.31615"
          x="66.748283"
          id="tspan3493"
-         sodipodi:role="line">DO4</tspan></text>
+         sodipodi:role="line">DQ4</tspan></text>
     <text
        id="text3499"
        y="124.41414"
        x="66.659225"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="124.41414"
          x="66.659225"
          id="tspan3497"
-         sodipodi:role="line">DO3</tspan></text>
+         sodipodi:role="line">DQ3</tspan></text>
     <text
        id="text3503"
        y="145.0311"
@@ -18456,13 +18412,12 @@
        id="text3507"
        y="147.39114"
        x="67.193581"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="147.39114"
          x="67.193581"
          id="tspan3505"
-         sodipodi:role="line">DO6</tspan></text>
+         sodipodi:role="line">DQ6</tspan></text>
     <text
        id="text3511"
        y="142.93822"
@@ -18483,13 +18438,12 @@
        id="text3517"
        y="117.82385"
        x="66.48111"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="117.82385"
          x="66.48111"
          id="tspan3515"
-         sodipodi:role="line">DO2</tspan></text>
+         sodipodi:role="line">DQ2</tspan></text>
     <text
        id="text3521"
        y="115.55286"
@@ -18505,24 +18459,22 @@
        id="text3525"
        y="108.65086"
        x="66.347527"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="108.65086"
          x="66.347527"
          id="tspan3523"
-         sodipodi:role="line">DO1</tspan></text>
+         sodipodi:role="line">DQ1</tspan></text>
     <text
        id="text3529"
        y="101.9715"
        x="66.347527"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="101.9715"
          x="66.347527"
          id="tspan3527"
-         sodipodi:role="line">DO0</tspan></text>
+         sodipodi:role="line">DQ0</tspan></text>
     <text
        id="text3533"
        y="97.295952"
@@ -18549,13 +18501,12 @@
        id="text3541"
        y="151.93311"
        x="67.149048"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="151.93311"
          x="67.149048"
          id="tspan3539"
-         sodipodi:role="line">DO7</tspan></text>
+         sodipodi:role="line">DQ7</tspan></text>
     <text
        id="text3545"
        y="154.20409"
@@ -19012,15 +18963,14 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="158.53822"
        y="161.3703"
        id="text3594"><tspan
          sodipodi:role="line"
          id="tspan3592"
          x="158.53822"
-         y="161.3703"
-         style="stroke-width:0.3562324">LDS</tspan></text>
+         y="161.3703">IOW</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 158.57025,159.96069 h 2.91532"
@@ -19232,26 +19182,24 @@
          style="stroke-width:0.3562324">RA1F</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.497154"
        y="107.57629"
        id="text3709"><tspan
          sodipodi:role="line"
          id="tspan3707"
          x="73.497154"
-         y="107.57629"
-         style="stroke-width:0.3562324">RDO1</tspan></text>
+         y="107.57629">RDQ1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.449432"
        y="100.75735"
        id="text3713"><tspan
          sodipodi:role="line"
          id="tspan3711"
          x="73.449432"
-         y="100.75735"
-         style="stroke-width:0.3562324">RDO0</tspan></text>
+         y="100.75735">RDQ0</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -19276,15 +19224,14 @@
          style="stroke-width:0.3562324">RA3F</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="72.615295"
        y="116.64306"
        id="text3725"><tspan
          sodipodi:role="line"
          id="tspan3723"
          x="72.615295"
-         y="116.64306"
-         style="stroke-width:0.3562324">RDO2</tspan></text>
+         y="116.64306">RDQ2</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -19497,59 +19444,54 @@
          style="stroke-width:0.3562324">RA5F</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.962013"
        y="123.47119"
        id="text3807"><tspan
          sodipodi:role="line"
          id="tspan3805"
          x="73.962013"
-         y="123.47119"
-         style="stroke-width:0.3562324">RDO3</tspan></text>
+         y="123.47119">RDQ3</tspan></text>
     <text
        id="text3811"
        y="130.26292"
        x="74.218307"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="130.26292"
          x="74.218307"
          id="tspan3809"
-         sodipodi:role="line">RDO4</tspan></text>
+         sodipodi:role="line">RDQ4</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="72.936844"
        y="139.32924"
        id="text3815"><tspan
          sodipodi:role="line"
          id="tspan3813"
          x="72.936844"
-         y="139.32924"
-         style="stroke-width:0.3562324">RDO5</tspan></text>
+         y="139.32924">RDQ5</tspan></text>
     <text
        id="text3819"
        y="146.18504"
        x="72.904808"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="146.18504"
          x="72.904808"
          id="tspan3817"
-         sodipodi:role="line">RDO6</tspan></text>
+         sodipodi:role="line">RDQ6</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.064995"
        y="150.76625"
        id="text3823"><tspan
          sodipodi:role="line"
          id="tspan3821"
          x="73.064995"
-         y="150.76625"
-         style="stroke-width:0.3562324">RDO7</tspan></text>
+         y="150.76625">RDQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -20535,46 +20477,42 @@
        id="text4200"
        y="101.02452"
        x="55.103462"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="101.02452"
          x="55.103462"
          id="tspan4198"
-         sodipodi:role="line">RDO0</tspan></text>
+         sodipodi:role="line">RDQ0</tspan></text>
     <text
        id="text4204"
        y="107.62082"
        x="55.240242"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="107.62082"
          x="55.240242"
          id="tspan4202"
-         sodipodi:role="line">RDO1</tspan></text>
+         sodipodi:role="line">RDQ1</tspan></text>
     <text
        id="text4209"
        y="117.17741"
        x="55.382545"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="117.17741"
          x="55.382545"
          id="tspan4207"
-         sodipodi:role="line">RDO2</tspan></text>
+         sodipodi:role="line">RDQ2</tspan></text>
     <text
        id="text4213"
        y="123.69384"
        x="55.48246"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="123.69384"
          x="55.48246"
          id="tspan4211"
-         sodipodi:role="line">RDO3</tspan></text>
+         sodipodi:role="line">RDQ3</tspan></text>
     <text
        id="text4217"
        y="102.95355"
@@ -20689,35 +20627,32 @@
        id="text4257"
        y="139.19565"
        x="55.704102"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="139.19565"
          x="55.704102"
          id="tspan4255"
-         sodipodi:role="line">RDO5</tspan></text>
+         sodipodi:role="line">RDQ5</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="55.894707"
        y="146.45222"
        id="text4261"><tspan
          sodipodi:role="line"
          id="tspan4259"
          x="55.894707"
-         y="146.45222"
-         style="stroke-width:0.3562324">RDO6</tspan></text>
+         y="146.45222">RDQ6</tspan></text>
     <text
        id="text4265"
        y="150.81078"
        x="56.233009"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="150.81078"
          x="56.233009"
          id="tspan4263"
-         sodipodi:role="line">RDO7</tspan></text>
+         sodipodi:role="line">RDQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -20949,15 +20884,14 @@
          style="stroke-width:0.3562324">CAS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.825249"
        y="187.09801"
        id="text4378"><tspan
          sodipodi:role="line"
          id="tspan4376"
          x="84.825249"
-         y="187.09801"
-         style="stroke-width:0.3562324">DO0</tspan></text>
+         y="187.09801">DQ0</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -20982,15 +20916,14 @@
          style="stroke-width:0.3562324">A1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.602608"
        y="193.95549"
        id="text4390"><tspan
          sodipodi:role="line"
          id="tspan4388"
          x="84.602608"
-         y="193.95549"
-         style="stroke-width:0.3562324">DO1</tspan></text>
+         y="193.95549">DQ1</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21026,15 +20959,14 @@
          style="stroke-width:0.3562324">VSS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.335426"
        y="203.21753"
        id="text4406"><tspan
          sodipodi:role="line"
          id="tspan4404"
          x="84.335426"
-         y="203.21753"
-         style="stroke-width:0.3562324">DO2</tspan></text>
+         y="203.21753">DQ2</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21059,15 +20991,14 @@
          style="stroke-width:0.3562324">A5</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.825249"
        y="210.075"
        id="text4418"><tspan
          sodipodi:role="line"
          id="tspan4416"
          x="84.825249"
-         y="210.075"
-         style="stroke-width:0.3562324">DO3</tspan></text>
+         y="210.075">DQ3</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21092,15 +21023,14 @@
          style="stroke-width:0.3562324">A7</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.691658"
        y="216.84341"
        id="text4430"><tspan
          sodipodi:role="line"
          id="tspan4428"
          x="84.691658"
-         y="216.84341"
-         style="stroke-width:0.3562324">DO4</tspan></text>
+         y="216.84341">DQ4</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21136,15 +21066,14 @@
          style="stroke-width:0.3562324">NC</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.780716"
        y="226.0164"
        id="text4446"><tspan
          sodipodi:role="line"
          id="tspan4444"
          x="84.780716"
-         y="226.0164"
-         style="stroke-width:0.3562324">DO5</tspan></text>
+         y="226.0164">DQ5</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21169,15 +21098,14 @@
          style="stroke-width:0.3562324">VSS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.647141"
        y="232.87387"
        id="text4458"><tspan
          sodipodi:role="line"
          id="tspan4456"
          x="84.647141"
-         y="232.87387"
-         style="stroke-width:0.3562324">DO6</tspan></text>
+         y="232.87387">DQ6</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21191,15 +21119,14 @@
          style="stroke-width:0.3562324">NC</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="84.780716"
        y="237.41583"
        id="text4466"><tspan
          sodipodi:role="line"
          id="tspan4464"
          x="84.780716"
-         y="237.41583"
-         style="stroke-width:0.3562324">DO7</tspan></text>
+         y="237.41583">DQ7</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -21922,15 +21849,14 @@
        r="0.50378871" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="74.183205"
        y="186.10942"
        id="text4757"><tspan
          sodipodi:role="line"
          id="tspan4755"
          x="74.183205"
-         y="186.10942"
-         style="stroke-width:0.3562324">RDO8</tspan></text>
+         y="186.10942">RDQ8</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 80.105173,177.85823 0.155851,4.27479 h 2.538156"
@@ -22021,13 +21947,12 @@
        id="text4793"
        y="185.8645"
        x="56.972725"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="185.8645"
          x="56.972725"
          id="tspan4791"
-         sodipodi:role="line">RDO8</tspan></text>
+         sodipodi:role="line">RDQ8</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 82.79918,184.11457 -8.90581,0.0222 -0.09287,-13.72379 -9.220759,-0.0155 -0.314868,0.37784 -0.503788,-0.75569 -0.409329,0.69272 -0.503789,-0.66123 -0.503788,0.62974 -0.566763,-0.56677 -0.472302,0.59826 -0.377842,-0.59826 -0.598248,0.40933 -3.904363,-0.0315 0.157435,7.11602 0.28338,0.4723 -0.535275,0.53527 0.566761,0.50379 -0.566761,0.5038 0.566761,0.50378 -0.535275,0.47231 0.59825,0.50378 -0.535276,0.56676 0.346355,0.53528 -0.03149,1.88921"
@@ -22047,15 +21972,14 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="55.694221"
        y="130.48558"
        id="text4803"><tspan
          sodipodi:role="line"
          id="tspan4801"
          x="55.694221"
-         y="130.48558"
-         style="stroke-width:0.3562324">RDO4</tspan></text>
+         y="130.48558">RDQ4</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 51.139025,96.370069 1.180019,2.337775 h -2.337775 z"
@@ -22096,81 +22020,74 @@
          style="stroke-width:0.3562324">R39A</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="74.449982"
        y="192.75319"
        id="text4825"><tspan
          sodipodi:role="line"
          id="tspan4823"
          x="74.449982"
-         y="192.75319"
-         style="stroke-width:0.3562324">RDO9</tspan></text>
+         y="192.75319">RDQ9</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.247696"
        y="202.01523"
        id="text4829"><tspan
          sodipodi:role="line"
          id="tspan4827"
          x="73.247696"
-         y="202.01523"
-         style="stroke-width:0.3562324">RDO10</tspan></text>
+         y="202.01523">RDQ10</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.782043"
        y="208.96176"
        id="text4833"><tspan
          sodipodi:role="line"
          id="tspan4831"
          x="73.782043"
-         y="208.96176"
-         style="stroke-width:0.3562324">RDO11</tspan></text>
+         y="208.96176">RDQ11</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="74.004692"
        y="215.68567"
        id="text4837"><tspan
          sodipodi:role="line"
          id="tspan4835"
          x="74.004692"
-         y="215.68567"
-         style="stroke-width:0.3562324">RDO11</tspan></text>
+         y="215.68567">RDQ12</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.64846"
        y="224.76959"
        id="text4841"><tspan
          sodipodi:role="line"
          id="tspan4839"
          x="73.64846"
-         y="224.76959"
-         style="stroke-width:0.3562324">RDO13</tspan></text>
+         y="224.76959">RDQ13</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="73.294464"
        y="231.7737"
        id="text4845"><tspan
          sodipodi:role="line"
          id="tspan4843"
          x="73.294464"
-         y="231.7737"
-         style="stroke-width:0.3562324">RDO14</tspan></text>
+         y="231.7737">RDQ14</tspan></text>
     <text
        id="text4849"
        y="231.58476"
        x="55.598885"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="231.58476"
          x="55.598885"
          id="tspan4847"
-         sodipodi:role="line">RDO14</tspan></text>
+         sodipodi:role="line">RDQ14</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 83.09397,229.56119 -3.495032,-0.063 v 0.62973"
@@ -22311,24 +22228,22 @@
        id="text4905"
        y="236.40225"
        x="73.735275"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="236.40225"
          x="73.735275"
          id="tspan4903"
-         sodipodi:role="line">RDO15</tspan></text>
+         sodipodi:role="line">RDQ15</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="56.984299"
        y="236.33929"
        id="text4909"><tspan
          sodipodi:role="line"
          id="tspan4907"
          x="56.984299"
-         y="236.33929"
-         style="stroke-width:0.3562324">RDO15</tspan></text>
+         y="236.33929">RDQ15</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -22388,46 +22303,42 @@
        id="text4933"
        y="224.63602"
        x="56.638359"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="224.63602"
          x="56.638359"
          id="tspan4931"
-         sodipodi:role="line">RDO13</tspan></text>
+         sodipodi:role="line">RDQ13</tspan></text>
     <text
        id="text4937"
        y="215.86378"
        x="56.994591"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="215.86378"
          x="56.994591"
          id="tspan4935"
-         sodipodi:role="line">RDO11</tspan></text>
+         sodipodi:role="line">RDQ12</tspan></text>
     <text
        id="text4941"
        y="208.96176"
        x="56.593826"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="208.96176"
          x="56.593826"
          id="tspan4939"
-         sodipodi:role="line">RDO11</tspan></text>
+         sodipodi:role="line">RDQ11</tspan></text>
     <text
        id="text4945"
        y="201.88165"
        x="55.480606"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="201.88165"
          x="55.480606"
          id="tspan4943"
-         sodipodi:role="line">RDO10</tspan></text>
+         sodipodi:role="line">RDQ10</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 66.078521,222.9439 -3.206092,0.0891"
@@ -22460,13 +22371,12 @@
        id="text4959"
        y="192.97583"
        x="57.217239"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="192.97583"
          x="57.217239"
          id="tspan4957"
-         sodipodi:role="line">RDO9</tspan></text>
+         sodipodi:role="line">RDQ9</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 65.811348,186.4746 h -9.351102 l -1.424929,1.87023 -2e-6,71.33554 2.315513,2.58268 49.338192,-0.17811 2.22645,-2.40457"
@@ -22619,13 +22529,12 @@
        id="text5017"
        y="187.09801"
        x="67.885353"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="187.09801"
          x="67.885353"
          id="tspan5015"
-         sodipodi:role="line">DO0</tspan></text>
+         sodipodi:role="line">DQ0</tspan></text>
     <text
        id="text5021"
        y="189.42433"
@@ -22685,13 +22594,12 @@
        id="text5041"
        y="203.02859"
        x="67.836349"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="203.02859"
          x="67.836349"
          id="tspan5039"
-         sodipodi:role="line">DO2</tspan></text>
+         sodipodi:role="line">DQ2</tspan></text>
     <text
        id="text5045"
        y="205.33649"
@@ -22718,13 +22626,12 @@
        id="text5053"
        y="210.01204"
        x="67.885353"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="210.01204"
          x="67.885353"
          id="tspan5051"
-         sodipodi:role="line">DO3</tspan></text>
+         sodipodi:role="line">DQ3</tspan></text>
     <text
        id="text5057"
        y="212.23848"
@@ -22751,13 +22658,12 @@
        id="text5065"
        y="216.6545"
        x="67.940689"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="216.6545"
          x="67.940689"
          id="tspan5063"
-         sodipodi:role="line">DO4</tspan></text>
+         sodipodi:role="line">DQ4</tspan></text>
     <text
        id="text5069"
        y="219.05905"
@@ -22773,13 +22679,12 @@
        id="text5073"
        y="225.82747"
        x="68.029747"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="225.82747"
          x="68.029747"
          id="tspan5071"
-         sodipodi:role="line">DO5</tspan></text>
+         sodipodi:role="line">DQ5</tspan></text>
     <text
        id="text5077"
        y="230.53229"
@@ -22795,13 +22700,12 @@
        id="text5081"
        y="232.81091"
        x="67.833183"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="232.81091"
          x="67.833183"
          id="tspan5079"
-         sodipodi:role="line">DO6</tspan></text>
+         sodipodi:role="line">DQ6</tspan></text>
     <text
        id="text5085"
        y="235.07423"
@@ -22817,13 +22721,12 @@
        id="text5089"
        y="237.41583"
        x="67.777855"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="237.41583"
          x="67.777855"
          id="tspan5087"
-         sodipodi:role="line">DO7</tspan></text>
+         sodipodi:role="line">DQ7</tspan></text>
     <text
        id="text5093"
        y="239.49791"
@@ -22894,13 +22797,12 @@
        id="text5119"
        y="193.89252"
        x="67.725677"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        xml:space="preserve"><tspan
-         style="stroke-width:0.3562324"
          y="193.89252"
          x="67.725677"
          id="tspan5117"
-         sodipodi:role="line">DO1</tspan></text>
+         sodipodi:role="line">DQ1</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -25160,6 +25062,16 @@
        style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 156.33793,136.25379 h 4.72008"
        id="path1051-3"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path7465"
+       d="m 84.566166,183.43308 h 3.36908"
+       style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.3562324px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 67.468834,183.40159 H 70.83792"
+       id="path7467"
        inkscape:connector-curvature="0" />
   </g>
 </svg>
