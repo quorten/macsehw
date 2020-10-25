@@ -96,7 +96,7 @@ a huge number of pins, its purpose can be summarized as follows.
   configurations.
 
   128K (double undocumented), 256K (double undocumented), 512K
-  (undocumented), 1 MB, 2 MB, 4 MB.
+  (undocumented), 1MB, 2MB, 4MB.
 
 * Refresh the DRAM by periodically reading some arbitrary memory from
   every available row.  Unlike the Apple II, the contiguous
@@ -169,7 +169,7 @@ only simple, single-pin interfaces.
   to the address lines on the RAM SIMMs, outputs.
 
 * `RA9` is only controlled when the `MBRAM` input is TRUE, i.e. +5V.
-  This indicates that 1 MB RAM SIMMs are being used.  Otherwise, it is
+  This indicates that 1MB RAM SIMMs are being used.  Otherwise, it is
   kept at zero and high memory addresses are marked as bus errors.
   256K RAM SIMMs are used in this case.
 
@@ -179,10 +179,10 @@ only simple, single-pin interfaces.
   `CAS1H` are not driven.
 
 * If both `MBRAM` and `ROW2` are TRUE, i.e. +5V, it is also possible
-  for the BBU to detect a 2.5 MB RAM configuration and adjust bus
+  for the BBU to detect a 2.5MB RAM configuration and adjust bus
   errors flagging accordingly.
 
-* `RDO0` - `RDO15` are bidirectional data signals, they are the
+* `RDQ0` - `RDQ15` are bidirectional data signals, they are the
   primary means by which single-pin I/O devices and the like are
   mapped into the address space that can be directly accessed by the
   CPU, in conjunction with the address inputs.  Namely, the BBU reads
