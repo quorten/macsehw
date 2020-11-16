@@ -663,109 +663,109 @@ module ram_config (row2, mbram, s64kram,
    assign ramsz
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             ramsz_128k
+             `ramsz_128k
           : // 2 rows of RAM SIMMs
-             ramsz_256k
+             `ramsz_256k
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             ramsz_512k
+             `ramsz_512k
           : // 2 rows of RAM SIMMs
-             ramsz_1m
+             `ramsz_1m
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             ramsz_2m
+             `ramsz_2m
           : // 2 rows of RAM SIMMs
-             ramsz_4m
+             `ramsz_4m
    ;
 
    assign ramsz_en
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             RAMSZ_EN_128K
+             `RAMSZ_EN_128K
           : // 2 rows of RAM SIMMs
-             RAMSZ_EN_256K
+             `RAMSZ_EN_256K
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             RAMSZ_EN_512K
+             `RAMSZ_EN_512K
           : // 2 rows of RAM SIMMs
-             RAMSZ_EN_1M
+             `RAMSZ_EN_1M
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             RAMSZ_EN_2M
+             `RAMSZ_EN_2M
           : // 2 rows of RAM SIMMs
-             RAMSZ_EN_4M
+             `RAMSZ_EN_4M
    ;
 
    assign vid_main_addr
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_main_addr_128k
+             `vid_main_addr_128k
           : // 2 rows of RAM SIMMs
-             vid_main_addr_256k
+             `vid_main_addr_256k
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_main_addr_512k
+             `vid_main_addr_512k
           : // 2 rows of RAM SIMMs
-             vid_main_addr_1m
+             `vid_main_addr_1m
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_main_addr_2m
+             `vid_main_addr_2m
           : // 2 rows of RAM SIMMs
-             vid_main_addr_4m
+             `vid_main_addr_4m
    ;
 
    assign vid_alt_addr
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_alt_addr_128k
+             `vid_alt_addr_128k
           : // 2 rows of RAM SIMMs
-             vid_alt_addr_256k
+             `vid_alt_addr_256k
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_alt_addr_512k
+             `vid_alt_addr_512k
           : // 2 rows of RAM SIMMs
-             vid_alt_addr_1m
+             `vid_alt_addr_1m
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             vid_alt_addr_2m
+             `vid_alt_addr_2m
           : // 2 rows of RAM SIMMs
-             vid_alt_addr_4m
+             `vid_alt_addr_4m
    ;
 
    assign snddsk_main_addr
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_main_addr_128k
+             `snddsk_main_addr_128k
           : // 2 rows of RAM SIMMs
-             snddsk_main_addr_256k
+             `snddsk_main_addr_256k
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_main_addr_512k
+             `snddsk_main_addr_512k
           : // 2 rows of RAM SIMMs
-             snddsk_main_addr_1m
+             `snddsk_main_addr_1m
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_main_addr_2m
+             `snddsk_main_addr_2m
           : // 2 rows of RAM SIMMs
-             snddsk_main_addr_4m
+             `snddsk_main_addr_4m
    ;
 
    assign snddsk_alt_addr
       = (s64kram) ? // 64K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_alt_addr_128k
+             `snddsk_alt_addr_128k
           : // 2 rows of RAM SIMMs
-             snddsk_alt_addr_256k
+             `snddsk_alt_addr_256k
        : (~mbram) ? // 256K RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_alt_addr_512k
+             `snddsk_alt_addr_512k
           : // 2 rows of RAM SIMMs
-             snddsk_alt_addr_1m
+             `snddsk_alt_addr_1m
        : // 1MB RAM SIMMs
           (~row2) ? // 1 row of RAM SIMMs
-             snddsk_alt_addr_2m
+             `snddsk_alt_addr_2m
           : // 2 rows of RAM SIMMs
-             snddsk_alt_addr_4m
+             `snddsk_alt_addr_4m
    ;
 
 endmodule
