@@ -248,26 +248,40 @@ only simple, single-pin interfaces.
   Note that the BBU needs a RESET input pin for its own sake since it
   includes sequential logic to scan the CRT and sound buffers.
 
-* I'm assuming `*PMCYC` is an output signal?  It only connects to the
+* `C2M` is an output signal, it primarily controls the address
+  multiplexers to select either the row address (zero) or column
+  address (one).  Connecting directly to a simple 2 MHz clock could be
+  adequate, or a more tailored method may be used for higher
+  performance and lower memory access time.
+
+* `*PMCYC` is an output signal.  Its primary conceptual purpose is to
+  define "whose turn" it is to access DRAM, the CPU or the BBU?  This
+  could be as simple as a 1 MHz clock, since the CPU always takes a
+  multiple of 4 clock cycles at 8 MHz to access DRAM.  The symbol is
+  probably short for Processor Memory CYCle.  It only connects to the
   PDS slot and the F257 chips.
 
 ----------
 
 Peripheral device signals, input or output?
 
-* `*EXT.DTK` is very likely an input signal, for PDS use.  Why?  The
-  Macintosh Classic is essentially a stripped-down Macintosh SE that
-  uses the same BBU.  In that schematic, pin 11 is indicated as
-  connected to a pull-up resistor.  So, clearly this must be an input
-  since it cannot be connected.
-
-  Actually, the full purpose is documented right here.  If this pin is
-  pulled low, then the system expansion card is responsible for
-  generating the `*DTACK` signal to indicate to the CPU that the data
-  transfer is complete.  The BBU puts the signal in a high-impedance
-  state.
+* `*EXT.DTK` is an input signal, for PDS use.  If this pin is pulled
+  low, then the system expansion card is responsible for generating
+  the `*DTACK` signal to indicate to the CPU that the data transfer is
+  complete.  The BBU puts the signal in a high-impedance state.
 
   20200808/https://web.archive.org/web/20190909060927/http://www.ccadams.org/se/pinouts.html
+
+  However, please note that the BBU can still access DRAM on its
+  regular turn to do so.  The primary purpose of a PDS card driving
+  `*DTACK`, of course, is for I/O-mapped I/O where the memory in
+  question is hosted on the PDS card, not in the system's main DRAM.
+  If the BBU were to start the process of accessing DRAM on behalf of
+  the CPU, it will cancel it upon detection of this signal.
+
+  In the Macintosh Classic schematic, this pin is connected to a
+  pull-up resistor since the Classic doesn't support PDS expansion
+  cards.
 
 * `*EAREN` is very likely an output signal (also for PDS use), for the
   reason it is not indicated in the Bomarc Macintosh Classic
@@ -296,5 +310,24 @@ signals.
   wired together, this probably requires circuit board changes to
   function successfully.
 
+* Allow the use of even faster DRAM by speeding up the BBU's internal
+  timing.  The internal clock would be driven by an internal
+  oscillator as a phase-locked-loop on the 16 MHz external clock.  The
+  CPU could then be able to always access DRAM with zero wait states.
+
 * Add Memory Manager Unit (MMU) functionality to implement virtual
-  memory.
+  memory.  In order to be compatible with the original MC68000, all
+  the logic to handle page faults would need to be built into the BBU
+  itself and the CPU is simply instructed to wait additional cycles by
+  holding the `*DTACK` signal deasserted.
+
+* Implement bank switching to allow access to more than 4 MB of RAM
+  without requiring a CPU that is capable of virtual memory.  The
+  original MC68000 CPU in particular does not allow for
+  exception-handling that repeats execution of a faulted instruction,
+  hence it is not capable of a straightforward implementation of
+  virtual memory that uses page faults.
+
+* It could be possible to choose a FPGA with a sufficient quantity of
+  SRAM (or even DRAM) stacked within it such that the physical DRAM
+  sticks are not needed.
