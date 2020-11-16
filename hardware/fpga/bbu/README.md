@@ -28,8 +28,8 @@ a huge number of pins, its purpose can be summarized as follows.
     * 2 (0x800000-0xbfffff): Select SCC.
     * 3 (0xc00000-0xffffff): Select IWM or VIA.
 
-  In particular, the zones are further subdivided as follows,
-  according to MESS/MAME source code:
+  In particular, the zones are further subdivided as follows for the
+  Macintosh Plus, according to MESS/MAME source code:
 
     * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
     * 0x400000 - 0x4fffff: ROM
@@ -42,22 +42,46 @@ a huge number of pins, its purpose can be summarized as follows.
     * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
     * 0xfffff0 - 0xffffff: Auto Vector
 
+  The Macintosh SE goes a step further and adds invalid address guard
+  zones around the SCC and IWM mappings:
+
+    * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
+    * 0x400000 - 0x4fffff: ROM
+    * 0x580000 - 0x5fffff: 5380 NCR/Symbios SCSI peripherals chip
+    * 0x600000 - 0x6fffff: RAM, boot-time overlay only
+    * 0x900000 - 0x9fffff: Zilog 8530 SCC (Serial Control Chip) Read
+    * 0xb00000 - 0xbfffff: Zilog 8530 SCC (Serial Control Chip) Write
+    * 0xd00000 - 0xdfffff: IWM (Integrated Woz Machine; floppy)
+    * 0xe80000 - 0xefffff: Rockwell 6522 VIA
+    * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
+    * 0xfffff0 - 0xffffff: Auto Vector
+
   Note that all of these address ranges specified can be handled by
   only checking the upper 5 bits of the address (A19-A23), which route
   directly into the BBU from the main address bus.  Well, except for
   the last one, but our BBU doens't need to do any specially handling
   for the sake of that zone.
 
-* Control the RAM and ROM switches to expose the ROM overlay at
-  0x000000 and RAM at 0x600000 at startup.
+  TODO VERIFY: Does the Macintosh Plus and Macintosh SE really not
+  expose the boot-time RAM address remapping, just the ROM address
+  remapping?  This is what MESS/MAME source code seems to claim.
 
-* Set the ROM/RAM control signals depending on the particular address
-  requested, i.e. `*EN245`, `*ROMEN`, `*RAS`, `*CAS0L`, `*CAS0H`,
-  `*CAS1L`, `*CAS1H`, `RAM R/*W`.  `*PMCYC` is apparently used to
-  totally disable DRAM row and column access strobes only during
-  startup.  The F257 chips are used to select separate address
-  portions for the DRAM row and column access strobes.  The LS245
-  chips are used to disable DRAM access during ROM access.
+* Control the RAM and ROM switches to expose the ROM overlay at
+  0x000000 and RAM at 0x600000 at startup.  Snoop the address bus to
+  detect the first access to the standard ROM address mapping and
+  disable the boot-time ROM overlay, until the next RESET.
+
+  Also, apparently, according to MESS/MAME source code, the first
+  write to the regular RAM address zone also disables the ROM overlay.
+
+* Act as a DRAM controller.  Set the ROM/RAM control signals depending
+  on the particular address requested, i.e. `*EN245`, `*ROMEN`,
+  `*RAS`, `*CAS0L`, `*CAS0H`, `*CAS1L`, `*CAS1H`, `RAM R/*W`.
+  `*PMCYC` is apparently used to totally disable DRAM row and column
+  access strobes only during startup.  The F257 chips are used to
+  select separate address portions for the DRAM row and column access
+  strobes.  The LS245 chips are used to disable DRAM access during ROM
+  access.
 
   DRAM is accessed by sending the row access strobe first, the column
   access strobe second.
@@ -73,12 +97,13 @@ a huge number of pins, its purpose can be summarized as follows.
   much RAM is installed.
 
   If only 64K RAM SIMMs are installed (which is an unsupported
-  configuration), then RA7 is either A10 (row) or A9 (column).  If
-  there are two rows of DRAM SIMMs, A17 is used to determine which one
-  to use.  It could be possible that one of the unused, unlabeled BBU
-  pins controls this setting.  With the minimum configuration of one
-  row of DRAM SIMMs, this means you can configure a Macintosh SE with
-  only 128K of RAM.  Hilarious!
+  configuration), then RA7 is either A9 (row) or A10 (column).  Bus
+  snooping must be used to copy RA8 over to RA7 on the column access
+  strobe.  If there are two rows of DRAM SIMMs, A17 is used to
+  determine which one to use.  It could be possible that one of the
+  unused, unlabeled BBU pins controls this setting.  With the minimum
+  configuration of one row of DRAM SIMMs, this means you can configure
+  a Macintosh SE with only 128K of RAM.  Hilarious!
 
   If only 256K RAM SIMMs are installed, then RA7 is either A17 (row)
   or A9 (column).  RA9 is not used.  If there are two rows of DRAM
@@ -125,7 +150,9 @@ a huge number of pins, its purpose can be summarized as follows.
   the same time.
 
 * Generate the PWM signals for sound output and disk drive speed
-  control.  Read directly from RAM buffers as required.
+  control.  Read directly from RAM buffers as required.  Note that the
+  Macintosh SE deprecated the alternate sound buffer found in previous
+  compact Macintoshes.
 
 * Handle SCSI DMA transfers, if the mode is enabled by the ROM.
   However, as I understand it, the Macintosh SE ROM does not actually
