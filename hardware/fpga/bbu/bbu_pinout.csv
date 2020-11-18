@@ -1,85 +1,85 @@
-BBU Pin,Signal Name,Description,Device Connection,Device Pin
-1,GND,,,
-2,RD7,,,
-3,RD8,,,
-4,RD9,,,
-5,RD10,,,
-6,RD11,,,
-7,RD12,,,
-8,RD13,,,
-9,RD14,,,
-10,RD15,,,
-11,EXTPDS,,,
-12,EN245,Select Data Buffer,74LS245,
-13,VCC,,,
-14,/WR,,,
-15,/CAS-SIMM3,,SIMM3,2
-16,/CAS-SIMM1,,SIMM1,2
-17,/EOP,,53C80,
-18,/CAS-SIMM4,,SIMM4,2
-19,/CAS-SIMM2,,SIMM2,2
-20,/RAS,,,
-21,GND,,,
-22,VCC,,,
-23,A23,,,
-24,A22,,,
-25,A21,,,
-26,A20,,,
-27,A19,,,
-28,A17,,,
-29,A9,,,
-30,/IPL1,,68000,
-31,/IPL0,,68000,
-32,IRQ,,65C22/6523,
-33,/LDS,,68000,
-34,/BERR,,68000,
-35,/UDS,,,
-36,/VPA,,68000,
-37,CK,,68000,
-38,/DTACK,,68000,
-39,SELROM,Select ROM,ROM,"20 on ROM HI, LO"
-40,"RTxCB, PCLK, ADB CLK",All the things,"85C30, ADB, GLU","20 & 28 on 85C30, 16 on ADB, 9 on GLU"
-41,/AS,,,
-42,VCC,,,
-43,GND,,,
-44,FCLK,,"SWIM, GLU","24 on SWIM, 19 on GLU"
-45,SELSCC,Select SCC,85C30,32 on /CE
-46,/RD,,85C30,
-47,R/W,,,
-48,SELSWIM,Select SWIM,SWIM,7 on /DEV
-49,EXTFLP,PWM,External Floppy,10 on PWM
-50,PB7,,65C22/6523,
-51,SELSND,Select Sound,SND,
-52,EXTPDS,,,
-53,PA6,,65C22/6523,
-54,/LDS,,,
-55,DRQ,,53C80,22 on DRQ
-56,/DACK,,53C80,26 on /DACK
-57,SELSCSI,Select SCSI,53C80,21 on /CS
-58,SELVIA,Select VIA,65C22/6523,24 on RS0
-59,/RST,,,
-60,HSYNC,Horizontal Sync,J12,Pin 10 on J12
-61,VSYNC,Veritcal Sync,"J12, 65C22/6523","Pin 11 on J12, 40 on DB7"
-62,VIDOUT,Composite Video Out,"J12, 65C22/6523","Pin 9 on J12, 28 on PC3"
-63,GND,,,
-64,VCC,,,
-65,RA9,,,
-66,RA7,,,
-67,RA8,,,
-68,RA6,,,
-69,RD0,,,
-70,RA5,,,
-71,RA4,,,
-72,RD1,,,
-73,RA3,,,
-74,RD2,,,
-75,RD3,,,
-76,RA2,,,
-77,RD4,,,
-78,RA1,,,
-79,RA0,,,
-80,RD5,,,
-81,/PMCYC,,74F257,/OE
-82,EN257,Select Address Buffer,74F257,
-83,RD6,,,
-84,VCC,,,
+Verilog,Signal,Pin,Description,Direction,Device Connection,Device Pin,Device Signal
+ra0,RA0,79,RAM Address bit 0,inout,DRAM SIMMs
+ra1,RA1,78,RAM Address bit 1,inout,DRAM SIMMs
+ra2,RA2,76,RAM Address bit 2,inout,DRAM SIMMs
+ra3,RA3,73,RAM Address bit 3,inout,DRAM SIMMs
+ra4,RA4,71,RAM Address bit 4,inout,DRAM SIMMs
+ra5,RA5,70,RAM Address bit 5,inout,DRAM SIMMs
+ra6,RA6,68,RAM Address bit 6,inout,DRAM SIMMs
+ra8,RA8,67,RAM Address bit 8,inout,DRAM SIMMs
+ra7,RA7,66,RAM Address bit 7,output,DRAM SIMMs
+ra9,RA9,65,RAM Address bit 9,output,DRAM SIMMs
+n_cas1l,*CAS1L,16,DRAM Column Access Strobe row #2 low-byte SIMM,output,DRAM SIMMs
+n_cas0l,*CAS0L,15,DRAM Column Access Strobe row #1 low-byte SIMM,output,DRAM SIMMs
+ram_r_n_w,RAM R/*W,14,DRAM read/write,output,DRAM SIMMs
+n_ras,*RAS,20,DRAM Row Access Strobe,output,DRAM SIMMs
+n_cas1h,*CAS1H,19,DRAM Column Access Strobe row #2 high-byte SIMM,output,DRAM SIMMs
+n_cas0h,*CAS0H,18,DRAM Column Access Strobe row #1 high-byte SIMM,output,DRAM SIMMs
+rdq0,RDQ0,69,RAM Data Value bit 0,inout,DRAM SIMMs
+rdq1,RDQ1,72,RAM Data Value bit 1,inout,DRAM SIMMs
+rdq2,RDQ2,74,RAM Data Value bit 2,inout,DRAM SIMMs
+rdq3,RDQ3,75,RAM Data Value bit 3,inout,DRAM SIMMs
+rdq4,RDQ4,77,RAM Data Value bit 4,inout,DRAM SIMMs
+rdq5,RDQ5,80,RAM Data Value bit 5,inout,DRAM SIMMs
+rdq6,RDQ6,83,RAM Data Value bit 6,inout,DRAM SIMMs
+rdq7,RDQ7,2,RAM Data Value bit 7,inout,DRAM SIMMs
+rdq8,RDQ8,3,RAM Data Value bit 8,inout,DRAM SIMMs
+rdq9,RDQ9,4,RAM Data Value bit 9,inout,DRAM SIMMs
+rdq10,RDQ10,5,RAM Data Value bit 10,inout,DRAM SIMMs
+rdq11,RDQ11,6,RAM Data Value bit 11,inout,DRAM SIMMs
+rdq12,RDQ12,7,RAM Data Value bit 12,inout,DRAM SIMMs
+rdq13,RDQ13,8,RAM Data Value bit 13,inout,DRAM SIMMs
+rdq14,RDQ14,9,RAM Data Value bit 14,inout,DRAM SIMMs
+rdq15,RDQ15,10,RAM Data Value bit 15,inout,DRAM SIMMs
+n_en245,*EN245,12,Enable LS245 DRAM to CPU data bus switch,output,LS245,19,*EO
+n_dtack,*DTACK,38,CPU Data Transfer Acknowledge,inout,68000,10,*DTACK
+r_n_w,R/*W,47,CPU memory read/write,input,68000,9,R/*W
+n_ipl1,*IPL1,30,CPU Interrupt Priority Level bit 1,input,68000,24,*IPL1
+n_lds,*LDS,33,CPU Lower Data Strobe,input,68000,8,*LDS
+n_vpa,*VPA,36,CPU Valid Peripheral Address,output,68000,21,*VPA
+c8m,C8M,37,8MHz clock,output,68000,15,CLK
+null,VCC,22,+5V power,power
+null,VCC,64,+5V power,power
+null,VCC,42,+5V power,power
+null,VCC,84,+5V power,power
+mbram,MBRAM,17,1MB RAM SIMMs jumper,input,Jumper J16
+null,GND,1,Ground,power
+s64kram,64KRAM,21,UNOFFICIAL 64K RAM SIMMs jumper,input
+null,GND,43,Ground,power
+null,GND,63,Ground,power
+row2,ROW2,13,2 rows of RAM SIMMs jumper,input,Jumper J16
+n_extdtk,*EXTDTK,11,External PDS will drive *DTACK,input,PDS slot J13,B28,*EXT.DTACK
+a23,A23,23,CPU Address bit 23,input,68000,52,A23
+a22,A22,24,CPU Address bit 22,input,68000,51,A22
+a21,A21,25,CPU Address bit 21,input,68000,50,A21
+a20,A20,26,CPU Address bit 20,input,68000,48,A20
+a19,A19,27,CPU Address bit 19,input,68000,47,A19
+a17,A17,28,CPU Address bit 17,input,68000,45,A17
+a9,A9,29,CPU Address bit 9,input,68000,37,A9
+n_pmcyc,*PMCYC,81,Processor Memory CYCle,output,F257,15,*OE
+c2m,C2M,82,~2MHz DRAM row/column address selector clock,output,F257,1,S
+n_res,*RES,59,RESet,input,68000,18,*RES
+c16m,C16MRSF2,44,Filtered 16MHz clock input,input,GLU,19,FCLK
+c3_7m,C3.7M,40,~3.7MHz clock,output,"8530, ADB, GLU","20 & 28 on 8530, 16 on ADB, 9 on GLU",RTXCB
+n_romen,*ROMEN,39,ROM ENable,output,ROM,20,*CE
+n_sccrd,*SCCRD,46,Serial Communications Controller ReaD,output,8530,36,*RD
+pwm,PWM,49,Pulse Width Modulation floppy disk drive motor speed control,output,External Floppy,10,PWM
+scsidrq,SCSIDRQ,55,SCSI DMA ReQuest,input,5380,22,DRQ
+n_iwm,*IWM,48,Integrated Wozniak Machine floppy disk controller chip enable,output,IWM,7,*DEV
+n_sccen,*SCCEN,45,Serial Communications Controller chip ENable,output,8530,33,*CE
+n_scsi,*SCSI,57,SCSI chip select,output,5380,21,*CS
+n_dack,*DACK,56,SCSI DMA ACKnowledge,output,5380,26,*DACK
+sndres,SNDRES,50,SouND RESet,input,6522,17,PB7 vSndEnb
+via_cs1,VIA.CS1,58,VIA Chip Select 1,output,6522,24,CS1
+vidpg2,VIDPG2,53,VIDeo framebuffer PaGe 2,input,6522,8,PA6 vPage2
+n_earen,*EAREN,52,Unknown reserved PDS input signal,output,PDS slot J13,B11,Reserved
+n_as,*AS,41,CPU Address Strobe,input,68000,6,*AS
+n_berr,*BERR,34,CPU Bus ERRor,output,68000,22,*BERR
+snd,SND,51,PWM SouND output,output,Sound filter circuit
+n_vsync,*VSYNC,61,Video Vertical Synchronization control,output,Analog board J12,11 on J12 and 40 on 6522,CA1
+n_iow,*IOW,54,SCSI and Serial Communications Controller I/O Write,output,5380 and 8530,29 on 5380 and 35 on 8530,*IOW on 5380 and *WR on 8530
+n_hsync,*HSYNC,60,Video Horizontal Synchronization control,output,Analog board J12,10 on J12
+n_viairq,*VIAIRQ,32,VIA Interrupt ReQuest,input,6522,21,*IRQ
+vidout,VIDOUT,62,VIDeo OUTput,output,Analog board J12,9 on J12
+n_ipl0,*IPL0,31,CPU Interrupt Priority Level bit 0,output,68000,25,*IPL0
+n_uds,*UDS,35,CPU Upper Data Strobe,input,68000,7,*UDS

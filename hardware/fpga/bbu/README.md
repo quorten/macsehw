@@ -48,7 +48,7 @@ a huge number of pins, its purpose can be summarized as follows.
     * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
     * 0x400000 - 0x4fffff: ROM
     * 0x580000 - 0x5fffff: 5380 NCR/Symbios SCSI peripherals chip
-    * 0x600000 - 0x6fffff: RAM, boot-time overlay only
+    * 0x600000 - 0x7fffff: RAM, boot-time overlay only
     * 0x900000 - 0x9fffff: Zilog 8530 SCC (Serial Control Chip) Read
     * 0xb00000 - 0xbfffff: Zilog 8530 SCC (Serial Control Chip) Write
     * 0xd00000 - 0xdfffff: IWM (Integrated Woz Machine; floppy)
@@ -297,6 +297,12 @@ Peripheral device signals, input or output?
 * Input signals: `VIDPG2`, `SNDRES`, `SCSIDRQ`, `VIAIRQ`.
 
 ----------
+
+Please note: Information on how the older compact Macintosh PAL gates
+worked, which provide nearly identical functionality of the BBU.
+
+20201116/http://www.retro.co.za/ccc/mac/ReverseEngineering/PALs.html  
+20201116/https://web.archive.org/web/20170726142931/http://www.mactech.com/articles/mactech/Vol.01/01.11/PAL/index.html
 
 There is still more to learn/investigate relating to unspecified
 signals.

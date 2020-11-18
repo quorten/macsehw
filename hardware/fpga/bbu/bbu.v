@@ -118,102 +118,13 @@
  
    TODO Abbreviations legend, here since they are not noted elsewhere:
  
-   RA = RAM Address
    RDQ = RAM Data Value
    PMCYC = Processor Memory Cycle
  
-   PINOUT:
+   Undocumented signal but assumed to exist:
 
-   RA0 79
-   RA1 78
-   RA2 76
-   RA3 73
-   RA4 71
-   RA5 70
-   RA6 68
-   RA8 67
-   RA7 66
-   RA9 65 
-   *CAS1L 16
-   *CAS0L 15 
-   RAM R/*W 14
-   *RAS 20
-   *CAS1H 19
-   *CAS0H 18
-   RDQ0 69
-   RDQ1 72
-   RDQ2 74
-   RDQ3 75
-   RDQ4 77
-   RDQ5 80
-   RDQ6 83
-   RDQ7 2
-   RDQ8 3
-   RDQ9 4
-   RDQ10 5
-   RDQ11 6
-   RDQ12 7
-   RDQ13 8
-   RDQ14 9
-   RDQ15 10
-   *EN245 12
-   *DTACK 38
-   R/*W 47
-   *IPL1 30
-   *LDS 33
-   *VPA 36
-   *C8M 37
-   VCC 22
-   VCC 64
-   VCC 42
-   VCC 84
-   MBRAM 17
-   GND 1
-   GND 21
-   GND 43
-   GND 63
-   ROW2 13
-   *EXTDTK 11
-   A23 23
-   A22 24
-   A21 25
-   A20 26
-   A19 27
-   A17 28
-   A9 29
-   *PMCYC 81
-   C2M 82
-   *RES 59
-   C16MRSF2 44
-   C3.7M 40
-   *ROMEN 39
-   *SCCRD 46
-   PWM 49
-   SCSIDRQ 55
-   *IWM 48
-   *SCCEN 45
-   *SCSI 57
-   *DACK 56
-   SNDRES 50
-   VIA.CS1 58
-   VIDPG2 53
-   *EAREN 52
-   *AS 41
-   *BERR 34
-   SND 51
-   *VSYNC 61
-   *IOW 54
-   *HSYNC 60
-   *VIAIRQ 32
-   VIDOUT 62
-   *IPL0 31
-   *UDS 35
-
-   Undocumented but assumed to exist:
-
-   64KRAM ???
- 
-   Note that *IOW controls both *SCSI.IOW and *SCC.WR.
+   64KRAM: Here we assign it to pin 21 for our own experimentation, a
+   pin that is specified as just tied to ground.
 */
 module bbu_master_ctrl
    // Essential sequential logic RESET and clock signals
@@ -250,21 +161,17 @@ module bbu_master_ctrl
    n_extdtk, n_earen,
    );
 
-   // TODO FIXME: Signals missing-in-action: OVERLAY, SNDPG2.  It's
-   // possible that the Macintosh SE uses a magic address access to
-   // obviate the need for consuming a VIA pin for OVERLAY, but I have
-   // no idea what this address would be.  Has support for the second
-   // sound page been dropped in the Macintosh SE?  Yes, indeed it has
-   // been.  Nevertheless... for the sake of possibly making
-   // quasi-hardware replicas of earlier Macintosh computers easier,
-   // we will preserve an implementation here anyways.  As for the
-   // OVERLAY signal, we'll have to use Mini vMac's guess on how to
-   // implement it.  At boot, the ROM exclusively accesses the ROM
-   // overlay addresses and the remapped RAM address when setting up.
-   // When it is done, it jumps into the standard ROM address access.
-   // As soon as the BBU detects this memory access (any address in
-   // the standard ROM address space), it switches the overlay, and it
-   // cannot be switched back except by a RESET signal.
+   // The Macintosh SE deprecated SNDPG2.  Nevertheless... for the
+   // sake of possibly making quasi-hardware replicas of earlier
+   // Macintosh computers easier, we will preserve an implementation
+   // here anyways.  As for the OVERLAY signal, we'll have to use Mini
+   // vMac's guess on how to implement it.  At boot, the ROM
+   // exclusively accesses the ROM overlay addresses and the remapped
+   // RAM address when setting up.  When it is done, it jumps into the
+   // standard ROM address access.  As soon as the BBU detects this
+   // memory access (any address in the standard ROM address space),
+   // it switches the overlay, and it cannot be switched back except
+   // by a RESET signal.
 
    // So yes... it turns out the BBU must actually do address bus
    // snooping.
@@ -272,9 +179,9 @@ module bbu_master_ctrl
    // Essential sequential logic RESET and clock signals
    input wire n_res; // *RESET signal
    input wire c16m;  // 15.667200 MHz master clock input
-   output reg c8m;   // 7.8336 MHz clock output
-   output reg c3_7m; // 3.672 MHz clock output
-   output reg c2m;   // 1.9584 MHz clock output
+   output wire c8m;   // 7.8336 MHz clock output
+   output wire c3_7m; // 3.672 MHz clock output
+   output wire c2m;   // 1.9584 MHz clock output
 
    // RAM configuration pins
    input wire row2;    // 1/2 rows of RAM SIMMs jumper
@@ -284,40 +191,42 @@ module bbu_master_ctrl
    // MC68000 signals
    input wire a9, a17, a19, a20, a21, a22, a23;
    input wire r_n_w, n_as, n_uds, n_lds;
-   output reg n_dtack, n_ipl0, n_ipl1;
+   inout wire n_dtack;
+   output wire n_ipl0;
+   input wire n_ipl1;
    output wire n_berr;
    input wire n_vpa;
 
    // DRAM signals
    inout wire ra0, ra1, ra2, ra3, ra4, ra5, ra6, ra8;
-   output reg ra7, ra9;
-   output reg n_cas1l, n_cas0l, ram_r_n_w, n_ras, n_cas1h, n_cas0h;
+   output wire ra7, ra9;
+   output wire n_cas1l, n_cas0l, ram_r_n_w, n_ras, n_cas1h, n_cas0h;
    inout wire rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, rdq6, rdq7,
 	      rdq8, rdq9, rdq10, rdq11, rdq12, rdq13, rdq14, rdq15;
-   output reg n_en245, n_pmcyc;
+   output wire n_en245, n_pmcyc;
 
    // ROM and memory overlay signals
-   output reg n_romen;
+   output wire n_romen;
 
    // VIA signals
-   output reg via_cs1;
+   output wire via_cs1;
    input wire n_viairq;
 
    // Video signals
    input wire vidpg2;  // VIDPG2 signal
-   output reg vidout;  // VIDOUT signal
-   output reg n_hsync; // *HSYNC signal
-   output reg n_vsync; // *VSYNC signal
+   output wire vidout;  // VIDOUT signal
+   output wire n_hsync; // *HSYNC signal
+   output wire n_vsync; // *VSYNC signal
 
    // Sound and disk speed signals
    input wire sndres;
-   output reg snd, pwm;
+   output wire snd, pwm;
    // IWM signals
-   output reg n_iwm;
+   output wire n_iwm;
    // SCC signals
-   output reg n_sccen, n_sccrd, n_iow;
+   output wire n_sccen, n_sccrd, n_iow;
    // SCSI signals
-   output reg n_scsi;
+   output wire n_scsi;
    input wire scsidrq;
    output reg n_dack;
    // PDS signals
@@ -326,8 +235,6 @@ module bbu_master_ctrl
 
    // Note tristate inout ... 'bz for high impedance.  8'bz for wide.
 
-   // Boot-time memory overlay switch, 1 = enable, 0 = disable.
-   reg boot_overlay;
    // In order to implement the memory overlay switch, we must snoop
    // the address bus.  These are the registers we use to store the
    // address multiplexor outputs.
@@ -336,84 +243,42 @@ module bbu_master_ctrl
    // Installed RAM size.
    wire [23:0] ramsz;
 
-   // C16M pixel clock (0.064 us per pixel).
-   // 512 horizontal draw pixels, 192 horizontal blanking pixels.
-   // 342 scan lines, 28 scan lines vertical blanking.
-   // 60.15 Hz vertical scan rate.
-   // (512 + 192) * (342 + 28) = 260480 pixel clock ticks per frame.
-
-   // Total screen buffer size = 10944 words.  High-order bit of each
-   // 16-bit word is the leftmost pixel, low-order bit is the
-   // rightmost pixel.  Words in ascending order move from left to
-   // right in the scan line, first scan line is topmost and then
-   // moves downward.
-
-   // *HSYNC and *VSYNC counters are negative during blanking.
-   reg [15:0] vidout_sreg;    // VIDOUT shift register
-   reg [4:0]  vidout_cntr;    // VIDOUT remaining counter
-   reg [9:0]  vid_hsync_cntr; // *HSYNC counter
-   reg [8:0]  vid_vsync_cntr; // *VSYNC counter
-
-   wire [23:0] vid_main_addr; // Address of main video buffer
-   wire [23:0] vid_alt_addr;  // Address of alternate video buffer
-
-   // Sound and disk speed buffers are scanned 370 words per video
-   // frame, and the size of both buffers together is 370 words.  Or,
-   // 260480 pixel clock ticks / 370 = 704 pixel clock ticks per word.
-   // In a single scan line, (512 + 192) / 704 = 704 / 704 = exactly 1
-   // word is read.  The sound byte is the most significant byte, the
-   // disk speed byte is the least significant byte.  Both the sound
-   // sample and disk speed represent a PCM amplitude value, this is
-   // used to generate a PDM waveform that can be processed by a
-   // low-pass filter to generate the analog signal.
-
-   // Well, at least in concept... Inside Macintosh claims that only a
-   // single pulse is generated, so this is not quite your typical PDM
-   // audio circuit.  Nevertheless, the sample rate is 22.2555 kHz, so
-   // it's not too bad overall for generating lo-fi audio.  But, good
-   // point to ponder, this is an area of improvement where a
-   // different algorithm can generate better audio quality.
-
-   reg [15:0] snddsk_reg; // PCM sound sample and disk speed register
-
-   wire [23:0] snddsk_main_addr; // Address of main sound/disk buffer
-   wire [23:0] snddsk_alt_addr;  // Address of alternate sound/disk buffer
-
-   // We must be careful that the sound circuitry does not attempt to
-   // access RAM at the same time as the video circuitry.  Because the
-   // phases are coherent, we can simply align the sound and disk
-   // speed RAM fetch to be at a constant offset relative to the video
-   // RAM fetch.
-
-   // PLEASE NOTE: We must carefully time our RAM accesses since they
-   // have delays and we don't want the screen bits shift register
-   // buffer to run empty before we have the next word available from
-   // RAM.  Our ideal is that the next word is available from RAM just
-   // as we are shifting out the last pixel, so that we can use a
-   // non-blocking assign and the new first pixel will be available
-   // right at the start of the next pixel clock cycle.  Otherwise,
-   // less ideal but easier to program would be to use two 16-bit
-   // buffers as a FIFO.
-
-   // SCC access notes: Even byte accesses are a read, odd byte
-   // accesses are a write.  Namely: `*LDS` == 0 == write, `*UDS` == 0
-   // == read.  Remember, it's big endian.  What about the separate
-   // address regions?  Well, I say just ignore those, it's there for
-   // a convenient convention, but it's not the officially documented
-   // hardware protocol.
-
-   // VIA support: Simply handle chip select, and issue an MC68000
-   // interrupt priority zero if we receive an interrupt signal from
-   // the VIA.
-
    // SCSI support: Handle chip select, and handle DMA.
 
-   // NOTE: For all peripherals, we must set `*DTACK` from the BBU
-   // upon successful access condition and time durations because it
-   // is not set by the device itself.
+   // Important!  How to handle SCSI DMA... according to Guide to the
+   // Macintosh family hardware, page 126, this is "pseudo-DMA" mode.
+   // The BBU does not assert `*DTACK` until `SCSIDRQ` is received to
+   // indicate the DMA transfer is complete.  And again, noting from
+   // page 126, .  Likewise, `*DTACK` is asserted for all addresses in
+   // range, even if nothing is mapped.  No stringent bus error
+   // control here, that's a hobbyist extension.  And again, inded
+   // `*DTACK` is tri-stated according to the manual when `*EXTDTK`
+   // (`*EXT.DTACK`) is asserted.
+
+   // Now, here's the golden rule: "If any access has not terminated
+   // within 265 ms, the BBU asserts the bus error signal /BERR."
+   // There you go, that's how it is driven.  So, another thing,
+   // yes... there must be at least a nominal delay to assert `*DTACK`
+   // to allow PDS cards to intervene by asserting `*EXTDTK` first.
+
+   // TODO MOVE DOCUMENTATION: PLEASE NOTE, PDS cards can also access
+   // DRAM, not just the CPU.  This is mainly a matter of bus
+   // arbitration, then as far s the BBU is concerned, PDS access to
+   // DRAM should appear identical to CPU access to DRAM.  Guide to
+   // the Macintosh Family hardware, page 84.
 
    //////////////////////////////////////////////////
    // Pure combinatorial logic is defined first.
+
+   // TODO: Assert `*IPL0` if we receive an interrupt signal from the
+   // VIA or SCSI.  However, do not assert `*IPL0` if the SCC asserts
+   // `*IPL1`.  Guide to the Macintosh family hardware, page 113.
+   // SCSI interrupts are signaled only on IRQ from the SCSI
+   // controller.  DRQ is not attached to MC68000 interrupt lines
+   // whatsoever, it must be polled by software and is only used by
+   // the BBU as specified in the other section.  TODO CONFIRM: The
+   // SCSI IRQ line attaches directly to `*IPL0`?
+   assign n_ipl0 = ~n_ipl1 | n_viairq;
 
    //////////////////////////////////////////////////
    // Sub-modules are instantiated here.
@@ -421,30 +286,8 @@ module bbu_master_ctrl
    // The remainder of definitions are for sequential logic.
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
-
-      n_dtack <= 1; n_ipl0 <= 1; n_ipl1 <= 1;
-
-      ra7 <= 0; ra9 <= 0;
-      n_cas1l <= 1; n_cas0l <= 1;
-      ram_r_n_w <= 0; n_ras <= 1;
-      n_cas1h <= 1; n_cas0h <= 1;
-      n_en245 <= 1;
-      n_pmcyc <= 1;
-
-      vidout <= 0; n_hsync <= 1; n_vsync <= 1;
-
-      snd <= 0; pwm <= 0;
-      n_iwm <= 1; n_sccen <= 1; n_sccrd <= 1; n_iow <= 1;
-      n_scsi <= 1; n_dack <= 1;
+      n_dack <= 1;
       n_earen <= 1;
-
-      // Initialize all internal registers on RESET.
-      boot_overlay <= 1;
-      vidout_sreg <= 0;
-      vidout_cntr <= 0;
-      vid_hsync_cntr <= 0;
-      vid_vsync_cntr <= 0;
-      snddsk_reg <= 0;
    end
 
    always @(posedge c16m) begin
@@ -541,88 +384,113 @@ Write down all my questions thus far about the BBU:
 
 // Clock divider module.  Generate the frequency-divided clock
 // signals.
-module clock_div (n_res, c16m, c8m, c3_7m, c2m, n_pmcyc);
+module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
    input wire n_res;
    input wire c16m;
    output reg c8m;
    output reg c3_7m;
    // c2m is now controlled by the DRAM controller state machine.
-   input wire c2m;
-   output reg n_pmcyc;
+   // This is just an I/O argument placeholder.  We still generate the
+   // signal internally, though.
+   input wire c2m_e;
+   output wire n_pmcyc;
+   // *PMCYC "pre-trigger": will the *PMCYC state be negated on the
+   // next cycle?
+   output wire pmcyc_pt;
+   // TODO FIXME: `*PMCYC` should not be a strict 1MHz clock, because
+   // during vertical blanking, all cycles (except for horizontal
+   // blanking sound cycles) are fair game for CPU use.  PLEASE NOTE:
+   // According to Guide to the Macintosh family hardware, page 194,
+   // the process of scanning the screen buffer also refreshes the
+   // DRAM.  But I don't quite understand how this works, wouldn't you
+   // need to access more addresses to refresh all the DRAM?  But,
+   // PLEASE NOTE.  Macintosh SE/30 takes one access cycle every
+   // 15.6us for DRAM refresh.
 
-   ///////////////////////////////////////////////////////////
-   // 15.6672 / 3.6720 = 9792/2295 = (51*2^6*3)/(51*3^2*5)
-   // = (2^6)/(3*5) = 64/15
+   /* Inside Macintosh claims that the serial clock is 3.672 MHz.
+      Clock multiplication (via PLL) and division can be used to
+      generate this from the 15.6672 MHz clock as follows:
 
-   // So, here's how we implement the frequency divider to generate
-   // the 3.672 MHz clock.  Initialize to 64 - 15 = 49, and keep
-   // subtracting 15 until we reach zero or less.  Then, add back 49,
-   // and toggle the C3.7M output.
+      15.6672 / 3.6720 = 9792/2295 = (51*2^6*3)/(51*3^2*5)
+      = (2^6)/(3*5) = 64/15
 
-   // TODO FIXME: The complex frequency divider will not work
-   // correctly: Since the base frequency is not high enough, there
-   // will be terrible aliasing artifacts.  Divide by 4 is a bit too
-   // fast, divide by 5 is a bit too slow, but that's the best we can
-   // do without PLL clock frequency multiplication.
-   //
-   // PLL clock frequency synthesis inside the BBU is conceivable to
-   // believe, however, considering that the the GLUE chip in the
-   // Macintosh SE/30 doubles the 16 MHz crystal input to 32 MHz.
-   // Easiest method, we want the least common multiple between these
-   // two frequencies.  So, back to where we started.
-   //
-   // 15.6672 / 3.6720 = 16/16 * 9792/2295 = (51*2^10*3)/(51*2^4*3^2*5)
-   // LCM: 51*2^10*3^2*5 = 2350080 -> 235.0080 MHz
-   // 235.0080 / 15.6672 = 15
-   // 235.0080 / 3.6720 = 64
-   //
-   // So, this is how we synthesize the perfect 3.6720 MHz clock
-   // signal.  Multiply the source frequency of 15.6672 MHz by 15 via
-   // a PLL to get an intermediate clock frequency of 235.0080 MHz,
-   // then divide by 64 to get the target 3.6720 MHz clock signal.
-   // Yes, we could really just use divide-by-four (3.9168 MHz) if
-   // going a tad bit faster wasn't an issue.
-   //
-   // How about this, 16 / (64 * 16/15) ~= 16/68.  Multiply by 16,
-   // divide by 68.  PLL = 250.6752 MHz, result = 3.6864 MHz.  I guess
-   // that's a lot better.  Alternatively, PLL = 250 MHz, result =
-   // 3.6765 MHz.  Even better.
+      This would entail a PLL clock running at 235.008 MHz inside the
+      BBU, which was impractical for the technology available during
+      the 1980s.  But if that were configured, a simple divide-by-64
+      frequency counter would yield a perfect clock signal.
 
-   // TODO: Optimize this to minimize the number of register bits
-   // required, while still preserving ideal frequency division and
-   // synchronization behavior.
+      As it turns out, the actual Macintosh did not use a true,
+      constant-period 15.6672 MHz clock, but rather a 3.686 MHz clock
+      with a phase/period error of up to 1 clock cycle of the 15.6672
+      MHz clock.  Sequential logic is used to effect a principal
+      divide-by-four clock cycle format, and at every fourth 3.686 MHz
+      clock cycle, one extra 15.6672 MHz clock cycle is slipped in on
+      the last low-edge half-period of the 3.686 MHz clock.  Over a
+      long period of time, this effects an average frequency division
+      factor of 4.25.
+
+      And yes, even with that introduced phase/period error, the
+      downstream hardware apparently still works just fine, thanks to
+      the divide-by-16 in front of the SCC's internal baud rate
+      generator.  This gives you a max baud of 230 kbits/sec, with a
+      phase/period error of 1/(16*16) = 0.39%.
+   */
+
+   // TODO EVALUATE: Optimize this to minimize the number of register
+   // bits required, while still preserving ideal frequency division
+   // and synchronization behavior.  Maybe not... less registers
+   // entails more combinatorial logic delay.
 
    // We use shift registers or 1-bit inverters for high performance,
    // minimal cycle overhead.
-   reg [5:0] c16m_div4_cntr; // Complex C16M -> C3_7M divider counter
-   // reg [3:0] c16m_div8_cntr; // C16M / 8 counter
+   reg c16m_div4_cntr; // C16M / 4 counter
+   // Complex C16M -> C3_7M divider counter, principal divide-by-4
+   reg c16m_div4_0_cntr;
+   // Complex C16M -> C3_7M divider counter, counter for slipping in
+   // extra cycle
+   reg [16:0] c16m_div4_25_cntr;
+   reg [3:0] c16m_div8_cntr; // C16M / 8 counter
    reg [7:0] c16m_div16_cntr; // C16M / 16 counter
+   reg c4m;
+   reg c2m;
+   reg c1m;
+
+   assign pmcyc_pt = c16m_div16_cntr[7];
+   // assign c2m_e = c2m;
+   assign n_pmcyc = c1m;
 
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
       c8m <= 0;
+      c4m <= 0;
       c3_7m <= 0;
-      // c2m <= 0;
-      n_pmcyc <= 1;
+      c2m <= 0;
+      c1m <= 0;
 
       // Initialize all internal registers on RESET.
-      c16m_div4_cntr <= 1;
-      // c16m_div8_cntr <= 1;
+      c16m_div4_cntr <= 0;
+      c16m_div4_0_cntr <= 0;
+      c16m_div4_25_cntr <= 1;
+      c16m_div8_cntr <= 1;
       c16m_div16_cntr <= 1;
    end
 
    always @(posedge c16m) begin
       if (n_res) begin
 	 c8m <= ~c8m;
-	 if (c16m_div4_cntr[1]) begin
-	    c3_7m <= ~c3_7m;
-	    c16m_div4_cntr <= 1;
+	 if (c16m_div4_cntr) c4m <= ~c4m;
+	 c16m_div4_cntr <= ~c16m_div4_cntr;
+	 if (~c16m_div4_25_cntr[16]) begin
+	    if (c16m_div4_0_cntr) c3_7m <= ~c3_7m;
+	    c16m_div4_0_cntr <= ~c16m_div4_0_cntr;
 	 end
-	 else
-	   c16m_div4_cntr <= { c16m_div4_cntr[4:0], c16m_div4_cntr[5] };
-	 // if (c16m_div8_cntr[3]) c2m <= ~c2m;
-	 // c16m_div8_cntr <= { c16m_div8_cntr[2:0], c16m_div8_cntr[3] };
-	 if (c16m_div16_cntr[7]) n_pmcyc <= ~n_pmcyc;
+	 // else Slip in the extra cycle by not incrementing the
+	 // principal divide-by-4 counter.
+	 c16m_div4_25_cntr <= { c16m_div4_25_cntr[15:0],
+				c16m_div4_25_cntr[16] };
+	 if (c16m_div8_cntr[3]) c2m <= ~c2m;
+	 c16m_div8_cntr <= { c16m_div8_cntr[2:0], c16m_div8_cntr[3] };
+	 if (c16m_div16_cntr[7]) c1m <= ~c1m;
 	 c16m_div16_cntr <= { c16m_div16_cntr[6:0], c16m_div16_cntr[7] };
       end
    end
@@ -784,7 +652,7 @@ endmodule
    * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
    * 0x400000 - 0x4fffff: ROM
    * 0x580000 - 0x5fffff: 5380 NCR/Symbios SCSI peripherals chip
-   * 0x600000 - 0x6fffff: RAM, boot-time overlay only
+   * 0x600000 - 0x7fffff: RAM, boot-time overlay only
    * 0x900000 - 0x9fffff: Zilog 8530 SCC (Serial Control Chip) Read
    * 0xb00000 - 0xbfffff: Zilog 8530 SCC (Serial Control Chip) Write
    * 0xd00000 - 0xdfffff: IWM (Integrated Woz Machine; floppy)
@@ -792,58 +660,143 @@ endmodule
    * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
    * 0xfffff0 - 0xffffff: Auto Vector
 
+   This address map has also been confirmed with Guide to the
+   Macintosh family hardware, page 127.  PLEASE NOTE: In SCC Read
+   zone, if A0 == 1, then that is an SCC RESET.  IWM must be A0 == 1,
+   VIA must be A0 == 0, SCC write must be A0 == 1.  SCSI read A0 == 0,
+   SCSI write A0 == 1.
+
+   SCC access notes: In the Macintosh Plus and older, even byte
+   accesses are a read, odd byte accesses are a write.  Namely: `*LDS`
+   == 0 == write, `*UDS` == 0 == read.  Remember, it's big endian.
+   What about the separate address regions?  Well, I say just ignore
+   those, it's there for a convenient convention, but it's not the
+   officially documented hardware protocol.
+
+   In the Macintosh SE, this behavior is somewhat changed.  Now `*IOW`
+   controls both `*SCSI.IOW` and `*SCC.WR`, and `*SCCRD` is wired
+   directly from the BBU to `*SCC.RD`.  `*UDS` is used to trigger
+   `*SCSI.IOR`.
+
+   PLEASE NOTE: Guide to the Macintosh family hardware, page 121.
+   Rather than signaling bus errors for out of range RAM addresses,
+   overflow accesses should just wrap around and repeat access to the
+   same RAM.
+
+   PLEASE NOTE: Guide to the Macintosh family hardware, page 122.  "A
+   word-wide access to any SCC address causes a phase shift in the
+   processor clock, and is used by the operating system to correct the
+   phase when necessary."
+
+   "At system startup, the operating system reads an address in the
+   range $F0 0000 through $F7 FFFF (labeled _Phase read_ in Gifgures
+   3-1 and 3-2) to determine whether the computer's high-frequency
+   timing signals are correctly in phase.  When the timing signals are
+   not in phase, RAM accesses are not timed correctly, causing an
+   unstable video display, RAM errors, and VIA errors."  Well, I can
+   see how that would be happening with just a bunch of PALs, but I
+   don't think it still needs to be that way when you have the BBU in
+   charge, you can do better!  And indeed, that note only appears to
+   apply to the Macintosh Plus, not the Macintosh SE, as it is listed
+   in that section.
+ 
+   TODO FIXME: Guide to the Macintosh family hardware, page 127.
+   Okay, so this is how to interpret the information about the
+   boot-time overlay for the alternate RAM location.  Only a 2MB zone
+   is exposed, even though you may have up to 4MB of RAM.  So, 2.5MB
+   and 4MB RAM configurations need to be treated specially.  In
+   particular, only the "upper row" of RAM is accessible greater than
+   or equal to the address 0x680000.  Below that address, you get
+   access to the first 512K of RAM.  Macintosh Plus actually uses the
+   same overlay map too.  That's a defect in MESS/MAME source code but
+   apparently it's not important, interestingly enough.  Okay, I guess
+   I don't really quite understand, though, sorry.  Okay, this means,
+   the first row, right?  "If 2.5 or 4 MB only upper row is
+   accessible" page 127.
+ 
+   The signal *VPA is asserted in address range 0xe00000 - 0xffffff,
+   optionally excluding invalid addresses when a bus error signal is
+   generated.  This is for synchronous I/O devices accessed in the old
+   6800 fashion.
 */
-module decode_devaddr (n_ramen, n_romen, n_scsi, n_sccen, n_sccrd,
-		       n_iwm, via_cs1, n_berr, a23_19,
-		       boot_overlay, r_n_w, reg_romen, reg_ram_w);
+module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
+		       n_sccen, n_sccrd, n_iow, n_iwm, via_cs1, n_vpa,
+		       n_berr, n_as, a23_19, berr_ram, n_extdtk,
+		       boot_overlay, r_n_w, reg_romen, reg_ram_w,
+		       n_dtack_peri);
+   input wire n_res;
+   input wire clk;
    output wire n_ramen;
    output wire n_romen;
    output wire n_scsi;
    output wire n_sccen;
    output wire n_sccrd;
+   output wire n_iow;
    output wire n_iwm;
    output wire via_cs1;
+   output wire n_vpa;
    output wire n_berr;
+   input wire n_as;
    input wire [4:0] a23_19;
+   input wire berr_ram; // Would this RAM address be a bus error?
+   input wire n_extdtk;
    input wire boot_overlay;
    input wire r_n_w;
+   // Have we attempted to write to the regular RAM address zone?
+   output wire reg_ram_w;
    // Has an address access to the regular *ROMEN zone occurred?  This
    // signal is used to disable the boot-time memory overlay.
    output wire reg_romen;
-   // Have we attempted to write to the regular RAM address zone?
-   output wire reg_ram_w;
+   output wire n_dtack_peri; // *DTACK for peripherals
 
-   wire berr_ram;
+   wire reg_ram, reg_ram_r;
+   wire scsi, sccrd, sccwr;
+   wire berr_scc;
+
+   wire n_dtack_peri_pt; // *DTACK peripherals "pre-trigger"
+   reg n_dtack_peri_bf; // *DTACK for peripherals buffer
 
    // If the boot-time overlay is enabled but we attempt to write to
    // the regular RAM region, then this is a *RAMEN trigger.  The
    // overlay control logic will zero the switch on the next cycle,
    // but we use combinatorial logic here to act immediately.
-   assign reg_ram_w = (~r_n_w & (a23_19[4:3] == 2'b00));
-   assign n_ramen = ~((boot_overlay) ? (a23_19[4:1] == 4'b0110) :
-		      (a23_19[4:3] == 2'b00)) &
-		    ~reg_ram_w;
-   assign reg_romen = (a23_19[4:1] == 4'h4);
-   // Only trigger *ROMEN for reads, not writes.
-   assign n_romen = ~(reg_romen |
-		      (boot_overlay & r_n_w & (a23_19[4:3] == 2'b00)));
-   assign n_scsi  = ~(a23_19[4:0] == 5'b01011);
-   assign n_sccen = ~((a23_19[4:1] == 4'h9) |
-		      (a23_19[4:1] == 4'hb));
-   assign n_sccrd = ~(a23_19[4:1] == 4'h9);
-   assign n_iwm   = ~(a23_19[4:1] == 4'hd);
-   assign via_cs1 =  (a23_19[4:0] == 5'b11101);
-   // TODO: We don't currently implement Auto Vector, but neither does
-   // MESS/MAME but its emulation still works just fine?  There could
-   // be ROM patch hacks...
+   assign reg_ram = ~n_as & (a23_19[4:3] == 2'b00);
+   assign reg_ram_r = (r_n_w & reg_ram);
+   assign reg_ram_w = (~r_n_w & reg_ram);
+   assign n_ramen = ~((boot_overlay) ?
+		      ((~n_as & ((a23_19[4:1] == 4'h6) |
+				 (a23_19[4:1] == 4'h7))) | reg_ram_w) :
+		    reg_ram);
+   assign reg_romen = ~n_as & (a23_19[4:1] == 4'h4);
+   // Only trigger *ROMEN for reads, not writes, in overlay zone.
+   assign n_romen = ~(reg_romen | (boot_overlay & reg_ram_r));
+   assign scsi    = ~n_as & (a23_19[4:0] == 5'b01011);
+   assign n_scsi  = ~scsi;
+   assign sccrd   = ~n_as & (a23_19[4:1] == 4'h9);
+   assign sccwr   = ~n_as & (a23_19[4:1] == 4'hb);
+   assign n_sccen = ~(sccrd | sccwr);
+   assign n_sccrd = ~sccrd;
+   assign n_iow   = ~((scsi & ~r_n_w) | sccwr);
+   assign n_iwm   = ~(~n_as & (a23_19[4:1] == 4'hd));
+   assign via_cs1 =  ~n_as & (a23_19[4:0] == 5'b11101);
+   assign n_vpa   = ~(via_cs1 | (~n_as & (a23_19[4:1] == 4'hf)));
+   // N.B.: According to Guide to the Macintosh family hardware, page
+   // 126, the implementation of Auto Vector is easy and
+   // straightforward for the BBU.  Just assert `*VPA` in the address
+   // range.  The CPU sets address lines A3 - A1, and this causes the
+   // CPU to automatically jump to the memory location containing the
+   // interrupt handler.
 
-   // TODO: Signal a bus error for out-of-range RAM addresses.  Make
-   // sure to also signal errors in the boot-time overlay when booting
-   // with less than 1 MB of RAM.  This would require decoding more
-   // address bits, though.
-   assign berr_ram = 0;
+   // Optionally trigger bus errors if a read is attempted from the
+   // write-only SCC address space, and vice versa.
+   assign berr_scc = (sccrd & ~r_n_w) | (sccwr & r_n_w);
 
-   assign n_berr = ~(berr_ram |
+   // Note that if the PDS card asserts *EXTDTK, we also must not
+   // drive *BERR.  TODO EVALUATE: Should we wait a cycle before
+   // asserting *BERR to give the PDS card time to respond first?
+   assign n_berr = n_as | ~n_extdtk |
+		   ~((~n_ramen & berr_ram) |
+		     berr_scc |
 		     (a23_19[4:0] == 5'b01010) |
 		     (a23_19[4:1] == 4'h7) |
 		     (a23_19[4:1] == 4'h8) |
@@ -851,21 +804,88 @@ module decode_devaddr (n_ramen, n_romen, n_scsi, n_sccen, n_sccrd,
 		     (a23_19[4:1] == 4'hc) |
 		     (a23_19[4:0] == 5'b11100));
    // TODO: Also flag bus errors for the final address zone.
+
+   // NOTE: For all peripherals, we must set `*DTACK` from the BBU
+   // upon successful access condition and time durations because it
+   // is not set by the device itself.  From the time *AS is asserted,
+   // we simply wait one clock cycle on whatever clock is given to us
+   // before we trigger *DTACK for the peripheral.
+
+   // N.B.: According to Guide to the Macintosh family hardware,
+   // `*DTACK` is not used to respond to addresses in the range
+   // 0xe00000 - 0xffffff, only below that.  `*VPA` alone is used to
+   // respond to these addresses.  So therefore, we exclude `VIA.CS1`.
+   assign n_dtack_peri_pt = n_scsi & n_sccen & n_iwm;
+   // N.B. We use combinatorial logic here to deassert *DTACK for
+   // peripherals as soon as *AS is released.
+   assign n_dtack_peri = n_as | n_dtack_peri_bf;
+
+   always @(negedge n_res) begin
+      n_dtack_peri_bf <= 1;
+   end
+
+   always @(posedge clk) begin
+      if (n_res) begin
+	 if (n_as)
+	   n_dtack_peri_bf <= 1;
+	 else begin
+	    if (n_dtack_peri_pt)
+	      n_dtack_peri_bf <= 0;
+	    else
+	      n_dtack_peri_bf <= 1;
+	 end
+      end
+      else
+	; // Nothing to be done during RESET.
+   end
+endmodule
+
+// Determine if a RAM address is out of range and should therefore
+// signal a bus error.
+module berr_ram_logic (a0_21, ramsz, /*ramsz_en,*/ berr_ram);
+   input wire [21:0] a0_21;
+   input wire [23:0] ramsz;
+   // input wire [6:0] ramsz_en;
+   output wire berr_ram;
+
+   // We could either use arithmetic comparison (easiest to code in
+   // Verilog), or bit-wise comparisons (possibly more efficient in
+   // hardware).  We may simply consider implementing this logic in a
+   // separate module.
+
+   // 4MB valid: 0x000000 - 0x3fffff
+   // 4MB invalid: None!
+   // 2.5MB valid: 0x000000 - 0x27ffff
+   // 2.5MB invalid: 0x280000 - 0x3fffff
+   // 2MB valid: 0x000000 - 0x1fffff
+   // 2MB invalid: 0x200000 - 0x3fffff
+   // 1MB valid: 0x000000 - 0x0fffff
+   // 1MB invalid: 0x100000 - 0x3fffff
+   // 512K valid: 0x000000 - 0x07ffff
+   // 512K invalid: 0x080000 - 0x3fffff
+   // 256K valid: 0x000000 - 0x03ffff
+   // 256K invalid: 0x040000 - 0x3fffff
+   // 128K valid: 0x000000 - 0x01ffff
+   // 128K invalid: 0x020000 - 0x3fffff
+
+   // N.B. Verilog comparison is unsigned by default.
+   assign berr_ram = { 1'b0, a0_21[21:17] } < ramsz[22:17];
 endmodule
 
 // Boot-time memory overlay register and controlling logic.  This is
 // fairly straightforward to implement once you see all the other
 // logic of the BBU in place.
-module overlay_logic (n_res, clk, overlay, reg_romen, reg_ram_w);
+module overlay_logic (n_res, clk, boot_overlay, reg_romen, reg_ram_w);
    input wire n_res;
    input wire clk;
-   output reg overlay;
+   // Boot-time memory overlay switch, 1 = enable, 0 = disable.
+   output reg boot_overlay;
    input wire reg_romen;
    input wire reg_ram_w;
 
    always @(negedge n_res) begin
       // Initialize the overlay switch to ENABLED on RESET.
-      overlay <= 1;
+      boot_overlay <= 1;
    end
 
    always @(posedge clk) begin
@@ -874,13 +894,12 @@ module overlay_logic (n_res, clk, overlay, reg_romen, reg_ram_w);
 	 // address zone.  And, according to MESS/MAME, also disable
 	 // on the first attempt to write the regular RAM zone.
 	 if (reg_romen | reg_ram_w)
-	   overlay <= 0;
+	   boot_overlay <= 0;
 	 else
 	   ; // Nothing to be done.
       end
    end
-endmodule // btm_overlay
-
+endmodule
 
 // Column address strobe decode logic.  Determine which column access
 // strobe line to assert based off of the installed RAM, high-order
@@ -1324,39 +1343,96 @@ endmodule
 // determine where we are on the screen, which buffer address to fetch
 // next, and so on.
 module avtimers ();
+   input wire n_res;
+   input wire c16m;
+
+   // Video signals
+   input wire vidpg2;  // VIDPG2 signal
+   output reg vidout;  // VIDOUT signal
+   output reg n_hsync; // *HSYNC signal
+   output reg n_vsync; // *VSYNC signal
+
+   // Sound and disk speed signals
+   input wire sndres;
+   output reg snd, pwm;
+
+   // C16M pixel clock (0.064 us per pixel).
+   // 512 horizontal draw pixels, 192 horizontal blanking pixels.
+   // 342 scan lines, 28 scan lines vertical blanking.
+   // 60.15 Hz vertical scan rate.
+   // (512 + 192) * (342 + 28) = 260480 pixel clock ticks per frame.
+
+   // Total screen buffer size = 10944 words.  High-order bit of each
+   // 16-bit word is the leftmost pixel, low-order bit is the
+   // rightmost pixel.  Words in ascending order move from left to
+   // right in the scan line, first scan line is topmost and then
+   // moves downward.
+
+   // *HSYNC and *VSYNC counters are negative during blanking.
+   reg [15:0] vidout_sreg;    // VIDOUT shift register
+   reg [4:0]  vidout_cntr;    // VIDOUT remaining counter
+   reg [9:0]  vid_hsync_cntr; // *HSYNC counter
+   reg [8:0]  vid_vsync_cntr; // *VSYNC counter
+
+   wire [23:0] vid_main_addr; // Address of main video buffer
+   wire [23:0] vid_alt_addr;  // Address of alternate video buffer
+
+   // Sound and disk speed buffers are scanned 370 words per video
+   // frame, and the size of both buffers together is 370 words.  Or,
+   // 260480 pixel clock ticks / 370 = 704 pixel clock ticks per word.
+   // In a single scan line, (512 + 192) / 704 = 704 / 704 = exactly 1
+   // word is read.  The sound byte is the most significant byte, the
+   // disk speed byte is the least significant byte.  Both the sound
+   // sample and disk speed represent a PCM amplitude value, this is
+   // used to generate a PDM waveform that can be processed by a
+   // low-pass filter to generate the analog signal.
+
+   // Well, at least in concept... Inside Macintosh claims that only a
+   // single pulse is generated, so this is not quite your typical PDM
+   // audio circuit.  Nevertheless, the sample rate is 22.2555 kHz, so
+   // it's not too bad overall for generating lo-fi audio.  But, good
+   // point to ponder, this is an area of improvement where a
+   // different algorithm can generate better audio quality.
+
+   reg [15:0] snddsk_reg; // PCM sound sample and disk speed register
+
+   wire [23:0] snddsk_main_addr; // Address of main sound/disk buffer
+   wire [23:0] snddsk_alt_addr;  // Address of alternate sound/disk buffer
+
+   // We must be careful that the sound circuitry does not attempt to
+   // access RAM at the same time as the video circuitry.  Because the
+   // phases are coherent, we can simply align the sound and disk
+   // speed RAM fetch to be at a constant offset relative to the video
+   // RAM fetch.
+
+   // PLEASE NOTE: We must carefully time our RAM accesses since they
+   // have delays and we don't want the screen bits shift register
+   // buffer to run empty before we have the next word available from
+   // RAM.  Our ideal is that the next word is available from RAM just
+   // as we are shifting out the last pixel, so that we can use a
+   // non-blocking assign and the new first pixel will be available
+   // right at the start of the next pixel clock cycle.  Otherwise,
+   // less ideal but easier to program would be to use two 16-bit
+   // buffers as a FIFO.
+
+   always @(negedge n_res) begin
+      // Initialize all output registers on RESET.
+
+      vidout <= 0; n_hsync <= 1; n_vsync <= 1;
+
+      snd <= 0; pwm <= 0;
+
+      // Initialize all internal registers on RESET.
+      vidout_sreg <= 0;
+      vidout_cntr <= 0;
+      vid_hsync_cntr <= 0;
+      vid_vsync_cntr <= 0;
+      snddsk_reg <= 0;
+   end
 endmodule
 
 /* TODO: Summary of what is missing and left to implement: DRAM
-   initialization pulses, DRAM refresh, video, disk, and audio
-   scanout, SCSI DMA, EXTDTK yielding, double-check SCC read/write
-   logic.  */
-
-/*
-
-TODO: Okay, we really have a plan now to try to make my code modular
-and easy to understand.  The original probably wasn't too nice since
-it was only written by really one person working by themself, but hey,
-let's go better a second time around.  So, yes, this is the plan.  See
-that nice, clean, simple DRAM controller main state advancement
-module?  My goal is to create just a series of modules like that, they
-plug together to create the full integrated system.  We use
-combinatorial logic and rerouting wires as necessary to get the final
-intended behavior.
-
-One thing to remember is that we have monopoly control over the output
-logic of RA7 and RA9.  We never need to yield high-impedance on this.
-So we just use combinatorial logic to set this as we please, from
-jumpers, internal registers, and the like.  Yes, namely the configured
-installed RAM mode.
-
-To keep the main DRAM controller simple, we can use combinatorial
-logic spelled out separately and `n_cas` as a register to trigger the
-proper CAS lines on the individual DRAM SIMMs.  This is also where we
-handle *LDS and *UDS.
-
-Since we use a module for the DRAM controller main loop, we can use
-wires and other modules to feed it whatever state advancement clock we
-want.  That's really good!  That solves a problem I was worrying
-about.
-
-*/
+   initialization pulses, DRAM refresh, detect 2.5MB of RAM and
+   configure address buffers accordingly, video, disk, and audio
+   scanout, SCSI DMA, EXTDTK yielding, interrupt propagation,
+   double-check SCC read/write logic.  */
