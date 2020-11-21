@@ -50,6 +50,10 @@
 `define RAMSZ_EN_4M 7'b1000000
 `define RAMSZ_ENI_4M 6
 
+// Please note: If we don't list the configuration in one of the
+// following the tables, it's not supported by the BBU.  The BBU is a
+// gate array, not a microcontroller!
+
 // The main and alternate screen buffer memory addresses are
 // calculated by subtracting a constant from the installed RAM size.
 // Deltas: main -0x5900, alt. -0xd900.
@@ -61,10 +65,6 @@
 // 2MB: main 0x1fa700, alt 0x1f2700.
 // 2.5MB: main 0x27a700, alt 0x272700.
 // 4MB: main 0x3fa700, alt 0x3f2700.
-
-// Please note: If we don't list the configuration in the table, it's
-// not supported by the BBU.  The BBU is a gate array, not a
-// microcontroller!
 
 // Table of video memory base addresses.
 `define vid_main_addr_128k 24'h1a700
@@ -94,10 +94,6 @@
 // 2.5MB: main 0x27fd00, alt. 0x27a100.
 // 4MB: main 0x3ffd00, alt. 0x3fa100.
 
-// Please note: If we don't list the configuration in the table,
-// it's not supported by the BBU.  The BBU is a gate array, not a
-// microcontroller!
-
 // Table of sound and disk speed memory base addresses.
 `define snddsk_main_addr_128k 24'h1fd00
 `define snddsk_alt_addr_128k  24'h1a100
@@ -115,11 +111,6 @@
 `define snddsk_alt_addr_4m  24'h3fa100
 
 /* Top-level module for the BBU.
- 
-   TODO Abbreviations legend, here since they are not noted elsewhere:
- 
-   RDQ = RAM Data Value
-   PMCYC = Processor Memory Cycle
  
    Undocumented signal but assumed to exist:
 
@@ -164,17 +155,7 @@ module bbu_master_ctrl
    // The Macintosh SE deprecated SNDPG2.  Nevertheless... for the
    // sake of possibly making quasi-hardware replicas of earlier
    // Macintosh computers easier, we will preserve an implementation
-   // here anyways.  As for the OVERLAY signal, we'll have to use Mini
-   // vMac's guess on how to implement it.  At boot, the ROM
-   // exclusively accesses the ROM overlay addresses and the remapped
-   // RAM address when setting up.  When it is done, it jumps into the
-   // standard ROM address access.  As soon as the BBU detects this
-   // memory access (any address in the standard ROM address space),
-   // it switches the overlay, and it cannot be switched back except
-   // by a RESET signal.
-
-   // So yes... it turns out the BBU must actually do address bus
-   // snooping.
+   // here anyways.
 
    // Essential sequential logic RESET and clock signals
    input wire n_res; // *RESET signal
@@ -235,15 +216,22 @@ module bbu_master_ctrl
 
    // Note tristate inout ... 'bz for high impedance.  8'bz for wide.
 
-   // In order to implement the memory overlay switch, we must snoop
-   // the address bus.  These are the registers we use to store the
-   // address multiplexor outputs.
+   // Full DRAM address bus snooping?  I almost thought this was
+   // required to implement some functions, but it turns out it isn't,
+   // partial address bus snooping is good enough.  Nevertheless, I'll
+   // preserve the implementation as it could be useful for BBU mods.
    reg [7:0] row_snoop; reg [7:0] col_snoop;
 
    // Installed RAM size.
    wire [23:0] ramsz;
 
-   // SCSI support: Handle chip select, and handle DMA.
+   // SCSI support: Handle chip select, and handle DMA.  Important!
+   // Never have *DACK and *SCSI active simultaneously.  Okay, so
+   // let's get this straight.  When we would normally assert *DTACK,
+   // we release *SCSI and wait for SCSI.DRQ.  Then when we receive
+   // it, we can assert *DTACK and also *DACK, with a timer to
+   // deassert *DACK.  Important!  Make sure we do not go faster than
+   // the minimum read/write pulse width of the SCSI chip.
 
    // Important!  How to handle SCSI DMA... according to Guide to the
    // Macintosh family hardware, page 126, this is "pseudo-DMA" mode.
@@ -255,9 +243,13 @@ module bbu_master_ctrl
    // `*DTACK` is tri-stated according to the manual when `*EXTDTK`
    // (`*EXT.DTACK`) is asserted.
 
+   // TODO: How do we know if DMA mode is true?  Do we have to snoop
+   // the address but to get this information.
+
    // Now, here's the golden rule: "If any access has not terminated
    // within 265 ms, the BBU asserts the bus error signal /BERR."
-   // There you go, that's how it is driven.  So, another thing,
+   // There you go, that's how it is driven, though the condition only
+   // happens for PDS and SCSI accesses.  So, another thing,
    // yes... there must be at least a nominal delay to assert `*DTACK`
    // to allow PDS cards to intervene by asserting `*EXTDTK` first.
 
@@ -407,6 +399,17 @@ module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
    // PLEASE NOTE.  Macintosh SE/30 takes one access cycle every
    // 15.6us for DRAM refresh.
 
+   // So, what's the secret sauce of the Macintosh SE being more
+   // performant in memory access?  Guide to the Macintosh family
+   // hardware, page 401.  During the BBU memory access cycle time,
+   // unlike earlier models that would only read one word, the BBU
+   // reads two 16-bit words.  Yes, so it does do buffering!  This
+   // allows the CPU to have free access to the next two cycles.  So,
+   // the word is hard and strong now, `*PMCYC` is not a simple 1MHz
+   // clock, but has a much more complex timing circuit.  That equates
+   // to a 200% memory access speedup during screen scanning in the
+   // Macintosh SE compared to the Macintosh Plus.
+
    /* Inside Macintosh claims that the serial clock is 3.672 MHz.
       Clock multiplication (via PLL) and division can be used to
       generate this from the 15.6672 MHz clock as follows:
@@ -432,9 +435,9 @@ module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
       And yes, even with that introduced phase/period error, the
       downstream hardware apparently still works just fine, thanks to
       the divide-by-16 in front of the SCC's internal baud rate
-      generator.  This gives you a max baud of 230 kbits/sec, with a
-      phase/period error of 1/(16*16) = 0.39%.
-   */
+      generator.  This gives you a max baud of 230.4 kbits/sec, with a
+      phase/period error of 1/(16*16) = 0.39%.  This is the same baud
+      as AppleTalk.  */
 
    // TODO EVALUATE: Optimize this to minimize the number of register
    // bits required, while still preserving ideal frequency division
@@ -699,7 +702,24 @@ endmodule
    charge, you can do better!  And indeed, that note only appears to
    apply to the Macintosh Plus, not the Macintosh SE, as it is listed
    in that section.
- 
+
+   But, for the sake of Macintosh Plus recreation, please note.  The
+   TSG PAL places one of the high-frequency phase indicator signals on
+   D0 of the address bus, I assume it is the 1 MHz *PMCYC signal.  A
+   multiple address read instruction is used to read three consecutive
+   data values from the address bus in synchronous I/O mode (due to
+   using address 0xf00000), so each address read is either 10 or 20
+   CPU cycles long.  This will sample the phase at a few different
+   points.  The phase readings are added together, if they are zero or
+   one, then we are "in-phase."  Otherwise, phase readings 2 and 3 are
+   considered "out-of-phase" so we access a word-width address in the
+   SCC range to shift the high frequency timing by 128 ns (one CPU
+   clock cycle at 8 MHz).
+
+   The important thing to remember is that every MC68000 instruction
+   executes for an even number of clock cycles (divisible by 2), and
+   there is no pipelining in these early CPUs.
+
    TODO FIXME: Guide to the Macintosh family hardware, page 127.
    Okay, so this is how to interpret the information about the
    boot-time overlay for the alternate RAM location.  Only a 2MB zone
@@ -991,6 +1011,77 @@ module a0_to_ds (a0, n_uds, n_lds);
    output wire n_uds, n_lds;
    assign n_uds = a0;
    assign n_lds = ~a0;
+endmodule
+
+// TODO: So this is how the fastest CPU access state machine workss.
+// *AS is started to be asserted on the rising edge of the CPU clock
+// at S2, but it is not guaranteed clearly asserted until the falling
+// edge of S2.  Between this time, we must assert *DTACK before the
+// falling edge of S4.  So yes, we effectively have a maximum of two
+// 16 MHz cycles to react, but better if we can get it done in 1.5
+// cycles at 16 MHz.  We must assert *DTACK before 10 ns of the end,
+// so better to go 30 ns before the end, i.e. half of a 16 MHz clock
+// cycle.
+
+// So, point in hand, we need to design our logic to work very fast
+// within these constraints.  First, we have a cycle counter runs on
+// the _falling edge_ of the clock.  We only count one.  Then, we have
+// a "subcycle counter" which is really just combinatorial logic.  We
+// must only use combinatorial logic in order to be able to assert
+// signals sub-cycle in a way that hopefully still works on an FPGA.
+// If this really only works on an ASIC, though, our next best option
+// is to use a 32 MHz PLL to satisfy the timing requirements.  Also,
+// it's important to understand, when using combinatorial logic to
+// effectively double the clock frequency, understanding signal
+// propagation delay is critical.
+
+// Here, we assume the rising edge of C16M is synced to the rising
+// edge of C8M, otherwise this won't work!
+
+// There's good reason to be concerned about glitching when not using
+// register-buffered outputs on a sequential clock.  But, yeah,
+// hardware-wise, this is the simplest way to do clock frequency
+// doubling, and if it works like the 3.686 MHz clock with
+// phase/period error, history be told.  F.Y.I. Anecdotal evidence
+// hints that the Macintosh Plus may have used this combinatorial
+// logic hackery on clock signals in its PALs.  But it was still
+// driven by clock C16M and was a registered PAL?  Maybe I better just
+// look down its datasheet real good, check that it uses typical
+// latching.  PAL16R4.
+
+// Okay, here's the deal.  We can get this to work reasonably without
+// glitching through the means of programmable slew rate limiting
+// filter circuits built into the FPGA at the pin terminals.  But that
+// is the necessity if we go that path.
+
+module dram_fast_test (c16m, c8m, n_res, n_as);
+   input wire c16m;
+   input wire c8m;
+   input wire n_res;
+   input wire n_as;
+
+   reg state_buf;
+   wire state0, state1, state2, state3;
+   // wire state4;
+
+   assign state0 = n_as;
+   assign state1 = ~n_as & ~state_buf &  c16m & ~c8m;
+   assign state2 = ~n_as & ~state_buf & ~c16m & ~c8m;
+   assign state3 = ~n_as &  state_buf &  c16m &  c8m;
+   // assign state4 = ~n_as &  state_buf & ~c16m &  c8m;
+
+   always @(negedge n_res) begin
+      state_buf <= 0;
+   end
+
+   always @(posedge c16m) begin
+      if (n_res) begin
+	 if (~n_as)
+	   state_buf <= 1;
+	 else
+	   state_buf <= 0;
+      end
+   end
 endmodule
 
 // Stateful advancement DRAM controller logic for CPU memory accesses.
