@@ -143,12 +143,18 @@ module ls161(n_clr, clk, a, b, c, d, enp, gnd,
    assign rco = (outvec == 4'hf);
    assign { q_d, q_c, q_b, q_a } = outvec;
 
+   // Clear is asynchronous, so it is not dependent on the clock.
+   always @(negedge n_clr) begin
+      if (~n_clr) outvec <= 0;
+   end
+
    // N.B. As soon as the rising edge of the clock is detected under
    // the proper conditions, we propagate the incremented value to the
    // output pins.  We do not wait until the next rising edge of the
    // clock.
    always @(posedge clk) begin
-      if (~n_clr) outvec <= 0;
+      if (~n_clr)
+	; // Nothing to be done.
       else if (~n_load) outvec <= loadvec;
       else if (enp & ent)
 	outvec <= outvec + 1;

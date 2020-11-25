@@ -1496,6 +1496,10 @@ module avtimers ();
    // point to ponder, this is an area of improvement where a
    // different algorithm can generate better audio quality.
 
+   // Important!  Main screen/sound buffers are selected when the VIA
+   // bit is one, alternate when the VIA bit is zero.  These are
+   // treated as active low signals.
+
    reg [15:0] snddsk_reg; // PCM sound sample and disk speed register
 
    wire [23:0] snddsk_main_addr; // Address of main sound/disk buffer
