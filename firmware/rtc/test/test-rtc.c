@@ -2155,7 +2155,7 @@ void writehex(char *rch)
 */
 
 static const char * bench_irq_names[5] =
-  { "BENCH.SEC1", "BENCH.CE*", "BENCH.CLK",
+  { "BENCH.SEC1*", "BENCH.CE*", "BENCH.CLK",
     "BENCH.DATA.IN", "BENCH.DATA.OUT*" };
 
 // simavr variables
@@ -2190,7 +2190,7 @@ void simNoRec(void)
 
 void pin_change_notify(avr_irq_t *irq, uint32_t value, void *param)
 {
-  if (irq == bench_irqs + IRQ_SEC1 && value)
+  if (irq == bench_irqs + IRQ_SEC1 && !value)
     sec1Isr();
   else if (irq == bench_irqs + IRQ_DATA_OUT) {
     // Only write the updated value to the buffer register if the VIA
@@ -2230,15 +2230,15 @@ int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
   // together.
   bench_irqs = avr_alloc_irq(&avr->irq_pool, 0, 5, bench_irq_names);
 
-  avr_connect_irq(avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 5),
-                  bench_irqs + IRQ_SEC1);
   avr_connect_irq(bench_irqs + IRQ_CE,
                   avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 0));
   avr_connect_irq(bench_irqs + IRQ_CLK,
                   avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 2));
 
-  // Since we use open-drain signaling on data, this a bit trickier to
-  // connect to, but this is how to do it.
+  // Since we use open-drain signaling on sec1 and data, this a bit
+  // trickier to connect to, but this is how to do it.
+  avr_connect_irq(avr_iomem_getirq(avr, AVR_IO_TO_DATA(0x17), "RTC.SEC1*", 5),
+                  bench_irqs + IRQ_SEC1);
   avr_connect_irq(bench_irqs + IRQ_DATA_IN,
                   avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 1));
   avr_connect_irq(avr_iomem_getirq(avr, AVR_IO_TO_DATA(0x17), "RTC.DATA.OUT*", 1),
@@ -2283,10 +2283,6 @@ int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
   // ATTiny85 PORTB == 0x18
 
   avr_vcd_add_signal(&vcd_file,
-    avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 5),
-    1  /* bits */,
-    "RTC.SEC1" );
-  avr_vcd_add_signal(&vcd_file,
     avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 0),
     1  /* bits */,
     "RTC.CE*" );
@@ -2295,8 +2291,12 @@ int setupSimAvr(char *progName, const char *fname, bool8_t interactMode)
     1  /* bits */,
     "RTC.CLK" );
 
-  // Since we use open-drain signaling on data, this a bit trickier to
-  // monitor, but this is how to do it.
+  // Since we use open-drain signaling on sec1 and data, this a bit
+  // trickier to monitor, but this is how to do it.
+  avr_irq_t *rtc_sec1_irq =
+    avr_iomem_getirq(avr, AVR_IO_TO_DATA(0x17), "RTC.SEC1*", 5);
+  avr_vcd_add_signal(&vcd_file, rtc_sec1_irq, 1  /* bits */,
+    "RTC.SEC1*" );
   avr_vcd_add_signal(&vcd_file,
     avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('B'), 1),
     1  /* bits */,

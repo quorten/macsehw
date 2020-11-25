@@ -289,8 +289,11 @@ void setup(void)
   PORTB |= 1<<SOFT_XTAL1;
   DDRB &= ~(1<<SOFT_XTAL2);
   PORTB |= 1<<SOFT_XTAL2;  
-  // OUTPUT: The 1Hz square wave (used for interrupts elsewhere in the system)
-  DDRB |= (1<<ONE_SEC_PIN);
+  // OUTPUT open-drain: The 1Hz square wave (used for interrupts
+  // elsewhere in the system)
+  DDRB &= ~(1<<ONE_SEC_PIN);
+  PORTB &= ~(1<<ONE_SEC_PIN);
+  digitalWriteOD(ONE_SEC_PIN, 0);
   // INPUT: The processor pulls this pin low when it wants access
   DDRB &= ~(1<<RTC_ENABLE_PIN);
   PORTB &= ~(1<<RTC_ENABLE_PIN);
@@ -358,8 +361,8 @@ void oflowInterrupt(void)
     // Reset the timer-related flags now that we've reached a
     // half-second.
     numOflows = 0;
-    PINB = 1<<ONE_SEC_PIN;  // Flip the one-second pin
-    if (!(PINB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
+    DDRB ^= 1<<ONE_SEC_PIN; // Flip the one-second pin
+    if ((DDRB&(1<<ONE_SEC_PIN))) { // If the one-second pin is low
       seconds++;
     }
   }
