@@ -1,21 +1,26 @@
 /* Synthesizable Verilog hardware description for a drop-in
    replacement of the Apple Custom Silicon Bob Bailey Unit (BBU), an
    address controller for the Macintosh SE and similar computers.
- 
+
    Written in 2020 by Andrew Makousky
- 
+
    Public Domain Dedication:
- 
+
    To the extent possible under law, the author(s) have dedicated all
    copyright and related and neighboring rights to this software to
    the public domain worldwide. This software is distributed without
    any warranty.
- 
+
    You should have received a copy of the CC0 Public Domain Dedication
    along with this software. If not, see
    <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 */
+
+`ifndef BBU_V
+`define BBU_V
+
+`include "common.vh"
 
 // NOTE: These constants are defined in lower-case because they are
 // meant to be treated principally as if they are hard-wired
@@ -172,7 +177,7 @@ module bbu_master_ctrl
    // MC68000 signals
    input wire a9, a17, a19, a20, a21, a22, a23;
    input wire r_n_w, n_as, n_uds, n_lds;
-   inout wire n_dtack;
+   `output_wz wire n_dtack;
    output wire n_ipl0;
    input wire n_ipl1;
    output wire n_berr;
@@ -262,8 +267,8 @@ module bbu_master_ctrl
    //////////////////////////////////////////////////
    // Pure combinatorial logic is defined first.
 
-   // TODO: Assert `*IPL0` if we receive an interrupt signal from the
-   // VIA or SCSI.  However, do not assert `*IPL0` if the SCC asserts
+   // Assert `*IPL0` if we receive an interrupt signal from the VIA or
+   // SCSI.  However, do not assert `*IPL0` if the SCC asserts
    // `*IPL1`.  Guide to the Macintosh family hardware, page 113.
    // SCSI interrupts are signaled only on IRQ from the SCSI
    // controller.  DRQ is not attached to MC68000 interrupt lines
@@ -662,6 +667,12 @@ endmodule
    * 0xe80000 - 0xefffff: Rockwell 6522 VIA
    * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
    * 0xfffff0 - 0xffffff: Auto Vector
+
+   TODO FIXME: Note that SCSI chip enable is NOT asserted when A9 is
+   one, and Macintosh Plus asserts DACK when A9 is one, but not when
+   it is zero.  Okay, so I think I have that figured out.  Add 512 for
+   DMA mode access logic, otherwise we do not implement DMA access
+   mode at all.
 
    This address map has also been confirmed with Guide to the
    Macintosh family hardware, page 127.  PLEASE NOTE: In SCC Read
@@ -1099,7 +1110,7 @@ module dramctl_cpu (n_res, clk, r_n_w, c2m,
    // data output/input (RDQ) by placing those lanes in a
    // high-impedance state.
    output reg n_en245;
-   // *PMCYC principally enables the row/column address multiplexors.
+   // *PMCYC principally enables the row/column address multiplexers.
    // At a higher level, it is used to determine whether it is the
    // CPU's turn to access RAM or the BBU's turn to access RAM.  The
    // CPU always takes a multiple of 4 clock cycles running at 8 MHz
@@ -1112,7 +1123,7 @@ module dramctl_cpu (n_res, clk, r_n_w, c2m,
    input wire [9:0] ra; // RAM Address (RA)
    // In order to implement the memory overlay switch, we must snoop
    // the address bus.  These are the registers we use to store the
-   // address multiplexor outputs.
+   // address multiplexer outputs.
    // N.B. RA7 and RA9 are set by us, but for simplicity of downstream
    // code, we capture them into the address snooping registers
    // regardless.
@@ -1196,7 +1207,7 @@ module dramctl_cpu (n_res, clk, r_n_w, c2m,
 	    // triggers *PMCYC at the beginning of the CPU's turn to
 	    // access memory.
 	    // if (drc_state[1]) begin // State 2
-	    //    // Enable the row address multiplexors.
+	    //    // Enable the row address multiplexers.
 	    //    n_pmcyc <= 0;
 	    //    // Trigger *EN245 as early as possible.
 	    //    n_en245 <= 0;
@@ -1217,7 +1228,7 @@ module dramctl_cpu (n_res, clk, r_n_w, c2m,
 	       drc_state_buf <= drc_state << 1;
 	    end
 	    if (drc_state[3]) begin // State 8
-	       // Enable the column address multiplexors.
+	       // Enable the column address multiplexers.
 	       c2m <= 1;
 	       drc_state_buf <= drc_state << 1;
 	    end
@@ -1267,7 +1278,7 @@ module dramctl_bbu (n_res, clk, r_n_w,
    output wire ram_r_n_w;
    // Row Address Strobe (*RAS), Column Address Strobe (*CAS)
    output reg n_ras, n_cas;
-   // *PMCYC principally enables the row/column address multiplexors.
+   // *PMCYC principally enables the row/column address multiplexers.
    // At a higher level, it is used to determine whether it is the
    // CPU's turn to access RAM or the BBU's turn to access RAM.  The
    // CPU always takes a multiple of 4 clock cycles running at 8 MHz
@@ -1350,7 +1361,7 @@ module dramctl_bbu (n_res, clk, r_n_w,
 	    // end
 
 	    if (drc_state[1]) begin // State 2
-	       // Enable the row address multiplexors.
+	       // Enable the row address multiplexers.
 	       ra <= row_addr;
 	       drc_state_buf <= drc_state << 1;
 	    end
@@ -1360,7 +1371,7 @@ module dramctl_bbu (n_res, clk, r_n_w,
 	       drc_state_buf <= drc_state << 1;
 	    end
 	    if (drc_state[3]) begin // State 8
-	       // Enable the column address multiplexors.
+	       // Enable the column address multiplexers.
 	       ra <= col_addr;
 	       drc_state_buf <= drc_state << 1;
 	    end
@@ -1506,6 +1517,12 @@ module avtimers ();
    // less ideal but easier to program would be to use two 16-bit
    // buffers as a FIFO.
 
+   // N.B. Sound generation.  Since the original Macintosh used only
+   // simple counters and the registered ASG PAL for PWM generation,
+   // there is no way the more sophisticated PWM techniques could have
+   // been used.  This is going to be a one-shot countdown timer for
+   // generating a single pulse per byte.
+
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
 
@@ -1525,5 +1542,64 @@ endmodule
 /* TODO: Summary of what is missing and left to implement: DRAM
    initialization pulses, DRAM refresh, detect 2.5MB of RAM and
    configure address buffers accordingly, video, disk, and audio
-   scanout, SCSI DMA, EXTDTK yielding, interrupt propagation,
-   double-check SCC read/write logic.  */
+   scanout, SCSI DMA, EXTDTK yielding.
+
+   Okay, so the VERDICT on DRAM initialization pulses.  We don't
+   actually use these as we should, strictly speaking, but why does it
+   still work?  On power-on RESET, the first few CPU memory accesses
+   are all in ROM.  Yet the BBU is still scanning the DRAM and
+   fetching words from it.  These first few words will be garbage, but
+   it's okay because we're read-only.  By the time the CPU makes its
+   first write to DRAM, all is well because it received a sufficient
+   number of *RAS initialization pulses.
+
+   So really, the only mysteries left now is 2.5MB RAM detection and
+   4MB RAM DRAM refresh.  Then we need to do the busywork to implement
+   the PWM and video scanout modules and we're done!  */
+
+/*
+
+Now I think I see why there is the funny thing going on with the
+address multiplexers for RAS/CAS.  It is a required modification to
+use DRAM fast-page mode since RAS and CAS are still logically
+"swapped" compared to a contiguous memory layout.  This swapping of
+RAS and CAS is used to get DRAM refresh for free when scanning the
+video framebuffer.
+
+Okay, so let's review in more detail.
+
+Address multiplexer row address outputs:
+
+A2, A3, A4, A5, A6, A7, A8, A10
+
+A9 inputs directly to BBU, controls RA7.
+
+This is a straight match-up to DRAM row address lines.
+
+RA0 A2
+RA1 A3
+RA2 A4
+RA3 A5
+RA4 A6
+RA5 A7
+RA6 A8
+RA7 A9
+RA8 A10
+RA9 A19 (optional) (!)
+
+So, how many longwords for the video framebuffer?
+
+512 x 342 / 32 = 5472 longwords
+In hex: 0x1560
+Number of address bits fully covered by a full scan: 12
+
+Okay, so the question, does it work for DRAM refresh?  Indeed it
+does!  Well, at least for <=1MB of RAM.
+
+RA9 looks to be trouble.  But, the Unitron reverse engineering docs
+almost have a solution.  Set this to A17 (?) and it should "just work"
+I guess.  But why?
+
+*/
+
+`endif // NOT BBU_V

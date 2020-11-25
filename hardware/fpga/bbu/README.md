@@ -1,5 +1,7 @@
 # "BBU" Apple Custom Silicon
 
+COMPILING: I use Icarus Verilog (`iverilog`) for simulation.
+
 The "BBU" (Bob Bailey Unit), as it is called on the Macintosh SE's
 printed circuit board silkscreen, is a relatively complex Apple custom
 silicon chip, compared to the other custom chips on the Macintosh SE's
