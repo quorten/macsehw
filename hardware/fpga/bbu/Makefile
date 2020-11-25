@@ -1,4 +1,4 @@
-TARGETS = bbu.vvp test_stdlogic.vvp test_mac128pal.vvp
+TARGETS = bbu.vvp test_stdlogic.vvp test_mac128pal.vvp dram.vvp
 
 all: $(TARGETS)
 

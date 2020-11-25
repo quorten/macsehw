@@ -279,17 +279,19 @@ module palcl();
    // TODO: Also implement dual video address counter ICs as part of
    // the PAL cluster.
    // Video address signals, comes from video counter IC
-   input wire va14, va13, va12, va11, va10, va9, va8, va7,
-	      va4, va3, va2, va1;
+   wire va14, va13, va12, va11, va10, va9, va8, va7,
+	va6, va5, va4, va3, va2, va1;
    // Audio address signals?
    output wire ava14, ava13;
 
    // Video control signals
-   output wire n_vshft, n_vsync, n_hsync, n_snddma, vid;
-   input wire servid;
+   output wire n_vsync, n_hsync, vid;
 
    // MC68000 CPU address signals
-   input wire a23, a22, a21, a20, a19, a17, a9;
+   input wire a23, a22, a21, a20, a19, a17, a16,
+	      a15, a14, a13, a12, a11, a10, a9,
+	      a8, a7, a6, a5, a4, a3, a2, a1;
+   // not used: a18
    input wire n_as, n_uds, n_lds;
    output wire n_dtack;
    input wire r_n_w;
@@ -311,11 +313,15 @@ module palcl();
 
    // DRAM signals
    output wire casl, cash, ras, we;
+   output wire ra0, ra1, ra2, ra3, ra4, ra5, ra6, ra7, ra8, ra9;
    inout wire rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, rdq6, rdq7,
 	      rdq8, rdq9, rdq10, rdq11, rdq12, rdq13, rdq14, rdq15;
 
+   // Internal video signals
+   wire n_vshft, n_snddma, servid;
+
    // Address multiplexer signals?
-   output wire s0, s1, l28, l15, g244;
+   wire s0, s1, l28, l15, n_245oe;
 
    // PAL chip-select and unknown "IO" signals
    wire tsm_oe1, lag_oe2, bmu0_oe1, tsg_oe3;
@@ -326,7 +332,6 @@ module palcl();
 
    // Wires to/from standard logic chips.
    wire sysclk, snddma, n_a20, n_sndres, sndres, n_snd, snd, wr, n_wr;
-   wire n_245oe;
 
    // N.B.: *WR comes from IWM chip, WR goes to floppy drives.  *A20
    // goes to VIA.CS1.  *SNDDMA comes from the LAG.  *SYSCLK comes
@@ -337,11 +342,14 @@ module palcl();
    wire c8mf, c16mf, n_dmald, u12f_tc, ram_r_n_w_f;
    wire vmsh; // video mid-shift, connect two register chips together
    wire n_lermd; // ???
-   wire n_ldps;
+   wire n_ldps; // => n_vshft
    wire s5;
-   wire ra8, ra9;
 
-   wire vid_n_a4; // ???
+   wire vid_n_a4; // => s1
+   // tc => vclk
+   wire l13, l12; // ???
+   wire n_sndpg2; // ???
+   wire n_vidpg2; // ???
 
    // TODO FIXME!  We're not using assign correctly!  `assign` implies
    // diode isolation between separate nets.  We want to merge
@@ -359,27 +367,46 @@ module palcl();
       they could forgo it to allow for more I/O pins.  Hence the
       motivation to use software phase correction instead.  */
 
+   // Inverters and 16MHz clock buffer
    f04 u4d(n_sysclk, sysclk, n_snddma, snddma, a20, n_a20, gnd,
 	   n_sndres, sndres, n_snd, snd, wr, n_wr, vcc);
-
+   // Dual PWM disk drive counters
    ls161 u13e(n_sndres, c8mf, rdq12, rdq13, rdq14, rdq15, n_snd, gnd,
 	      n_dmald, u12f_tc, , , , , snd, vcc);
    ls161 u12f(n_sndres, c8mf, rdq8, rdq9, rdq10, rdq11, n_snd, gnd,
 	      n_dmald, n_sndres, , , , , u12f_tc, vcc);
+   // Dual video shift registers
    ls166 u10f(vmsh, rdq8, rdq9, rdq10, rdq11, 1'b0, c16mf, gnd,
 	      s5, rdq12, rdq13, rdq14, n_lermd, rdq15, n_ldps, vcc);
    ls166 u11f(s5, rdq0, rdq1, rdq2, rdq3, 1'b0, c16mf, gnd,
 	      s5, rdq4, rdq5, rdq6, vmsh, rdq7, n_ldps, vcc);
+   // Dual RAM data bus transceivers
    ls245 u9e(ram_r_n_w_f, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, rdq6, rdq7,
 	     gnd, d7, d6, d5, d4, d3, d2, d1, d0, n_245oe, vcc);
    ls245 u10e(ram_r_n_w_f, rdq8, rdq9, rdq10, rdq11, rdq12, rdq13, rdq14,
 	      rdq15, gnd, d15, d14, d13, d12, d11, d10, d9, d8,
 	      n_245oe, vcc);
-   f253 u10g(snddma, vid_n_a4, va7, s5, a9, a17, ra8, gnd,
+   // RAM RA8/RA9 row/column video/CPU address multiplexer
+   f253 u10g(snddma, s1, va9, s5, a9, a17, ra8, gnd,
 	     ra9, a20, a19, s5, s5, p0q2/*c2m*/, 1'b0, vcc);
-
-   // asg u11e(c16mf, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_dma, vclk, gnd,
-   // 	    tsen2, n_dmald, pwm, , , , , , , vcc);
+   // Dual video address counters
+   ls393 u1f(vclk, resnyb, va1, va2, va3, va4, gnd,
+	     va8, va7, va6, va5, reslin, resnyb, vcc);
+   ls393 u1g(va8, reslin, va9, va10, va11, va12, gnd,
+	     , , l13, l12, reslin, va12, vcc);
+   // RAM row/column video/CPU address multiplexers
+   f257 u2f(p0q2/*c2m*/, s5, va6, ra0, n_snd, va7, ra1, gnd,
+	    ra3/*???*/, va9, n_sndpg2, ra2, va8, n_sndpg2, n_snddma, vcc);
+   f257 u2g(p0q2/*c2m*/, s5, va10, ra4, n_sndpg2, va11, ra5, gnd,
+	    ra7, va13, s5, ra6, va12, s5, n_snddma, vcc);
+   f253 u3f(snddma, s1, va3, va11, a3, a11, ra2, gnd,
+	    ra3, a12, a4, va12, va4, p0q2/*c2m*/, snddma, vcc);
+   f253 u3g(snddma, s1, va5, va13, a5, a13, ra4, gnd,
+	    ra5, a14, a6, va14, va6, p0q2/*c2m*/, snddma, vcc);
+   f253 u4f(snddma, s1, va1, s5, a1, a9, ra0, gnd,
+	    ra1, a10, a2, va10, va2, p0q2/*c2m*/, snddma, vcc);
+   f253 u4g(snddma, s1, va7, n_vidpg2, a7, a15, ra6, gnd,
+	    ra7, a16, a8, s5, va8, p0q2/*c2m*/, snddma, vcc);
 
    tsm pal0(simclk, sysclk, sysclk, pclk, s1, n_ramen, n_romen, n_as, n_uds, n_lds,
 	    gnd, tsm_oe1, casl, cash, ras, vclk, p0q2, p0q1, s0, n_dtack, vcc);
@@ -390,11 +417,15 @@ module palcl();
    bmu1 pal2(simclk, va9, va8, va7, l15, va14, ovlay, a23, a22, a21, gnd,
 	     n_as, n_csiwm, n_sccrd, n_cescc, n_vpa, n_romen, n_ramen, p2io1, l28, vcc);
    bmu0 pal3(simclk, sysclk, n_ramen, n_romen, va10, va11, va12, va13, va14,
-	     r_n_w, gnd, bmu0_oe1, g244, we, ava14, l15, vid, ava13,
+	     r_n_w, gnd, bmu0_oe1, n_245oe, we, ava14, l15, vid, ava13,
 	     servid, n_dtack, vcc);
    tsg pal4(simclk, sysclk, n_vpa, a19, vclk, p0q1, e, keyclk, n_intscc,
 	    n_intvia, gnd, tsg_oe3, d0, q6, clkscc, q4, q3, viacb1,
 	    pclk, n_ipl0, vcc);
+
+   // TODO FIXME: ASG not implemented.
+   // asg u11e(c16mf, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_dma, vclk, gnd,
+   // 	    tsen2, n_dmald, pwm, , , , , , , vcc);
 endmodule
 
 `endif // not MAC128PAL_V
