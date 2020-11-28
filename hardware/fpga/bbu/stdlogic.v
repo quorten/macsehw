@@ -140,7 +140,7 @@ module ls161(n_clr, clk, a, b, c, d, enp, gnd,
    wire [3:0] loadvec = { d, c, b, a };
    reg [3:0] outvec;
 
-   assign rco = (outvec == 4'hf);
+   assign rco = (ent & (outvec == 4'hf));
    assign { q_d, q_c, q_b, q_a } = outvec;
 
    // Clear is asynchronous, so it is not dependent on the clock.
@@ -179,6 +179,16 @@ module ls165(sh_n_ld, clk, e, f, g, h, n_q_h, gnd,
    assign q_h = int_reg[7];
    assign n_q_h = ~q_h;
 
+   // N.B. The '165 chips use asynchronous data loading.  Don't
+   // confuse with '166!  This is actuallly a continuous
+   // assignment... but the behavior is externally imperceptible until
+   // we change to shift mode, so we simply act on the rising edge of
+   // SH/*LD.
+
+   always @(posedge sh_n_ld) begin
+      int_reg <= { h, g, f, e, d, c, b, a };
+   end
+
    // N.B. As soon as the falling edge of the clock is detected under
    // the proper conditions, we propagate the shifted value to the
    // output pins.  We do not wait until the next falling edge of the
@@ -187,7 +197,7 @@ module ls165(sh_n_ld, clk, e, f, g, h, n_q_h, gnd,
       if (sh_n_ld)
 	int_reg <= { int_reg[6:0], ser };
       else
-	int_reg <= { h, g, f, e, d, c, b, a };
+	; // Nothing to be done.
    end
 endmodule
 
@@ -209,6 +219,9 @@ module ls166(ser, a, b, c, d, clk_inh, clk, gnd,
 
    always @(negedge n_clr)
      int_reg <= 0;
+
+   // N.B. The '166 chips uses synchronous data loading.  Don't
+   // confuse with '165!
 
    // N.B. As soon as the falling edge of the clock is detected under
    // the proper conditions, we propagate the shifted value to the
@@ -383,13 +396,23 @@ module ls393(s1a, s1clr, s1q_a, s1q_b, s1q_c, s1q_d, gnd,
    assign { s1q_d, s1q_c, s1q_b, s1q_a } = s1reg;
    assign { s2q_d, s2q_c, s2q_b, s2q_a } = s2reg;
 
-   always @(posedge s1clr)
+   // N.B. These counters propagate the incremented value to the
+   // output pins on the negative edge of the A input, unlike the '161
+   // counter.
+
+   // Also, for the sake of simulating the Macintosh 128K Main Logic
+   // Board signals correctly, we must continuously evaluate the RESET
+   // signals (not edge evaluate), due to the fact that we can have
+   // glitches on the counter input while RESET is still being
+   // held,and the fact that we need to assert the correct RESET value
+   // early on.
+   always @(s1clr)
       s1reg <= 0;
-   always @(posedge s1a)
+   always @(negedge s1a)
       s1reg <= s1reg + 1;
-   always @(posedge s2clr)
+   always @(s2clr)
       s2reg <= 0;
-   always @(posedge s2a)
+   always @(negedge s2a)
       s2reg <= s2reg + 1;
 
 endmodule
@@ -397,10 +420,10 @@ endmodule
 // LS595: 8-bit serial input, parallel output shift register, with
 // output latch.
 module ls595(q_b, q_c, q_d, q_e, q_f, q_g, q_h, gnd,
-	     n_q_h, n_srclr, srclk, rclk, n_oe, ser, vcc);
+	     q_h_p, n_srclr, srclk, rclk, n_oe, ser, q_a, vcc);
    output wire q_b, q_c, q_d, q_e, q_f, q_g, q_h;
    `power wire gnd;
-   output wire n_q_h;
+   output wire q_h_p;
    input wire n_srclr, srclk, rclk, n_oe, ser;
    output wire q_a;
    `power wire vcc;
@@ -410,20 +433,20 @@ module ls595(q_b, q_c, q_d, q_e, q_f, q_g, q_h, gnd,
 
    assign { q_h, q_g, q_f, q_e, q_d, q_c, q_b, q_a }
      = (n_oe) ? 8'bz : int_reg;
-   assign n_q_h = q_h;
+   assign q_h_p = q_h;
 
    always @(negedge n_srclr) begin
       int_reg <= 0;
-   end
-
-   always @(posedge srclk) begin
-      int_reg = { int_reg[7:1], ser };
    end
 
    // N.B. As soon as the rising edge of the clock is detected under
    // the proper conditions, we propagate the shifted value to the
    // output pins.  We do not wait until the next rising edge of the
    // clock.
+   always @(posedge srclk) begin
+      int_reg <= { int_reg[6:0], ser };
+   end
+
    always @(posedge rclk) begin
       out_reg <= int_reg;
    end

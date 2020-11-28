@@ -56,13 +56,14 @@ module tsm(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      casl <= 0; cash <= 0; s0 <= 0; dtack <= 0;
+      casl <= 1; cash <= 1; s0 <= 1; dtack <= 1;
 
-      ras <= 0; vclk <= 0; q2 <= 0; q1 <= 0;
+      ras <= 1; vclk <= 1; q2 <= 1; q1 <= 1;
    end
 
    // Simulate combinatorial logic sub-cycles.
    always @(posedge simclk) begin
+      if (n_res) begin
       casl <= ~(~s0 & s1 & sysclk // video
 		| ~s0 & ~ramen & ~lds // processor
 		| ~s0 & ~casl & sysclk
@@ -77,22 +78,29 @@ module tsm(simclk, n_res,
 		 | ~ras & ~ramen & ~s1 // guarantees that it will be recognized on the falling edge of `pclk` in state `s5`
 		 | ~as & ~dtack & ramen // expects `as` to rise for disable
 		 | ~as & ~dtack & ~s1); // but avoid video cycles (WE)
+      end
    end
 
    // Simulate registered logic.
-   always @(posedge clk) begin
-      ras <= ~(~pclk & q1 & s1 // video cycle
-	       | ~pclk & q1 & ~ramen & dtack // processor cycle
-	       | pclk & ~ras); // any other cycle
-      vclk <= ~(~q1 & pclk & q2 & vclk // divide by 8 (1MHz)
-		| ~vclk & q1
-		| ~vclk & ~pclk
-		| ~vclk & ~q2);
-      q1 <= ~(~pclk & q1
-	      | pclk & ~q1); // divide `pclk` by 2 (4MHz)
-      q2 <= ~(~q1 & pclk & q2 // divide by 4 (2MHz)
-	      | ~q2 & q1
-	      | ~q2 & ~pclk);
+   always @(negedge clk) begin
+      if (n_res) begin
+      ras <= @(posedge clk)
+	~(~pclk & q1 & s1 // video cycle
+	  | ~pclk & q1 & ~ramen & dtack // processor cycle
+	  | pclk & ~ras); // any other cycle
+      vclk <= @(posedge clk)
+	~(~q1 & pclk & q2 & vclk // divide by 8 (1MHz)
+	  | ~vclk & q1
+	  | ~vclk & ~pclk
+	  | ~vclk & ~q2);
+      q1 <= @(posedge clk)
+	~(~pclk & q1
+	  | pclk & ~q1); // divide `pclk` by 2 (4MHz)
+      q2 <= @(posedge clk)
+	~(~q1 & pclk & q2 // divide by 4 (2MHz)
+	  | ~q2 & q1
+	  | ~q2 & ~pclk);
+      end
    end
 endmodule
 
@@ -119,8 +127,8 @@ module lag(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      vshft <= 0; vsync <= 0; hsync <= 0; s1 <= 0; viapb6 <= 0;
-      snddma <= 0; reslin <= 0; resnyb <= 0;
+      vshft <= 1; vsync <= 1; hsync <= 1; s1 <= 1; viapb6 <= 1;
+      snddma <= 1; reslin <= 1; resnyb <= 1;
    end
 
    // Simulate combinatorial logic sub-cycles.
@@ -128,38 +136,60 @@ module lag(simclk, n_res,
    end
 
    // Simulate registered logic.
-   always @(posedge sysclk) begin
-      vshft <= ~(s1 & ~vclk & snddma); // one pulse on the falling edge of `vclk`
-      vsync <= ~(reslin
-		 | ~vsync & ~l28);
-      hsync  <= ~(viapb6 & va4 & ~va3 & ~va2 & va1 // begins in 29 (VA5)
-		  | /*~ ???*/resnyb
-		  | ~hsync & viapb6); // ends in 0F
-      s1 <= ~(~p0q2 // 0 for processor and 1 for video
-	      | ~vclk
-	      | ~vsync & hsync
-	      | ~vsync & viapb6 // only in vertical retrace we have sound cycles
-	      | ~viapb6 & hsync & ~va4 & ~va3 & ~va2
-	      | ~viapb6 & ~hsync & (~va4 | va4 & ~va3 & ~va2 |
+   always @(negedge sysclk) begin
+      if (n_res) begin
+      vshft <= @(posedge sysclk)
+	~(s1 & ~vclk & snddma); // one pulse on the falling edge of `vclk`
+      vsync <= @(posedge sysclk)
+	~(reslin
+	  | ~vsync & ~l28);
+      // hsync  <= @(posedge sysclk)
+      // 	~(viapb6 & va4 & ~va3 & ~va2 & va1 // begins in 29 (VA5)
+      // 	  | /*~ ???*/resnyb
+      // 	  | ~hsync & viapb6); // ends in 0F
+      hsync  <= @(posedge sysclk)
+	~(~viapb6 & ~va4 & ~va3 & va2 & va1 // begins in 29 (VA5)
+	  | ~hsync & ~va4
+	  | ~hsync & ~viapb6); // ends in 0F
+      s1 <= @(posedge sysclk)
+	~(~p0q2 // 0 for processor and 1 for video
+	  | ~vclk
+	  | ~vsync & hsync
+	  | ~vsync & viapb6 // only in vertical retrace we have sound cycles
+	  | ~viapb6 & hsync & ~va4 & ~va3 & ~va2
+	  | ~viapb6 & ~hsync & (~va4 | va4 & ~va3 & ~va2 |
 				    va4 & ~va3 & va2 & ~va1));
-      viapb6 <= ~(~hsync & resnyb // 1 indicates horizontal retrace (pseudo VA6)
-		  | va1 & ~viapb6
-		  | va2 & ~viapb6
-		  | ~hsync & ~viapb6
-		  | resnyb & ~viapb6
-		  | vshft & ~viapb6);
-      snddma <= ~(viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
-		  | ~snddma & vclk); // ... indicates sound cycle
-      reslin <= ~(0); // ??? try to generate line 370
-      resnyb <= ~(vclk // increment VA5:VA14 in 0F and 2B
-		  | viapb6 // ???
-		  | va1
-		  | va2
-		  | ~viapb6 & va3
-		  | hsync
-		  | viapb6 & ~va3
-		  | ~hsync & va3 & ~va4
-		  | ~hsync & ~va3 & va4);
+      // viapb6 <= @(posedge sysclk)
+      // 	~(~hsync & resnyb // 1 indicates horizontal retrace (pseudo VA6)
+      // 	  | va1 & ~viapb6
+      // 	  | va2 & ~viapb6
+      // 	  | ~hsync & ~viapb6
+      // 	  | resnyb & ~viapb6
+      // 	  | vshft & ~viapb6);
+      viapb6 <= @(posedge sysclk)
+	~(hsync & ~va4 & ~va3 & va2 & va1 // 1 indicates horizontal retrace (pseudo VA6)
+	  | ~viapb6 & snddma
+	  | ~viapb6 & vclk);
+      snddma <= @(posedge sysclk)
+	~(viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
+	  | ~snddma & vclk); // ... indicates sound cycle
+      reslin <= @(posedge sysclk) // try to generate line 370
+	~(l28
+	  | ~vsync
+	  | hsync
+	  | ~viapb6
+	  | ~vclk);      
+      resnyb <= @(posedge sysclk)
+      	~(vclk // increment VA5:VA14 in 0F and 2B
+      	  | viapb6 // ???
+      	  | va1
+      	  | va2
+      	  | ~viapb6 & va3
+      	  | hsync
+      	  | viapb6 & ~va3
+      	  | ~hsync & va3 & ~va4
+      	  | ~hsync & ~va3 & va4);
+      end
    end
 endmodule
 
@@ -184,12 +214,13 @@ module bmu1(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      csiwm <= 0; rd <= 0; cescc <= 0; vpa <= 0; romen <= 0;
-      ramen <= 0; io1 <= 0; l28 <= 0;
+      csiwm <= 1; rd <= 1; cescc <= 1; vpa <= 1; romen <= 1;
+      ramen <= 1; io1 <= 1; l28 <= 1;
    end
 
    // Simulate combinatorial logic sub-cycles.
    always @(posedge simclk) begin
+      if (n_res) begin
       csiwm <= ~(a23 & a22 & ~a21 & ~as); // DFE1FF
       rd <= ~(a23 & ~a22 & ~a21 & ~as); // 9FFFF8
       cescc <= ~(a23 & ~a22 & ~as); // 9FFFF8(R) or BFFFF9(W)
@@ -205,6 +236,7 @@ module bmu1(simclk, n_res,
 	       | ~l28 & ~va9
 	       | ~l28 & ~va8
 	       | ~l28 & ~va7);
+      end
    end
 endmodule
 
@@ -227,26 +259,32 @@ module bmu0(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      g244 <= 0; we <= 0;
+      g244 <= 1; we <= 1;
 
-      ava14 <= 0; l15 <= 0; vid <= 0; ava13 <= 0;
+      ava14 <= 1; l15 <= 1; vid <= 1; ava13 <= 1;
    end
 
    // Simulate combinatorial logic sub-cycles.
    always @(posedge simclk) begin
+      if (n_res) begin
       g244 <= ~(~ramen & rw
 		| ~g244 & ~ramen);
       we <= ~(~ramen & ~rw
 	      | ~we & ~dtack); // or `dtack` is shorter before the video cycle
+      end
    end
 
    // Simulate registered logic.
-   always @(posedge sysclk) begin
-      ava14 <= ~(~va14 & ~va13); // + 1
-      l15 <= ~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
-	       | va14 & ~va13 & va12 & va11 & va10); // passed by 368
-      vid <= ~(servid); // here we invert: blanking is in `vshft`
-      ava13 <= ~(va13); // + 1
+   always @(negedge sysclk) begin
+      if (n_res) begin
+      ava14 <= @(posedge sysclk) ~(~va14 & ~va13); // + 1
+      l15 <= @(posedge sysclk)
+	~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
+	  | va14 & ~va13 & va12 & va11 & va10); // passed by 368
+      vid <= @(posedge sysclk)
+	~(servid); // here we invert: blanking is in `vshft`
+      ava13 <= @(posedge sysclk) ~(va13); // + 1
+      end
    end
 endmodule
 
@@ -267,34 +305,40 @@ module tsg(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      d0 <= 0; ipl0 <= 0;
+      d0 <= 1; ipl0 <= 1;
 
-      q6 <= 0; clkscc <= 0; q4 <= 0; q3 <= 0; viacb1 <= 0;
-      pclk <= 0;
+      q6 <= 1; clkscc <= 1; q4 <= 1; q3 <= 1; viacb1 <= 1;
+      pclk <= 1;
    end
 
    // Simulate combinatorial logic sub-cycles.
    always @(posedge simclk) begin
+      if (n_res) begin
       ipl0 <= ~intscc | intvia; // CORRECTION
       // ipl0 <= ~(0); // ??? /M nanda
       d0 <= ~(~vpa & ~a19 & e); // F00000 sample the phase with 0  /n e' + usado
+      end
    end
 
    // Simulate registered logic.
-   always @(posedge sysclk) begin
+   always @(negedge sysclk) begin
+      if (n_res) begin
       // TODO VERIFY: q6 missing?
-      q6 <= ~(0);
-      clkscc <= ~(clkscc & ~pclk & ~q4
-		  | clkscc & ~pclk & ~q3
-		  | clkscc & ~pclk & vclk
-		  | ~clkscc & pclk
-		  | ~clkscc & q4 & q3 & ~vclk); // skip one inversion every 32 cycles
-      viacb1 <= ~(0); // ??? /M nanda
-      pclk <= ~(pclk); // divide SYSCLK by 2 (8MHz)
-      q3 <= ~(~vclk); // `sysclk` / 16
-      q4 <= ~(q4 & q3 & ~vclk // `sysclk` / 32
-	      | ~q4 & ~q3                       // } J for generating CLKSCC
-	      | ~q4 & vclk);
+      q6 <= @(posedge sysclk) ~(0);
+      clkscc <= @(posedge sysclk)
+	~(clkscc & ~pclk & ~q4
+	  | clkscc & ~pclk & ~q3
+	  | clkscc & ~pclk & vclk
+	  | ~clkscc & pclk
+	  | ~clkscc & q4 & q3 & ~vclk); // skip one inversion every 32 cycles
+      viacb1 <= @(posedge sysclk) ~(0); // ??? /M nanda
+      pclk <= @(posedge sysclk) ~(pclk); // divide SYSCLK by 2 (8MHz)
+      q3 <= @(posedge sysclk) ~(~vclk); // `sysclk` / 16
+      q4 <= @(posedge sysclk)
+	~(q4 & q3 & ~vclk // `sysclk` / 32
+	  | ~q4 & ~q3                       // } J for generating CLKSCC
+	  | ~q4 & vclk);
+      end
    end
 endmodule
 

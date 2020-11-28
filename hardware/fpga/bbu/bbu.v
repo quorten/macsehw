@@ -1319,6 +1319,11 @@ module dramctl_bbu (n_res, clk, r_n_w,
    // are in state 64.
    assign bbu_dtack = drc_state[6];
 
+   // TODO FIXME Important!  High speed control for column access
+   // strobes?  The Macintosh 128K and Macintosh Plus use
+   // combinatorial logic to assert the *CAS signal for half of a C16M
+   // clock cycle, one pulse.
+
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
       ra <= 10'bz; // Set to high-impedance to disable output.
