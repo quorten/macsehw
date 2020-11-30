@@ -432,8 +432,8 @@ module ls595(q_b, q_c, q_d, q_e, q_f, q_g, q_h, gnd,
    reg [7:0] out_reg;
 
    assign { q_h, q_g, q_f, q_e, q_d, q_c, q_b, q_a }
-     = (n_oe) ? 8'bz : int_reg;
-   assign q_h_p = q_h;
+     = (n_oe) ? 8'bz : out_reg;
+   assign q_h_p = int_reg[7];
 
    always @(negedge n_srclr) begin
       int_reg <= 0;

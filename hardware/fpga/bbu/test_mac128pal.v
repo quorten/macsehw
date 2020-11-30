@@ -95,9 +95,9 @@ endmodule
 
 module test_mac128pal();
    // Instantiate individual test modules.
-   test_ls161 tu0();
-   test_ls245 tu1();   
-   test_palcl tu2();
+   test_ls161 tu0_ls161();
+   test_ls245 tu1_ls245();
+   test_palcl tu2_palcl();
 
    // Perform the remainder of global configuration here.
 
