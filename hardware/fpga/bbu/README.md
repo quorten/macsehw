@@ -90,8 +90,8 @@ a huge number of pins, its purpose can be summarized as follows.
 
   Also, note that the address multiplexing is configured as follows:
 
-  Row access strobe: A1, A11, A12, A13, A14, A15, A16, RA7*, A18, RA9*.
-  Column access strobe: A2, A3, A4, A5, A6, A7, A8, RA7*, A10, RA9*.
+  Row access strobe: A2, A3, A4, A5, A6, A7, A8, RA7*, A10, RA9*.
+  Column access strobe: A1, A11, A12, A13, A14, A15, A16, RA7*, A18, RA9*.
 
   RA7 and RA9 are controlled directly by the BBU rather than being
   wired through the F257 address multiplexers.  Now, the devil is in
@@ -107,17 +107,28 @@ a huge number of pins, its purpose can be summarized as follows.
   configuration of one row of DRAM SIMMs, this means you can configure
   a Macintosh SE with only 128K of RAM.  Hilarious!
 
-  If only 256K RAM SIMMs are installed, then RA7 is either A17 (row)
-  or A9 (column).  RA9 is not used.  If there are two rows of DRAM
+  If only 256K RAM SIMMs are installed, then RA7 is either A9 (row) or
+  A17 (column).  RA9 is not used.  If there are two rows of DRAM
   SIMMs, A19 is used to determine which one to use.
 
-  If 1MB RAM SIMMs are installed, then RA7 is either A17 (row) or A9
-  (column).  RA9 is either A20 (row) or A19 (column).  If there are
+  If 1MB RAM SIMMs are installed, then RA7 is either A9 (row) or A17
+  (column).  RA9 is either A19 (row) or A20 (column).  If there are
   two rows of DRAM SIMMs, A21 is used to determine which one to use.
 
   Since RAM accesses are always on even bytes in 16-bit quantities, A0
   is implied to be zero and therefore also is not available on the
   CPU.
+
+  The purpose of this weird scrambled address mapping is to satisfy
+  two goals:
+
+    1. To allow the framebuffer scanning circuitry to double as DRAM
+       refresh.
+
+    2. To enable fast-page mode (FPM) for fetching two 16-bit words in
+       sequence (one "longword").  This in turn reduces the BBU's
+       memory access overhead and therefore increases the speed of CPU
+       memory accesses.
 
 * So, wow.  Here's a list of all possible Macintosh SE RAM
   configurations.

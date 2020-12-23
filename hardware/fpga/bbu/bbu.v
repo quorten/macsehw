@@ -230,34 +230,6 @@ module bbu_master_ctrl
    // Installed RAM size.
    wire [23:0] ramsz;
 
-   // SCSI support: Handle chip select, and handle DMA.  Important!
-   // Never have *DACK and *SCSI active simultaneously.  Okay, so
-   // let's get this straight.  When we would normally assert *DTACK,
-   // we release *SCSI and wait for SCSI.DRQ.  Then when we receive
-   // it, we can assert *DTACK and also *DACK, with a timer to
-   // deassert *DACK.  Important!  Make sure we do not go faster than
-   // the minimum read/write pulse width of the SCSI chip.
-
-   // Important!  How to handle SCSI DMA... according to Guide to the
-   // Macintosh family hardware, page 126, this is "pseudo-DMA" mode.
-   // The BBU does not assert `*DTACK` until `SCSIDRQ` is received to
-   // indicate the DMA transfer is complete.  And again, noting from
-   // page 126, .  Likewise, `*DTACK` is asserted for all addresses in
-   // range, even if nothing is mapped.  No stringent bus error
-   // control here, that's a hobbyist extension.  And again, inded
-   // `*DTACK` is tri-stated according to the manual when `*EXTDTK`
-   // (`*EXT.DTACK`) is asserted.
-
-   // TODO: How do we know if DMA mode is true?  Do we have to snoop
-   // the address but to get this information.
-
-   // Now, here's the golden rule: "If any access has not terminated
-   // within 265 ms, the BBU asserts the bus error signal /BERR."
-   // There you go, that's how it is driven, though the condition only
-   // happens for PDS and SCSI accesses.  So, another thing,
-   // yes... there must be at least a nominal delay to assert `*DTACK`
-   // to allow PDS cards to intervene by asserting `*EXTDTK` first.
-
    // TODO MOVE DOCUMENTATION: PLEASE NOTE, PDS cards can also access
    // DRAM, not just the CPU.  This is mainly a matter of bus
    // arbitration, then as far s the BBU is concerned, PDS access to
@@ -668,12 +640,6 @@ endmodule
    * 0xf00000 - 0xffffef: ??? (the ROM appears to be accessing here)
    * 0xfffff0 - 0xffffff: Auto Vector
 
-   TODO FIXME: Note that SCSI chip enable is NOT asserted when A9 is
-   one, and Macintosh Plus asserts DACK when A9 is one, but not when
-   it is zero.  Okay, so I think I have that figured out.  Add 512 for
-   DMA mode access logic, otherwise we do not implement DMA access
-   mode at all.
-
    This address map has also been confirmed with Guide to the
    Macintosh family hardware, page 127.  PLEASE NOTE: In SCC Read
    zone, if A0 == 1, then that is an SCC RESET.  IWM must be A0 == 1,
@@ -697,40 +663,6 @@ endmodule
    overflow accesses should just wrap around and repeat access to the
    same RAM.
 
-   PLEASE NOTE: Guide to the Macintosh family hardware, page 122.  "A
-   word-wide access to any SCC address causes a phase shift in the
-   processor clock, and is used by the operating system to correct the
-   phase when necessary."
-
-   "At system startup, the operating system reads an address in the
-   range $F0 0000 through $F7 FFFF (labeled _Phase read_ in Gifgures
-   3-1 and 3-2) to determine whether the computer's high-frequency
-   timing signals are correctly in phase.  When the timing signals are
-   not in phase, RAM accesses are not timed correctly, causing an
-   unstable video display, RAM errors, and VIA errors."  Well, I can
-   see how that would be happening with just a bunch of PALs, but I
-   don't think it still needs to be that way when you have the BBU in
-   charge, you can do better!  And indeed, that note only appears to
-   apply to the Macintosh Plus, not the Macintosh SE, as it is listed
-   in that section.
-
-   But, for the sake of Macintosh Plus recreation, please note.  The
-   TSG PAL places one of the high-frequency phase indicator signals on
-   D0 of the address bus, I assume it is the 1 MHz *PMCYC signal.  A
-   multiple address read instruction is used to read three consecutive
-   data values from the address bus in synchronous I/O mode (due to
-   using address 0xf00000), so each address read is either 10 or 20
-   CPU cycles long.  This will sample the phase at a few different
-   points.  The phase readings are added together, if they are zero or
-   one, then we are "in-phase."  Otherwise, phase readings 2 and 3 are
-   considered "out-of-phase" so we access a word-width address in the
-   SCC range to shift the high frequency timing by 128 ns (one CPU
-   clock cycle at 8 MHz).
-
-   The important thing to remember is that every MC68000 instruction
-   executes for an even number of clock cycles (divisible by 2), and
-   there is no pipelining in these early CPUs.
-
    TODO FIXME: Guide to the Macintosh family hardware, page 127.
    Okay, so this is how to interpret the information about the
    boot-time overlay for the alternate RAM location.  Only a 2MB zone
@@ -744,15 +676,47 @@ endmodule
    I don't really quite understand, though, sorry.  Okay, this means,
    the first row, right?  "If 2.5 or 4 MB only upper row is
    accessible" page 127.
- 
-   The signal *VPA is asserted in address range 0xe00000 - 0xffffff,
-   optionally excluding invalid addresses when a bus error signal is
-   generated.  This is for synchronous I/O devices accessed in the old
-   6800 fashion.
+
+   ----------
+
+   But, for the sake of Macintosh Plus recreation, please note.
+
+   Guide to the Macintosh family hardware, page 122.  For the
+   Macintosh Plus: "A word-wide access to any SCC address causes a
+   phase shift in the processor clock, and is used by the operating
+   system to correct the phase when necessary."
+
+   "At system startup, the operating system reads an address in the
+   range $F0 0000 through $F7 FFFF (labeled _Phase read_ in figures
+   3-1 and 3-2) to determine whether the computer's high-frequency
+   timing signals are correctly in phase.  When the timing signals are
+   not in phase, RAM accesses are not timed correctly, causing an
+   unstable video display, RAM errors, and VIA errors."  Well, I can
+   see how that would be happening with just a bunch of PALs, but I
+   don't think it still needs to be that way when you have the BBU in
+   charge, you can do better!  And indeed, that note only appears to
+   apply to the Macintosh Plus, not the Macintosh SE, as it is listed
+   in that section.
+
+   The TSG PAL places one of the high-frequency phase indicator
+   signals on D0 of the address bus, I assume it is the 1 MHz *PMCYC
+   signal.  A multiple address read instruction is used to read three
+   consecutive data values from the address bus in synchronous I/O
+   mode (due to using address 0xf00000), so each address read is
+   either 10 or 20 CPU cycles long.  This will sample the phase at a
+   few different points.  The phase readings are added together, if
+   they are zero or one, then we are "in-phase."  Otherwise, phase
+   readings 2 and 3 are considered "out-of-phase" so we access a
+   word-width address in the SCC range to shift the high frequency
+   timing by 128 ns (one CPU clock cycle at 8 MHz).
+
+   The important thing to remember is that every MC68000 instruction
+   executes for an even number of clock cycles (divisible by 2), and
+   there is no pipelining in these early CPUs.
 */
-module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
-		       n_sccen, n_sccrd, n_iow, n_iwm, via_cs1, n_vpa,
-		       n_berr, n_as, a23_19, berr_ram, n_extdtk,
+module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi, scsidrq,
+		       n_dack, n_sccen, n_sccrd, n_iow, n_iwm, via_cs1,
+		       n_vpa, n_berr, n_as, a23_19, a9, n_extdtk,
 		       boot_overlay, r_n_w, reg_romen, reg_ram_w,
 		       n_dtack_peri);
    input wire n_res;
@@ -760,6 +724,8 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    output wire n_ramen;
    output wire n_romen;
    output wire n_scsi;
+   input wire scsidrq;
+   output wire n_dack;
    output wire n_sccen;
    output wire n_sccrd;
    output wire n_iow;
@@ -769,7 +735,7 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    output wire n_berr;
    input wire n_as;
    input wire [4:0] a23_19;
-   input wire berr_ram; // Would this RAM address be a bus error?
+   input wire a9;
    input wire n_extdtk;
    input wire boot_overlay;
    input wire r_n_w;
@@ -781,14 +747,14 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    output wire n_dtack_peri; // *DTACK for peripherals
 
    wire reg_ram, reg_ram_r;
+   wire scdma; // host requested performing a SCSI pseudo-DMA read/write
    wire scsi, sccrd, sccwr;
    wire berr_scc;
 
-   wire n_dtack_peri_pt; // *DTACK peripherals "pre-trigger"
-   reg n_dtack_peri_bf; // *DTACK for peripherals buffer
+   reg [31:0] berr_cntr; // Counter to trigger `*BERR` after 265 ms
 
    // If the boot-time overlay is enabled but we attempt to write to
-   // the regular RAM region, then this is a *RAMEN trigger.  The
+   // the regular RAM region, then this is a `*RAMEN` trigger.  The
    // overlay control logic will zero the switch on the next cycle,
    // but we use combinatorial logic here to act immediately.
    assign reg_ram = ~n_as & (a23_19[4:3] == 2'b00);
@@ -799,10 +765,19 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
 				 (a23_19[4:1] == 4'h7))) | reg_ram_w) :
 		    reg_ram);
    assign reg_romen = ~n_as & (a23_19[4:1] == 4'h4);
-   // Only trigger *ROMEN for reads, not writes, in overlay zone.
+   // Only trigger `*ROMEN` for reads, not writes, in overlay zone.
    assign n_romen = ~(reg_romen | (boot_overlay & reg_ram_r));
    assign scsi    = ~n_as & (a23_19[4:0] == 5'b01011);
-   assign n_scsi  = ~scsi;
+   // Note that the SCSI chip enable is NOT asserted in pseudo-DMA
+   // access mode, which is indicated by A9 (add decimal 512 to base
+   // address).
+   assign scdma   = scsi & a9;
+   // assign n_scsi  = ~(scsi & ~scdma);
+   assign n_scsi  = ~(scsi & ~a9); // simplification
+   // N.B.: One idea I had was to use a timer to de-assert `*DACK` to
+   // ensure it is not held too long.  For now I am assuming this is
+   // not necessary given the MC68000 address bus speed.
+   assign n_dack  = scdma & scsidrq;
    assign sccrd   = ~n_as & (a23_19[4:1] == 4'h9);
    assign sccwr   = ~n_as & (a23_19[4:1] == 4'hb);
    assign n_sccen = ~(sccrd | sccwr);
@@ -810,7 +785,11 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    assign n_iow   = ~((scsi & ~r_n_w) | sccwr);
    assign n_iwm   = ~(~n_as & (a23_19[4:1] == 4'hd));
    assign via_cs1 =  ~n_as & (a23_19[4:0] == 5'b11101);
-   assign n_vpa   = ~(via_cs1 | (~n_as & (a23_19[4:1] == 4'hf)));
+   // The signal *VPA is asserted in address range 0xe00000 -
+   // 0xffffff.  This is for synchronous I/O devices accessed in the
+   // old 6800 fashion.
+   assign n_vpa   = ~(~n_as & ((a23_19[4:1] == 4'he) |
+			       (a23_19[4:1] == 4'hf)));
    // N.B.: According to Guide to the Macintosh family hardware, page
    // 126, the implementation of Auto Vector is easy and
    // straightforward for the BBU.  Just assert `*VPA` in the address
@@ -822,19 +801,12 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    // write-only SCC address space, and vice versa.
    assign berr_scc = (sccrd & ~r_n_w) | (sccwr & r_n_w);
 
-   // Note that if the PDS card asserts *EXTDTK, we also must not
-   // drive *BERR.  TODO EVALUATE: Should we wait a cycle before
-   // asserting *BERR to give the PDS card time to respond first?
-   assign n_berr = n_as | ~n_extdtk |
-		   ~((~n_ramen & berr_ram) |
-		     berr_scc |
-		     (a23_19[4:0] == 5'b01010) |
-		     (a23_19[4:1] == 4'h7) |
-		     (a23_19[4:1] == 4'h8) |
-		     (a23_19[4:1] == 4'ha) |
-		     (a23_19[4:1] == 4'hc) |
-		     (a23_19[4:0] == 5'b11100));
-   // TODO: Also flag bus errors for the final address zone.
+   // Here's the rule on asserting `*BERR`, Guide to the Macintosh
+   // Family hardware, page 126: "If any access has not terminated
+   // within 265 ms, the BBU asserts the bus error signal /BERR."  In
+   // practice, this would possibly only occur for PDS and SCSI
+   // accesses.
+   assign n_berr = ~(berr_cntr >= 4240000);
 
    // NOTE: For all peripherals, we must set `*DTACK` from the BBU
    // upon successful access condition and time durations because it
@@ -845,62 +817,35 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi,
    // N.B.: According to Guide to the Macintosh family hardware,
    // `*DTACK` is not used to respond to addresses in the range
    // 0xe00000 - 0xffffff, only below that.  `*VPA` alone is used to
-   // respond to these addresses.  So therefore, we exclude `VIA.CS1`.
-   assign n_dtack_peri_pt = n_scsi & n_sccen & n_iwm;
-   // N.B. We use combinatorial logic here to deassert *DTACK for
-   // peripherals as soon as *AS is released.
-   assign n_dtack_peri = n_as | n_dtack_peri_bf;
+   // respond to these addresses.  Except for the case of SCSI
+   // pseudo-DMA accesses, we only assert `*DTACK` when we assert
+   // `*DACK`.
+   assign n_dtack_peri = n_as | ((n_vpa | scdma) & n_dack);
+
+   // N.B. For now, we leave it to higher level logic to put on
+   // `*DTACK` on high-impedance when `*EXTDTK` is asserted.
+
+   // assign n_dtack_peri =
+   //   n_extdtk ? (n_as | ((n_vpa | scdma) & n_dack)) : 'bz;
 
    always @(negedge n_res) begin
-      n_dtack_peri_bf <= 1;
+      berr_cntr <= 0;
    end
 
    always @(posedge clk) begin
       if (n_res) begin
 	 if (n_as)
-	   n_dtack_peri_bf <= 1;
+	   berr_cntr <= 0;
 	 else begin
-	    if (n_dtack_peri_pt)
-	      n_dtack_peri_bf <= 0;
+	    if (berr_cntr < 4240000) // # of 16 MHz pulses in 265 ms
+	      berr_cntr <= berr_cntr + 1;
 	    else
-	      n_dtack_peri_bf <= 1;
+	      ; // Nothing to be done.
 	 end
       end
       else
 	; // Nothing to be done during RESET.
    end
-endmodule
-
-// Determine if a RAM address is out of range and should therefore
-// signal a bus error.
-module berr_ram_logic (a0_21, ramsz, /*ramsz_en,*/ berr_ram);
-   input wire [21:0] a0_21;
-   input wire [23:0] ramsz;
-   // input wire [6:0] ramsz_en;
-   output wire berr_ram;
-
-   // We could either use arithmetic comparison (easiest to code in
-   // Verilog), or bit-wise comparisons (possibly more efficient in
-   // hardware).  We may simply consider implementing this logic in a
-   // separate module.
-
-   // 4MB valid: 0x000000 - 0x3fffff
-   // 4MB invalid: None!
-   // 2.5MB valid: 0x000000 - 0x27ffff
-   // 2.5MB invalid: 0x280000 - 0x3fffff
-   // 2MB valid: 0x000000 - 0x1fffff
-   // 2MB invalid: 0x200000 - 0x3fffff
-   // 1MB valid: 0x000000 - 0x0fffff
-   // 1MB invalid: 0x100000 - 0x3fffff
-   // 512K valid: 0x000000 - 0x07ffff
-   // 512K invalid: 0x080000 - 0x3fffff
-   // 256K valid: 0x000000 - 0x03ffff
-   // 256K invalid: 0x040000 - 0x3fffff
-   // 128K valid: 0x000000 - 0x01ffff
-   // 128K invalid: 0x020000 - 0x3fffff
-
-   // N.B. Verilog comparison is unsigned by default.
-   assign berr_ram = { 1'b0, a0_21[21:17] } < ramsz[22:17];
 endmodule
 
 // Boot-time memory overlay register and controlling logic.  This is
@@ -959,6 +904,7 @@ endmodule
 
 // RA7/RA9 selector logic.  Determine which CPU address pins should be
 // routed to these RAM address pins based off of the installed RAM.
+// TODO FIXME: This is incorrect in light of new knowledge.
 module dramctl_ra7_9 (ra7, ra9, cas_n_ras, row2, mbram, s64kram,
 		      a9, a17, a19, a20, a10);
    output wire ra7;
@@ -1551,7 +1497,7 @@ endmodule
 /* TODO: Summary of what is missing and left to implement: DRAM
    initialization pulses, DRAM refresh, detect 2.5MB of RAM and
    configure address buffers accordingly, video, disk, and audio
-   scanout, SCSI DMA, EXTDTK yielding.
+   scanout, EXTDTK yielding.
 
    Okay, so the VERDICT on DRAM initialization pulses.  We don't
    actually use these as we should, strictly speaking, but why does it
@@ -1602,8 +1548,16 @@ So, how many longwords for the video framebuffer?
 In hex: 0x1560
 Number of address bits fully covered by a full scan: 12
 
-Okay, so the question, does it work for DRAM refresh?  Indeed it
-does!  Well, at least for <=1MB of RAM.
+Okay, so the question, does it work for DRAM refresh?  Indeed it does!
+Well, the number of longwords swept is great enough to cover all DRAM
+rows for 4MB of RAM, but the address bit mapping appears only to work
+for <=1MB of RAM.
+
+Please note that since we use only a single row access strobe signal
+for both DRAM rows and instead use separate column access strobes to
+differentiate between the rows, even if all the video memory addresses
+are only in one row, we still refresh the other row as long as we
+cover all the row addresses.
 
 RA9 looks to be trouble.  But, the Unitron reverse engineering docs
 almost have a solution.  Set this to A17 (?) and it should "just work"
