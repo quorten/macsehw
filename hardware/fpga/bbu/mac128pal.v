@@ -446,7 +446,7 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    wire c8mf, c16mf, c2m, u12f_tc, ram_r_n_w_f;
    wire vmsh; // video mid-shift, connect two register chips together
 
-   wire s5; // Video shift register final output
+   wire s5; // This is just a pull-up resistor
 
    // L12 => va13
    // L13 => va14
@@ -475,6 +475,8 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // TSG Output Enable is controlled by CAS on Macintosh Plus,
    // otherwise just go straight to ground on Macintosh 128k.
    assign tsg_oe3 = gnd;
+   // S5: Pull-up resistor.
+   assign s5 = vcc;
 
    /* N.B. The reason why phase calibration is required in the
       Macintosh 128k/512k/Plus is because the PALs do not have a RESET
