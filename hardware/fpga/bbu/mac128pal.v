@@ -48,38 +48,38 @@ module tsm(simclk, n_res,
    input wire sysclk, pclk, s1, ramen, romen, as, uds, lds;
    `power wire gnd;
    input wire oe1;
-   output `simwire casl, cash;
+   output wire casl, cash;
    output reg ras, vclk, q2, q1;
-   output `simwire s0, dtack;
+   output wire s0, dtack;
    `power wire vcc;
 
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      casl <= 1; cash <= 1; s0 <= 1; dtack <= 1;
+      // casl = 1; cash = 1; s0 = 1; dtack = 1;
 
       ras <= 1; vclk <= 1; q2 <= 1; q1 <= 1;
    end
 
-   // Simulate combinatorial logic sub-cycles.
-   always @(posedge simclk) begin
-      if (n_res) begin
-      casl <= ~(~s0 & s1 & sysclk // video
-		| ~s0 & ~ramen & ~lds // processor
-		| ~s0 & ~casl & sysclk
-		| pclk & ~casl);
-      cash <= ~(~s0 & s1 & sysclk // video
-		| ~s0 & ~ramen & ~uds // processor
-		| ~s0 & ~cash & sysclk
-		| pclk & ~cash);
-      s0 <= ~(~ras & ~sysclk // 0 for `cas` and 1 for `ras` (counting with the delay of the PAL)
-	      | ~ras & ~s0);
-      dtack <= ~(~romen // if the ROM is 250 nS or SCC or IWM
-		 | ~ras & ~ramen & ~s1 // guarantees that it will be recognized on the falling edge of `pclk` in state `s5`
-		 | ~as & ~dtack & ramen // expects `as` to rise for disable
-		 | ~as & ~dtack & ~s1); // but avoid video cycles (WE)
-      end
-   end
+   // Simulate combinatorial logic.
+   assign casl
+     = ~(~s0 & s1 & sysclk // video
+	 | ~s0 & ~ramen & ~lds // processor
+	 | ~s0 & ~casl & sysclk
+	 | pclk & ~casl);
+   assign cash
+     = ~(~s0 & s1 & sysclk // video
+	 | ~s0 & ~ramen & ~uds // processor
+	 | ~s0 & ~cash & sysclk
+	 | pclk & ~cash);
+   assign s0
+     = ~(~ras & ~sysclk // 0 for `cas` and 1 for `ras` (counting with the delay of the PAL)
+	 | ~ras & ~s0);
+   assign dtack
+     = ~(~romen // if the ROM is 250 nS or SCC or IWM
+	 | ~ras & ~ramen & ~s1 // guarantees that it will be recognized on the falling edge of `pclk` in state `s5`
+	 | ~as & ~dtack & ramen // expects `as` to rise for disable
+	 | ~as & ~dtack & ~s1); // but avoid video cycles (WE)
 
    // Simulate registered logic.
    always @(posedge clk) begin
@@ -129,10 +129,6 @@ module lag(simclk, n_res,
    always @(negedge n_res) begin
       vshft <= 1; vsync <= 1; hsync <= 1; s1 <= 1; viapb6 <= 1;
       snddma <= 1; reslin <= 1; resnyb <= 1;
-   end
-
-   // Simulate combinatorial logic sub-cycles.
-   always @(posedge simclk) begin
    end
 
    // Simulate registered logic.
@@ -187,6 +183,8 @@ module lag(simclk, n_res,
       // 	  | ~viapb6 & vclk);
       // TODO FIXME: This is incorrect, temporary equations in order
       // to get at least partial behavior for analysis.
+      // TODO FIXME: Why this latches up and is broken, we should not
+      // use memory access to clock this to one sensitivity cycle.
       viapb6 <=
 	~(~hsync // 1 indicates horizontal retrace (pseudo VA6)
 	  | ~viapb6 & p0q2
@@ -279,37 +277,42 @@ module bmu1(simclk, n_res,
    input wire va9, va8, va7, l15, va14, ovlay, a23, a22, a21;
    `power wire gnd;
    input wire as;
-   output `simwire csiwm, rd, cescc, vpa, romen, ramen, io1, l28;
+   output wire csiwm, rd, cescc, vpa, romen, ramen, io1, l28;
    `power wire vcc;
 
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      csiwm <= 1; rd <= 1; cescc <= 1; vpa <= 1; romen <= 1;
-      ramen <= 1; io1 <= 1; l28 <= 1;
+      // csiwm = 1; rd = 1; cescc = 1; vpa = 1; romen = 1;
+      // ramen = 1; io1 = 1; l28 = 1;
    end
 
-   // Simulate combinatorial logic sub-cycles.
-   always @(posedge simclk) begin
-      if (n_res) begin
-      csiwm <= ~(a23 & a22 & ~a21 & ~as); // DFE1FF
-      rd <= ~(a23 & ~a22 & ~a21 & ~as); // 9FFFF8
-      cescc <= ~(a23 & ~a22 & ~as); // 9FFFF8(R) or BFFFF9(W)
-      vpa <= ~(a23 & a22 & a21 & ~as); // above E00000 is synchronous
-      romen <= ~(~a23 & a22 & ~a21 & ~as // 400000
-		 | ~a23 & ~a22 & ~a21 & ~as & ovlay // (and 000000 with `ovlay`)
-		 | a23 & ~a22 & ~as
-		 | a23 & ~a21 & ~as); // for generating DTACK (not accessing ROM: A20)
-      ramen <= ~(~a23 & ~a22 & ~a21 & ~as & ~ovlay // 000000
-		 | ~a23 & a22 & a21 & ~as & ovlay); // (600000 with `ovlay`)
-      io1 <= ~(0); // TODO this indicates we're >= line 28
-      l28 <= ~(~l15 & ~va9 & ~va8 & va7 // reached 370 or we don't pass line 28
-	       | ~l28 & ~l15
-	       | ~l28 & ~va9
-	       | ~l28 & ~va8
-	       | ~l28 & va7);
-      end
-   end
+   // Simulate combinatorial logic.
+   assign csiwm
+     = ~(a23 & a22 & ~a21 & ~as); // DFE1FF
+   assign rd
+     = ~(a23 & ~a22 & ~a21 & ~as); // 9FFFF8
+   assign cescc
+     = ~(a23 & ~a22 & ~as); // 9FFFF8(R) or BFFFF9(W)
+   assign vpa
+     = ~(a23 & a22 & a21 & ~as); // above E00000 is synchronous
+   assign romen
+     = ~(~a23 & a22 & ~a21 & ~as // 400000
+	 | ~a23 & ~a22 & ~a21 & ~as & ovlay // (and 000000 with `ovlay`)
+	 | a23 & ~a22 & ~as
+	 | a23 & ~a21 & ~as); // for generating DTACK (not accessing ROM: A20)
+   assign ramen
+     = ~(~a23 & ~a22 & ~a21 & ~as & ~ovlay // 000000
+	 | ~a23 & a22 & a21 & ~as & ovlay); // (600000 with `ovlay`)
+   assign io1
+     = ~(0); // TODO this indicates we're >= line 28
+   assign l28
+     = ~(~l15 & ~va9 & ~va8 & va7 // reached 370 or we don't pass line 28
+	 | ~l28 & ~l15
+	 | ~l28 & ~va9
+	 | ~l28 & ~va8
+	 | ~l28 & va7
+	 | ~n_res); // SIMULATION ONLY: Else we never settle.
 endmodule
 
 // PAL3-16R4: Bus Management Unit 0
@@ -321,7 +324,7 @@ module bmu0(simclk, n_res,
    input wire ramen, romen, va10, va11, va12, va13, va14, rw;
    `power wire gnd;
    input wire oe1;
-   output `simwire g244, we;
+   output wire g244, we;
    output reg ava14, l15, vid, ava13;
    // N.B. Although this is nominally an output we can treat it as an
    // input?
@@ -331,20 +334,18 @@ module bmu0(simclk, n_res,
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      g244 <= 1; we <= 1;
+      // g244 = 1; we = 1;
 
       ava14 <= 1; l15 <= 1; vid <= 1; ava13 <= 1;
    end
 
-   // Simulate combinatorial logic sub-cycles.
-   always @(posedge simclk) begin
-      if (n_res) begin
-      g244 <= ~(~ramen & rw
-		| ~g244 & ~ramen);
-      we <= ~(~ramen & ~rw
-	      | ~we & ~dtack); // or `dtack` is shorter before the video cycle
-      end
-   end
+   // Simulate combinatorial logic.
+   assign g244
+     = ~(~ramen & rw
+	 | ~g244 & ~ramen);
+   assign we
+     = ~(~ramen & ~rw
+	 | ~we & ~dtack); // or `dtack` is shorter before the video cycle
 
    // Simulate registered logic.
    always @(posedge sysclk) begin
@@ -369,28 +370,26 @@ module tsg(simclk, n_res,
    input wire vpa, a19, vclk, p0q1, e, keyclk, intscc, intvia;
    `power wire gnd;
    input wire oe3;
-   output `simwire d0;
+   output wire d0;
    output reg q6, clkscc, q4, q3, viacb1, pclk;
-   output `simwire ipl0;
+   output wire ipl0;
    `power wire vcc;
 
    // We must implement RESET for simulation or else this will never
    // stabilize.
    always @(negedge n_res) begin
-      d0 <= 1; ipl0 <= 1;
+      // d0 = 1; ipl0 = 1;
 
       q6 <= 1; clkscc <= 1; q4 <= 1; q3 <= 1; viacb1 <= 1;
       pclk <= 1;
    end
 
-   // Simulate combinatorial logic sub-cycles.
-   always @(posedge simclk) begin
-      if (n_res) begin
-      ipl0 <= ~intscc | intvia; // CORRECTION
-      // ipl0 <= ~(0); // ??? /M nanda
-      d0 <= ~(~vpa & ~a19 & e); // F00000 sample the phase with 0  /n e' + usado
-      end
-   end
+   // Simulate combinatorial logic.
+   assign ipl0
+     = ~intscc | intvia; // CORRECTION
+   // assign ipl0 = ~(0); // ??? /M nanda
+   assign d0
+     = ~(~vpa & ~a19 & e); // F00000 sample the phase with 0  /n e' + usado
 
    // Simulate registered logic.
    always @(posedge sysclk) begin
@@ -513,8 +512,14 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // from the 16MHz crystal oscillator.  SND comes from the dual PWM
    // disk driver counters.
 
-   wire n_dmald; // *DMALD is generated by ASG.
+   // *DMALD is generated by ASG.  It's very similar to how *LDPS is
+   // generated.
+   // n_dmald <=
+   //   ~(s1 & ~vclk & ~n_snddma);
+   wire n_dmald;
 
+   // u12f_tc is the carry propagation signal for the dual PWM sound
+   // counters.
    wire c8mf, c16mf, c2m, u12f_tc, ram_r_n_w_f;
    wire vmsh; // video mid-shift, connect two register chips together
 
@@ -546,8 +551,10 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    assign bmu0_oe1 = gnd;
    // TSEN1: 150 ohm resistor to GND for LAG.
    assign lag_oe2 = gnd;
-   // TSG Output Enable is controlled by CAS on Macintosh Plus,
-   // otherwise just go straight to ground on Macintosh 128k.
+   // Pull-down resistor shared by TSG, ASG, and CAS (if present).
+   // TODO INVESTIGATE: Surely this is controlled by another switch
+   // related to the RAM data bus switches, otherwise D0 is
+   // unconditionally coerced for non-phase read accesses.
    assign tsg_oe3 = gnd;
    // S5: Pull-up resistor.  TODO FIXME: Should this be controlled by
    // another thing too?
@@ -566,7 +573,9 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // Inverters and 16MHz clock buffer
    f04 u4d(n_sysclk, sysclk, n_snddma, snddma, a20, n_a20, gnd,
 	   n_sndres, sndres, n_snd, snd, wr, n_wr, vcc);
-   // Dual PWM disk drive counters
+   // Dual PWM sound counters.  The final carry-out is the PWM sound
+   // signal, and it is inverted and fed back to the sound counters to
+   // form a saturating counter.
    ls161 u13e(n_sndres, c8mf, rdq12, rdq13, rdq14, rdq15, n_snd, gnd,
 	      n_dmald, u12f_tc, , , , , snd, vcc);
    ls161 u12f(n_sndres, c8mf, rdq8, rdq9, rdq10, rdq11, n_snd, gnd,
@@ -619,6 +628,9 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 	    sysclk, n_vpa, a19, vclk, p0q1, e, keyclk, n_intscc,
 	    n_intvia, gnd, tsg_oe3, d0, q6, clkscc, q4, q3, viacb1,
 	    pclk, n_ipl0, vcc);
+
+   // N.B.: ASG as a "sound generator" is largely a misnomer, it is
+   // primarily a PWM disk speed generator.
 
    // TODO FIXME: ASG not implemented.
    // asg u11e(c16mf, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_dma, vclk, gnd,

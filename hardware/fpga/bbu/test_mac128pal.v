@@ -81,8 +81,14 @@ module test_palcl();
    end
 
    // Sub-cycle simulator clock triggers as fast as possible.
-   always
-     #1 simclk = ~simclk;
+
+   // N.B.: This is now disabled as it has been vetted that Verilog is
+   // designed to simulate self-referential combinatorial logic
+   // equations just fine.  Disabling this helps speed up the
+   // simulation.
+
+   // always
+   //   #1 simclk = ~simclk;
 
    // Initialize all other control inputs.
    initial begin
@@ -103,10 +109,10 @@ module test_mac128pal();
 
    // Set simulation time limit.
    initial begin
-      // #1920000 $finish;
+      #1920000 $finish;
       // PLEASE NOTE: We must simulate LOTS of cycles in order to see
       // what the oscilloscope trace for one video frame looks like.
-      #30720000 $finish;
+      // #30720000 $finish;
    end
 
    // We can use `$display()` for printf-style messages and implement
