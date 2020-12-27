@@ -82,21 +82,21 @@ module tsm(simclk, n_res,
    end
 
    // Simulate registered logic.
-   always @(negedge clk) begin
+   always @(posedge clk) begin
       if (n_res) begin
-      ras <= @(posedge clk)
+      ras <=
 	~(~pclk & q1 & s1 // video cycle
 	  | ~pclk & q1 & ~ramen & dtack // processor cycle
 	  | pclk & ~ras); // any other cycle
-      vclk <= @(posedge clk)
+      vclk <=
 	~(~q1 & pclk & q2 & vclk // divide by 8 (1MHz)
 	  | ~vclk & q1
 	  | ~vclk & ~pclk
 	  | ~vclk & ~q2);
-      q1 <= @(posedge clk)
+      q1 <=
 	~(~pclk & q1
 	  | pclk & ~q1); // divide `pclk` by 2 (4MHz)
-      q2 <= @(posedge clk)
+      q2 <=
 	~(~q1 & pclk & q2 // divide by 4 (2MHz)
 	  | ~q2 & q1
 	  | ~q2 & ~pclk);
@@ -136,62 +136,133 @@ module lag(simclk, n_res,
    end
 
    // Simulate registered logic.
-   always @(negedge sysclk) begin
+   always @(posedge sysclk) begin
       if (n_res) begin
-      vshft <= @(posedge sysclk)
+      vshft <=
 	~(s1 & ~vclk & snddma); // one pulse on the falling edge of `vclk`
-      vsync <= @(posedge sysclk)
+      vsync <=
 	~(reslin
 	  | ~vsync & ~l28);
-      // hsync  <= @(posedge sysclk)
+      // hsync  <=
       // 	~(viapb6 & va4 & ~va3 & ~va2 & va1 // begins in 29 (VA5)
       // 	  | /*~ ???*/resnyb
       // 	  | ~hsync & viapb6); // ends in 0F
-      hsync  <= @(posedge sysclk)
-	~(~viapb6 & ~va4 & ~va3 & va2 & va1 // begins in 29 (VA5)
+      // hsync  <=
+      // 	~(~viapb6 & ~va4 & ~va3 & va2 & va1 // begins in 29 (VA5)
+      // 	  | ~hsync & ~va4
+      // 	  | ~hsync & ~viapb6); // ends in 0F
+      // TODO FIXME: This is incorrect, temporary equations in order
+      // to get at least partial behavior for analysis.
+      // TODO FIXME: We trigger hsync a bit too soon at the end of the
+      // scanline.  And, we release it too soon at the beginning.
+      hsync <=
+	~(viapb6 & ~p0q2 & s1 & ~va1 & ~va2 & ~va3 & ~va4
 	  | ~hsync & ~va4
-	  | ~hsync & ~viapb6); // ends in 0F
-      s1 <= @(posedge sysclk)
+	  | ~hsync & ~va3
+	  | ~hsync & va2
+	  | ~hsync & va1);
+      // TODO FIXME: This is not a synthesizable PAL equation.
+      // TODO FIXME: This isn't generating sound buffer accesses
+      // during vertical blanking but it should be.
+      s1 <=
 	~(~p0q2 // 0 for processor and 1 for video
 	  | ~vclk
 	  | ~vsync & hsync
-	  | ~vsync & viapb6 // only in vertical retrace we have sound cycles
-	  | ~viapb6 & hsync & ~va4 & ~va3 & ~va2
+	  | ~vsync & viapb6 // vertical retrace only has sound cycles
+	  /* TODO INVESTIGATE: Line disabled because it drops out
+	     pulses we'd normally expect.  */
+	  /* | ~viapb6 & hsync & ~va4 & ~va3 & ~va2 */
 	  | ~viapb6 & ~hsync & (~va4 | va4 & ~va3 & ~va2 |
 				    va4 & ~va3 & va2 & ~va1));
-      // viapb6 <= @(posedge sysclk)
+      // viapb6 <=
       // 	~(~hsync & resnyb // 1 indicates horizontal retrace (pseudo VA6)
       // 	  | va1 & ~viapb6
       // 	  | va2 & ~viapb6
       // 	  | ~hsync & ~viapb6
       // 	  | resnyb & ~viapb6
       // 	  | vshft & ~viapb6);
-      viapb6 <= @(posedge sysclk)
-	~(hsync & ~va4 & ~va3 & va2 & va1 // 1 indicates horizontal retrace (pseudo VA6)
-	  | ~viapb6 & snddma
-	  | ~viapb6 & vclk);
-      snddma <= @(posedge sysclk)
-	~(viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
+      // viapb6 <=
+      // 	~(hsync & ~va4 & ~va3 & va2 & va1 // 1 indicates horizontal retrace (pseudo VA6)
+      // 	  | ~viapb6 & snddma
+      // 	  | ~viapb6 & vclk);
+      // TODO FIXME: This is incorrect, temporary equations in order
+      // to get at least partial behavior for analysis.
+      viapb6 <=
+	~(~hsync // 1 indicates horizontal retrace (pseudo VA6)
+	  | ~viapb6 & p0q2
+	  | ~viapb6 & ~s1
+	  | ~viapb6 & va1
+	  | ~viapb6 & va2
+	  | ~viapb6 & va3
+	  | ~viapb6 & va4);
+      // TODO FIXME HACK: Previously viapb6 but negated for testing.
+      snddma <=
+	~(~viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
 	  | ~snddma & vclk); // ... indicates sound cycle
-      reslin <= @(posedge sysclk) // try to generate line 370
+      // TODO FIXME HACK: Previously ~viapb6 but negated for testing.
+      reslin <= // try to generate line 370
 	~(l28
 	  | ~vsync
 	  | hsync
-	  | ~viapb6
-	  | ~vclk);      
-      resnyb <= @(posedge sysclk)
-      	~(vclk // increment VA5:VA14 in 0F and 2B
-      	  | viapb6 // ???
-      	  | va1
-      	  | va2
-      	  | ~viapb6 & va3
-      	  | hsync
-      	  | viapb6 & ~va3
-      	  | ~hsync & va3 & ~va4
-      	  | ~hsync & ~va3 & va4);
+	  | viapb6
+	  | ~vclk);
+      // N.B. Primary conceptual equation:
+      // resnyb <=
+      //   ((~viapb6 & hsync & ~va4 & ~va3 & ~va2 & ~va1)
+      //    | (~viapb6 & ~hsync & va4 & va3 & ~va2 & ~va1));
+      // TODO FIXME HACK: Possibly incorrect interpretation of viapb6
+      // with hsync.
+      resnyb <=
+	~(vclk // increment VA5:VA14 in 0F and 2B
+	  | viapb6
+	  | va1
+	  | va2
+	  | hsync & va4
+	  | hsync & va3
+	  | ~hsync & ~va4
+	  | ~hsync & ~va3
+	  | ~va4 & va3
+	  | va4 & ~va3);
       end
    end
 endmodule
+
+/*
+This LAG doesn't work correctly, here's how it is supposed to work.
+
+1. Count video addresses to 32.  During this count, generate resnyb
+   every time we need a carry.
+
+2. Once we reach 32, that's 512 pixels, one scanline.  Now, we assert
+   the *HSYNC signal.  But please note, at this point we do **not**
+   generate resnyb for the carry at 32, instead we let that counter
+   wrap around to zero without a carry.
+
+3. When the *HSYNC signal is asserted, we only count to 12.  That's
+   192 pixels for horizontal blanking.  Just when we're about to reach
+   the end, we assert the *SNDDMA signal.  That's when we fetch the
+   sound sample, at the very end of horizontal blanking, not the very
+   beginning.
+
+   Finally, we assert resnyb to clear the counter and finally
+   propagate the carry to the next video address.
+
+At the very end of vertical blanking, we assert *RESLIN to clear the
+video address counter back to zero.  Until then, we keep counting
+positive to keep track of the vertical blanking time.
+
+But, to implement this... it's tricky because va5 and va6 are not
+connected to any PAL.  How do we generate the signals then?  We can
+otherwise only count to 16, we need to get to 32.
+
+Okay, I think I've got it figured out.  VIAPB6 is a little white lie,
+it's not the actual horizontal blanking signal, it's a prep signal
+before the horizontal blanking actually occurs.  But, nevertheless, it
+is almost the same thing, 16 cycles at 16MHz rather than 12 cycles.
+For the 8 MHz CPU, it pretty much looks like the same thing.  And
+that's where we hide the additional bit of memory we need.
+
+*/
 
 // 32 active cycles for line  - UA6..UA1 = 0 to 1F
 // 1 cycle for sound/PWM                 = 2B
@@ -231,11 +302,12 @@ module bmu1(simclk, n_res,
 		 | a23 & ~a21 & ~as); // for generating DTACK (not accessing ROM: A20)
       ramen <= ~(~a23 & ~a22 & ~a21 & ~as & ~ovlay // 000000
 		 | ~a23 & a22 & a21 & ~as & ovlay); // (600000 with `ovlay`)
-      io1 <= ~(0); // ???
+      io1 <= ~(0); // TODO this indicates we're >= line 28
       l28 <= ~(~l15 & ~va9 & ~va8 & va7 // reached 370 or we don't pass line 28
+	       | ~l28 & ~l15
 	       | ~l28 & ~va9
 	       | ~l28 & ~va8
-	       | ~l28 & ~va7);
+	       | ~l28 & va7);
       end
    end
 endmodule
@@ -275,15 +347,15 @@ module bmu0(simclk, n_res,
    end
 
    // Simulate registered logic.
-   always @(negedge sysclk) begin
+   always @(posedge sysclk) begin
       if (n_res) begin
-      ava14 <= @(posedge sysclk) ~(~va14 & ~va13); // + 1
-      l15 <= @(posedge sysclk)
+      ava14 <= ~(~va14 & ~va13); // + 1
+      l15 <=
 	~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
 	  | va14 & ~va13 & va12 & va11 & va10); // passed by 368
-      vid <= @(posedge sysclk)
+      vid <=
 	~(servid); // here we invert: blanking is in `vshft`
-      ava13 <= @(posedge sysclk) ~(va13); // + 1
+      ava13 <= ~(va13); // + 1
       end
    end
 endmodule
@@ -321,20 +393,20 @@ module tsg(simclk, n_res,
    end
 
    // Simulate registered logic.
-   always @(negedge sysclk) begin
+   always @(posedge sysclk) begin
       if (n_res) begin
       // TODO VERIFY: q6 missing?
-      q6 <= @(posedge sysclk) ~(0);
-      clkscc <= @(posedge sysclk)
+      q6 <= ~(0);
+      clkscc <=
 	~(clkscc & ~pclk & ~q4
 	  | clkscc & ~pclk & ~q3
 	  | clkscc & ~pclk & vclk
 	  | ~clkscc & pclk
 	  | ~clkscc & q4 & q3 & ~vclk); // skip one inversion every 32 cycles
-      viacb1 <= @(posedge sysclk) ~(0); // ??? /M nanda
-      pclk <= @(posedge sysclk) ~(pclk); // divide SYSCLK by 2 (8MHz)
-      q3 <= @(posedge sysclk) ~(~vclk); // `sysclk` / 16
-      q4 <= @(posedge sysclk)
+      viacb1 <= ~(0); // ??? /M nanda
+      pclk <= ~(pclk); // divide SYSCLK by 2 (8MHz)
+      q3 <= ~(~vclk); // `sysclk` / 16
+      q4 <=
 	~(q4 & q3 & ~vclk // `sysclk` / 32
 	  | ~q4 & ~q3                       // } J for generating CLKSCC
 	  | ~q4 & vclk);
@@ -421,7 +493,7 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // Incremented high-order video address lines
    wire ava14, ava13;
    // Internal video signals
-   wire n_vshft, n_snddma, n_servid;
+   wire vshft, n_snddma, n_servid;
 
    // Address multiplexer signals?
    wire s0, s1, l28, l15, n_245oe;
@@ -446,13 +518,15 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    wire c8mf, c16mf, c2m, u12f_tc, ram_r_n_w_f;
    wire vmsh; // video mid-shift, connect two register chips together
 
-   wire s5; // This is just a pull-up resistor
+   // This is just a pull-up resistor, possibly connected to a RESET
+   // circuit.
+   wire s5;
 
    // L12 => va13
    // L13 => va14
    // va12 => ava13
    // va13 => ava14
-   // n_ldps => n_vshft
+   // n_ldps => vshft
    // VID/*u => s1 
    // tc => vclk
 
@@ -475,8 +549,12 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // TSG Output Enable is controlled by CAS on Macintosh Plus,
    // otherwise just go straight to ground on Macintosh 128k.
    assign tsg_oe3 = gnd;
-   // S5: Pull-up resistor.
+   // S5: Pull-up resistor.  TODO FIXME: Should this be controlled by
+   // another thing too?
    assign s5 = vcc;
+
+   // TODO FIXME: A1 - A13 are connected to a pull-up resistors bank
+   // RP1.
 
    /* N.B. The reason why phase calibration is required in the
       Macintosh 128k/512k/Plus is because the PALs do not have a RESET
@@ -495,9 +573,9 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 	      n_dmald, n_sndres, , , , , u12f_tc, vcc);
    // Dual video shift registers
    ls166 u10f(vmsh, rdq8, rdq9, rdq10, rdq11, 1'b0, c16mf, gnd,
-	      s5, rdq12, rdq13, rdq14, n_servid, rdq15, n_vshft, vcc);
+	      s5, rdq12, rdq13, rdq14, n_servid, rdq15, vshft, vcc);
    ls166 u11f(s5, rdq0, rdq1, rdq2, rdq3, 1'b0, c16mf, gnd,
-	      s5, rdq4, rdq5, rdq6, vmsh, rdq7, n_vshft, vcc);
+	      s5, rdq4, rdq5, rdq6, vmsh, rdq7, vshft, vcc);
    // Dual RAM data bus transceivers
    ls245 u9e(ram_r_n_w_f, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, rdq6, rdq7,
 	     gnd, d7, d6, d5, d4, d3, d2, d1, d0, n_245oe, vcc);
@@ -529,7 +607,7 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    tsm pal0(simclk, n_res, sysclk, sysclk, pclk, s1, n_ramen, n_romen, n_as, n_uds, n_lds,
 	    gnd, tsm_oe1, casl, cash, ras, vclk, p0q2, p0q1, s0, n_dtack, vcc);
    lag pal1(simclk, n_res, sysclk, p2io1, l28, va4, p0q2, vclk, va3, va2, va1,
-	    gnd, lag_oe2, n_vshft, n_vsync, n_hsync, s1, viapb6,
+	    gnd, lag_oe2, vshft, n_vsync, n_hsync, s1, viapb6,
 	    n_snddma, reslin,
 	    resnyb, vcc);
    bmu1 pal2(simclk, n_res, va9, va8, va7, l15, va14, ovlay, a23, a22, a21, gnd,

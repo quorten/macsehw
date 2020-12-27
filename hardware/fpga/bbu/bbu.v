@@ -214,12 +214,10 @@ module bbu_master_ctrl
    // SCSI signals
    output wire n_scsi;
    input wire scsidrq;
-   output reg n_dack;
+   output wire n_dack;
    // PDS signals
    input wire n_extdtk;
    output reg n_earen; // ??? Purpose unknown.
-
-   // Note tristate inout ... 'bz for high impedance.  8'bz for wide.
 
    // Full DRAM address bus snooping?  I almost thought this was
    // required to implement some functions, but it turns out it isn't,
@@ -230,11 +228,8 @@ module bbu_master_ctrl
    // Installed RAM size.
    wire [23:0] ramsz;
 
-   // TODO MOVE DOCUMENTATION: PLEASE NOTE, PDS cards can also access
-   // DRAM, not just the CPU.  This is mainly a matter of bus
-   // arbitration, then as far s the BBU is concerned, PDS access to
-   // DRAM should appear identical to CPU access to DRAM.  Guide to
-   // the Macintosh Family hardware, page 84.
+   wire n_dtack_peri; // `*DTACK` for peripherals
+   wire n_dtack_bbu; // Holds `*DTACK` high for BBU RAM accesses
 
    //////////////////////////////////////////////////
    // Pure combinatorial logic is defined first.
@@ -249,44 +244,16 @@ module bbu_master_ctrl
    // SCSI IRQ line attaches directly to `*IPL0`?
    assign n_ipl0 = ~n_ipl1 | n_viairq;
 
+   // Tri-state `*DTACK` when `*EXTDTK` is asserted.
+   assign n_dtack = (n_extdtk) ? (n_dtack_peri | n_dtack_bbu) : 'bz;
+
    //////////////////////////////////////////////////
    // Sub-modules are instantiated here.
 
    // The remainder of definitions are for sequential logic.
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
-      n_dack <= 1;
       n_earen <= 1;
-   end
-
-   always @(posedge c16m) begin
-      if (n_res) begin
-	 // All high speed sequential logic goes here.
-      end
-   end
-
-   always @(posedge c8m) begin
-      if (n_res) begin
-	 // All CPU speed sequential logic goes here.
-      end
-   end
-
-   always @(posedge c3_7m) begin
-      if (n_res) begin
-	 // All peripheral speed sequential logic goes here.
-      end
-   end
-
-   always @(posedge c2m) begin
-      if (n_res) begin
-	 // Only DRAM operations go here.
-      end
-   end
-
-   always @(negedge c2m) begin
-      if (n_res) begin
-	 // Only DRAM operations go here.
-      end
    end
 endmodule
 
@@ -353,7 +320,7 @@ Write down all my questions thus far about the BBU:
 
 // Clock divider module.  Generate the frequency-divided clock
 // signals.
-module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
+module clock_div (n_res, c16m, c8m, c3_7m, c2m_e);
    input wire n_res;
    input wire c16m;
    output reg c8m;
@@ -362,30 +329,6 @@ module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
    // This is just an I/O argument placeholder.  We still generate the
    // signal internally, though.
    input wire c2m_e;
-   output wire n_pmcyc;
-   // *PMCYC "pre-trigger": will the *PMCYC state be negated on the
-   // next cycle?
-   output wire pmcyc_pt;
-   // TODO FIXME: `*PMCYC` should not be a strict 1MHz clock, because
-   // during vertical blanking, all cycles (except for horizontal
-   // blanking sound cycles) are fair game for CPU use.  PLEASE NOTE:
-   // According to Guide to the Macintosh family hardware, page 194,
-   // the process of scanning the screen buffer also refreshes the
-   // DRAM.  But I don't quite understand how this works, wouldn't you
-   // need to access more addresses to refresh all the DRAM?  But,
-   // PLEASE NOTE.  Macintosh SE/30 takes one access cycle every
-   // 15.6us for DRAM refresh.
-
-   // So, what's the secret sauce of the Macintosh SE being more
-   // performant in memory access?  Guide to the Macintosh family
-   // hardware, page 401.  During the BBU memory access cycle time,
-   // unlike earlier models that would only read one word, the BBU
-   // reads two 16-bit words.  Yes, so it does do buffering!  This
-   // allows the CPU to have free access to the next two cycles.  So,
-   // the word is hard and strong now, `*PMCYC` is not a simple 1MHz
-   // clock, but has a much more complex timing circuit.  That equates
-   // to a 200% memory access speedup during screen scanning in the
-   // Macintosh SE compared to the Macintosh Plus.
 
    /* Inside Macintosh claims that the serial clock is 3.672 MHz.
       Clock multiplication (via PLL) and division can be used to
@@ -435,9 +378,7 @@ module clock_div (n_res, c16m, c8m, c3_7m, c2m_e, n_pmcyc, pmcyc_pt);
    reg c2m;
    reg c1m;
 
-   assign pmcyc_pt = c16m_div16_cntr[7];
    // assign c2m_e = c2m;
-   assign n_pmcyc = c1m;
 
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
@@ -714,13 +655,13 @@ endmodule
    executes for an even number of clock cycles (divisible by 2), and
    there is no pipelining in these early CPUs.
 */
-module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi, scsidrq,
+module decode_devaddr (n_res, c16m, n_ramen, n_romen, n_scsi, scsidrq,
 		       n_dack, n_sccen, n_sccrd, n_iow, n_iwm, via_cs1,
 		       n_vpa, n_berr, n_as, a23_19, a9, n_extdtk,
 		       boot_overlay, r_n_w, reg_romen, reg_ram_w,
 		       n_dtack_peri);
    input wire n_res;
-   input wire clk;
+   input wire c16m;
    output wire n_ramen;
    output wire n_romen;
    output wire n_scsi;
@@ -744,7 +685,7 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi, scsidrq,
    // Has an address access to the regular *ROMEN zone occurred?  This
    // signal is used to disable the boot-time memory overlay.
    output wire reg_romen;
-   output wire n_dtack_peri; // *DTACK for peripherals
+   output wire n_dtack_peri; // `*DTACK` for peripherals
 
    wire reg_ram, reg_ram_r;
    wire scdma; // host requested performing a SCSI pseudo-DMA read/write
@@ -826,13 +767,13 @@ module decode_devaddr (n_res, clk, n_ramen, n_romen, n_scsi, scsidrq,
    // `*DTACK` on high-impedance when `*EXTDTK` is asserted.
 
    // assign n_dtack_peri =
-   //   n_extdtk ? (n_as | ((n_vpa | scdma) & n_dack)) : 'bz;
+   //   (n_extdtk) ? (n_as | ((n_vpa | scdma) & n_dack)) : 'bz;
 
    always @(negedge n_res) begin
       berr_cntr <= 0;
    end
 
-   always @(posedge clk) begin
+   always @(posedge c16m) begin
       if (n_res) begin
 	 if (n_as)
 	   berr_cntr <= 0;
@@ -879,7 +820,7 @@ endmodule
 
 // Column address strobe decode logic.  Determine which column access
 // strobe line to assert based off of the installed RAM, high-order
-// CPU address lines, and *LDS/*UDS signals.
+// CPU address lines, and *UDS/*LDS signals.
 module dramctl_cas (n_cas, n_cas0h, n_cas0l, n_cas1h, n_cas1l,
 		    n_uds, n_lds, row2, mbram, s64kram,
 		    a17, a19, a21);
@@ -904,7 +845,6 @@ endmodule
 
 // RA7/RA9 selector logic.  Determine which CPU address pins should be
 // routed to these RAM address pins based off of the installed RAM.
-// TODO FIXME: This is incorrect in light of new knowledge.
 module dramctl_ra7_9 (ra7, ra9, cas_n_ras, row2, mbram, s64kram,
 		      a9, a17, a19, a20, a10);
    output wire ra7;
@@ -920,11 +860,11 @@ module dramctl_ra7_9 (ra7, ra9, cas_n_ras, row2, mbram, s64kram,
      = (s64kram) ? // 64K RAM SIMMs
        (~cas_n_ras) ? a9 : a10
        : // 256K RAM SIMMs and 1MB RAM SIMMs
-       (~cas_n_ras) ? a17 : a9
+       (~cas_n_ras) ? a9 : a17
    ;
    assign ra9
      = (mbram) ? // 1MB RAM SIMMs
-       (~cas_n_ras) ? a20 : a19
+       (~cas_n_ras) ? a19 : a20
        : // <1MB RAM SIMMs
        0 // RA9 is not used
    ;
@@ -1060,8 +1000,11 @@ module dramctl_cpu (n_res, clk, r_n_w, c2m,
    // At a higher level, it is used to determine whether it is the
    // CPU's turn to access RAM or the BBU's turn to access RAM.  The
    // CPU always takes a multiple of 4 clock cycles running at 8 MHz
-   // to access RAM.  This signal could possibly be just wired up to a
-   // 1 MHz clock.
+   // to access RAM.  In the Macintosh Plus, this signal was wired up
+   // to a 1 MHz clock, but the Macintosh SE uses a more sophisticated
+   // approach.
+   // TODO FIXME: Implement `*PMCYC` generation logic, comes from the
+   // video timers module.
    input wire n_pmcyc;
    // output reg n_pmcyc;
    output reg n_dtack;
@@ -1354,6 +1297,10 @@ endmodule
 // exercise because of Verilog silliness.  Actually, might as well
 // make two modules since that is all that is needed to start: one for
 // video, one for DRAM.
+
+// TODO FIXME: We must be able to support Fast Page Mode (FPM) for
+// video memory access too.  But we don't do this for the sound
+// buffer.
 module fetch_vid_addr (n_res, clk, n_as, a, vidreg, s64kram);
    input wire n_res;
    input wire clk;
@@ -1399,9 +1346,21 @@ module avtimers ();
    input wire n_res;
    input wire c16m;
 
+   input wire c8m;
+   input wire c4m;
+   input wire c2m;
+   input wire c1m;
+
+   input wire [23:0] vid_main_addr; // Address of main video buffer
+   input wire [23:0] vid_alt_addr;  // Address of alternate video buffer
+   input wire [23:0] snddsk_main_addr; // Address of main sound/disk buffer
+   // Address of alternate sound/disk buffer
+   input wire [23:0] snddsk_alt_addr;
+
    // Video signals
    input wire vidpg2;  // VIDPG2 signal
-   output reg vidout;  // VIDOUT signal
+   output wire vidout;  // VIDOUT signal
+   output wire n_hsync_pt; // *HSYNC pre-trigger
    output reg n_hsync; // *HSYNC signal
    output reg n_vsync; // *VSYNC signal
 
@@ -1423,12 +1382,10 @@ module avtimers ();
 
    // *HSYNC and *VSYNC counters are negative during blanking.
    reg [15:0] vidout_sreg;    // VIDOUT shift register
-   reg [4:0]  vidout_cntr;    // VIDOUT remaining counter
-   reg [9:0]  vid_hsync_cntr; // *HSYNC counter
-   reg [8:0]  vid_vsync_cntr; // *VSYNC counter
-
-   wire [23:0] vid_main_addr; // Address of main video buffer
-   wire [23:0] vid_alt_addr;  // Address of alternate video buffer
+   wire [4:0] c16m_cntr;      // 16 MHz sub-cycle counter
+   reg n_ldps;
+   reg slice_cntr;            // Used to alter carry propagation
+   reg [14:0] va;             // Video address counter
 
    // Sound and disk speed buffers are scanned 370 words per video
    // frame, and the size of both buffers together is 370 words.  Or,
@@ -1453,9 +1410,6 @@ module avtimers ();
 
    reg [15:0] snddsk_reg; // PCM sound sample and disk speed register
 
-   wire [23:0] snddsk_main_addr; // Address of main sound/disk buffer
-   wire [23:0] snddsk_alt_addr;  // Address of alternate sound/disk buffer
-
    // We must be careful that the sound circuitry does not attempt to
    // access RAM at the same time as the video circuitry.  Because the
    // phases are coherent, we can simply align the sound and disk
@@ -1478,26 +1432,62 @@ module avtimers ();
    // been used.  This is going to be a one-shot countdown timer for
    // generating a single pulse per byte.
 
+   // The current 16 MHz cycle # can easily be determined from our
+   // divided clock frequencies.
+   assign c16m_cntr = { c1m, c2m, c4m, c8m };
+   assign vidout = vidout_sreg[15];
+
    always @(negedge n_res) begin
       // Initialize all output registers on RESET.
 
-      vidout <= 0; n_hsync <= 1; n_vsync <= 1;
+      n_hsync <= 1; n_vsync <= 1;
 
       snd <= 0; pwm <= 0;
 
       // Initialize all internal registers on RESET.
       vidout_sreg <= 0;
-      vidout_cntr <= 0;
-      vid_hsync_cntr <= 0;
-      vid_vsync_cntr <= 0;
+      va <= 0;
       snddsk_reg <= 0;
+   end
+
+   // N.B. Now this is tricky.  Our load pixel shifter is carefully
+   // timed to happen immediately after the last pixel is displayed
+   // and as soon as the next value is available from DRAM.  This
+   // means that we actually offset the horizontal blanking signal by
+   // a nominal amount in comparison to the video address counter
+   // increments to compensate.
+
+   // Okay, here's the trick with FPM fetches.  We still need to count
+   // by 16 on the video address so we can time the 16-bit sound load
+   // at the end of the cycle correctly, but we use a double-width
+   // video shift register and only trigger video load half as often.
+
+   always @(posedge c16m) begin
+      if (n_ldps) begin
+	 // Fill the least significant bit with logic one so that the
+	 // CRT beam is off during blanking.
+	vidout_sreg <= { vidout_sreg[14:0], 1'b1 };
+      end
+      else
+	vidout_sreg <= 0; // TODO load new value.
+
+      // Increment the video address on every 1 MHz clock cycle.
+      // However, on horizontal blanking, we slice the carry until the
+      // end of the interval.
+      if (c16m_cntr == 4'hf) begin
+	 // N.B.: Remember we are counting by 16-bit words.
+	 if (slice_cntr)
+	   va[4:0] <= va[4:0] + 2;
+	 else
+	   va <= va + 2;
+      end
    end
 endmodule
 
 /* TODO: Summary of what is missing and left to implement: DRAM
    initialization pulses, DRAM refresh, detect 2.5MB of RAM and
    configure address buffers accordingly, video, disk, and audio
-   scanout, EXTDTK yielding.
+   scanout.
 
    Okay, so the VERDICT on DRAM initialization pulses.  We don't
    actually use these as we should, strictly speaking, but why does it
@@ -1511,58 +1501,5 @@ endmodule
    So really, the only mysteries left now is 2.5MB RAM detection and
    4MB RAM DRAM refresh.  Then we need to do the busywork to implement
    the PWM and video scanout modules and we're done!  */
-
-/*
-
-Now I think I see why there is the funny thing going on with the
-address multiplexers for RAS/CAS.  It is a required modification to
-use DRAM fast-page mode since RAS and CAS are still logically
-"swapped" compared to a contiguous memory layout.  This swapping of
-RAS and CAS is used to get DRAM refresh for free when scanning the
-video framebuffer.
-
-Okay, so let's review in more detail.
-
-Address multiplexer row address outputs:
-
-A2, A3, A4, A5, A6, A7, A8, A10
-
-A9 inputs directly to BBU, controls RA7.
-
-This is a straight match-up to DRAM row address lines.
-
-RA0 A2
-RA1 A3
-RA2 A4
-RA3 A5
-RA4 A6
-RA5 A7
-RA6 A8
-RA7 A9
-RA8 A10
-RA9 A19 (optional) (!)
-
-So, how many longwords for the video framebuffer?
-
-512 x 342 / 32 = 5472 longwords
-In hex: 0x1560
-Number of address bits fully covered by a full scan: 12
-
-Okay, so the question, does it work for DRAM refresh?  Indeed it does!
-Well, the number of longwords swept is great enough to cover all DRAM
-rows for 4MB of RAM, but the address bit mapping appears only to work
-for <=1MB of RAM.
-
-Please note that since we use only a single row access strobe signal
-for both DRAM rows and instead use separate column access strobes to
-differentiate between the rows, even if all the video memory addresses
-are only in one row, we still refresh the other row as long as we
-cover all the row addresses.
-
-RA9 looks to be trouble.  But, the Unitron reverse engineering docs
-almost have a solution.  Set this to A17 (?) and it should "just work"
-I guess.  But why?
-
-*/
 
 `endif // NOT BBU_V

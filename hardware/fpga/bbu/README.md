@@ -79,11 +79,10 @@ a huge number of pins, its purpose can be summarized as follows.
 * Act as a DRAM controller.  Set the ROM/RAM control signals depending
   on the particular address requested, i.e. `*EN245`, `*ROMEN`,
   `*RAS`, `*CAS0L`, `*CAS0H`, `*CAS1L`, `*CAS1H`, `RAM R/*W`.
-  `*PMCYC` is apparently used to totally disable DRAM row and column
-  access strobes only during startup.  The F257 chips are used to
-  select separate address portions for the DRAM row and column access
-  strobes.  The LS245 chips are used to disable DRAM access during ROM
-  access.
+  `*PMCYC` enables the row/column address multiplexers.  The F257
+  chips are used to select separate address portions for the DRAM row
+  and column access strobes.  The LS245 chips are used to disable DRAM
+  access during ROM access.
 
   DRAM is accessed by sending the row access strobe first, the column
   access strobe second.
@@ -128,7 +127,24 @@ a huge number of pins, its purpose can be summarized as follows.
     2. To enable fast-page mode (FPM) for fetching two 16-bit words in
        sequence (one "longword").  This in turn reduces the BBU's
        memory access overhead and therefore increases the speed of CPU
-       memory accesses.
+       memory accesses.  Guide to the Macintosh family hardware, page
+       401.
+
+* Please note that the framebuffer scanning circuitry only refreshes
+  the DRAM rows controlled by RA0 through RA8.  RA9 is only accessed
+  by software.  That means if there is more than one megabyte of DRAM
+  installed, there must be a software routine to continuously scan a
+  contiguous 2KB buffer within the first 512KB of RAM (or an alternate
+  but equivalent strategy).  The is the same behavior as was used in
+  the Macintosh Plus and earlier.  Guide to the Macintosh family
+  hardware, page 194
+
+  This is a bit of a bummer, but even though I don't quite understand
+  how 4MB DRAM refresh works, maybe it will "just work" in the real
+  system.
+
+  PLEASE NOTE.  Macintosh SE/30 takes one access cycle every 15.6us
+  for DRAM refresh.
 
 * So, wow.  Here's a list of all possible Macintosh SE RAM
   configurations.
@@ -137,25 +153,12 @@ a huge number of pins, its purpose can be summarized as follows.
   (undocumented), 1MB, 2MB, 4MB.
 
 * Refresh the DRAM by periodically reading some arbitrary memory from
-  every available row.  Unlike the Apple II, the contiguous
-  organization of the screen, sound, and PWM disk speed buffers does
-  not allow for these periodic functions to double as automatic DRAM
+  every available row.  Similar to the Apple II, the framebuffer scan
+  doubles as a DRAM refresh.  Except that high RAM requires software
   refresh.  How does this need play together with the PDS card's
   ability to request priority access over `DTACK`?  Maybe the refresh
   circuitry still continues to function, but without driving DTACK for
   the duration that the PDS card requests driving the signal.
-
-  However, one interesting trick is that the address multiplexers are
-  configured to access alternating DRAM rows when reading consecutive
-  addresses rather than all coming from a single DRAM row.  I am not
-  sure of the motivation behind this, but it seems like it could have
-  been extended so that reading consecutive memory addresses would
-  provide automatic DRAM memory refresh, thus allowing the video
-  circuitry to double in this role without providing the drawbacks of
-  nonlinear video memory to software.
-
-  Unfortunately, this scheme also complicates reusing the same DRAM
-  row for performance improvements.
 
 * Scan the CRT by driving the primary digital control signals
   (`*VSYNC`, `*HSYNC`, `VIDOUT`).  Read directly from RAM buffers as
@@ -200,6 +203,11 @@ The following I/O chips are connected to the BBU:
 
 Other chips that are connected to the BBU are mainly interfaced via
 only simple, single-pin interfaces.
+
+Please note that PDS cards can also access DRAM, not just the CPU.
+This is mainly a matter of bus arbitration, then as far s the BBU is
+concerned, PDS access to DRAM should appear identical to CPU access to
+DRAM.  Guide to the Macintosh family hardware, page 84.
 
 ----------
 
@@ -268,11 +276,13 @@ only simple, single-pin interfaces.
   performance and lower memory access time.
 
 * `*PMCYC` is an output signal.  Its primary conceptual purpose is to
-  define "whose turn" it is to access DRAM, the CPU or the BBU?  This
-  could be as simple as a 1 MHz clock, since the CPU always takes a
-  multiple of 4 clock cycles at 8 MHz to access DRAM.  The symbol is
-  probably short for Processor Memory CYCle.  It only connects to the
-  PDS slot and the F257 chips.
+  define "whose turn" it is to access DRAM, the CPU or the BBU?  In
+  the Macintosh Plus, this was a simple 1 MHz clock, since the CPU
+  always takes a multiple of 4 clock cycles at 8 MHz to access DRAM.
+  But the Macintosh SE uses a more sophisticated pattern to give the
+  CPU as large of a time share as possible to access DRAM.  The symbol
+  is probably short for Processor Memory CYCle.  It only connects to
+  the PDS slot and the F257 chips.
 
 ----------
 
@@ -340,7 +350,7 @@ signals.
   itself and the CPU is simply instructed to wait additional cycles by
   holding the `*DTACK` signal deasserted.
 
-* Implement bank switching to allow access to more than 4 MB of RAM
+* Implement bank switching to allow access to more than 4MB of RAM
   without requiring a CPU that is capable of virtual memory.  The
   original MC68000 CPU in particular does not allow for
   exception-handling that repeats execution of a faulted instruction,

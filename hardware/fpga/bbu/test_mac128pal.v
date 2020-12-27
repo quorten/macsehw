@@ -103,7 +103,10 @@ module test_mac128pal();
 
    // Set simulation time limit.
    initial begin
-      #480000 $finish;
+      // #1920000 $finish;
+      // PLEASE NOTE: We must simulate LOTS of cycles in order to see
+      // what the oscilloscope trace for one video frame looks like.
+      #30720000 $finish;
    end
 
    // We can use `$display()` for printf-style messages and implement
@@ -115,7 +118,9 @@ module test_mac128pal();
 
    // Log to a VCD (Variable Change Dump) file.
    initial begin
-      $dumpfile("test_mac128pal.vcd");
+      // $dumpfile("test_mac128pal.vcd");
+      // Use LXT instead since it is more efficient.
+      $dumpfile("test_mac128pal.lxt");
       $dumpvars;
    end
 endmodule
