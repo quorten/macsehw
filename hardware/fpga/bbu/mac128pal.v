@@ -152,7 +152,7 @@ module lag(simclk, n_res,
       // TODO FIXME: We trigger hsync a bit too soon at the end of the
       // scanline.  And, we release it too soon at the beginning.
       hsync <=
-	~(viapb6 & ~p0q2 & s1 & ~va1 & ~va2 & ~va3 & ~va4
+	~(viapb6 /* & ~p0q2 & s1 */ & ~vclk & va1 & va2 & va3 & va4 /* FIXME & ~va1 & ~va2 & ~va3 & ~va4 */
 	  | ~hsync & ~va4
 	  | ~hsync & ~va3
 	  | ~hsync & va2
@@ -160,6 +160,10 @@ module lag(simclk, n_res,
       // TODO FIXME: This is not a synthesizable PAL equation.
       // TODO FIXME: This isn't generating sound buffer accesses
       // during vertical blanking but it should be.
+
+      // This is the correct conceptual equation:
+      // s1 <= ~(~p0q2 | ~vclk)
+
       s1 <=
 	~(~p0q2 // 0 for processor and 1 for video
 	  | ~vclk
@@ -185,14 +189,21 @@ module lag(simclk, n_res,
       // to get at least partial behavior for analysis.
       // TODO FIXME: Why this latches up and is broken, we should not
       // use memory access to clock this to one sensitivity cycle.
+
+      // TODO FIXME: Okay, this is how to do it.  The trick is within
+      // "self-latching" logic equations.  When another clock period
+      // remains the same, we use self-latching logic equations, but
+      // they loose effect... okay, I don't know what I'm talking
+      // about.
       viapb6 <=
 	~(~hsync // 1 indicates horizontal retrace (pseudo VA6)
-	  | ~viapb6 & p0q2
-	  | ~viapb6 & ~s1
-	  | ~viapb6 & va1
-	  | ~viapb6 & va2
-	  | ~viapb6 & va3
-	  | ~viapb6 & va4);
+	  /* | ~viapb6 & p0q2
+	  | ~viapb6 & ~s1 */
+	  | ~viapb6 & ~vclk
+	  | ~viapb6 & ~va1 // TODO FIXME wrong phase
+	  | ~viapb6 & ~va2
+	  | ~viapb6 & ~va3
+	  | ~viapb6 & ~va4);
       // TODO FIXME HACK: Previously viapb6 but negated for testing.
       snddma <=
 	~(~viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
@@ -305,7 +316,12 @@ module bmu1(simclk, n_res,
      = ~(~a23 & ~a22 & ~a21 & ~as & ~ovlay // 000000
 	 | ~a23 & a22 & a21 & ~as & ovlay); // (600000 with `ovlay`)
    assign io1
-     = ~(0); // TODO this indicates we're >= line 28
+     = ~(~l15 & ~va9 & va8 & ~va7 // reached 368 or we don't pass line 26
+	 | ~l28 & ~l15
+	 | ~l28 & ~va9
+	 | ~l28 & va8
+	 | ~l28 & ~va7
+	 | ~n_res); // SIMULATION ONLY: Else we never settle.
    assign l28
      = ~(~l15 & ~va9 & ~va8 & va7 // reached 370 or we don't pass line 28
 	 | ~l28 & ~l15
