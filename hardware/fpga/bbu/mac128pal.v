@@ -157,23 +157,15 @@ module lag(simclk, n_res,
 	  | ~hsync & ~va3
 	  | ~hsync & va2
 	  | ~hsync & va1);
-      // TODO FIXME: This is not a synthesizable PAL equation.
-      // TODO FIXME: This isn't generating sound buffer accesses
-      // during vertical blanking but it should be.
-
-      // This is the correct conceptual equation:
-      // s1 <= ~(~p0q2 | ~vclk)
-
       s1 <=
 	~(~p0q2 // 0 for processor and 1 for video
 	  | ~vclk
 	  | ~vsync & hsync
 	  | ~vsync & viapb6 // vertical retrace only has sound cycles
-	  /* TODO INVESTIGATE: Line disabled because it drops out
-	     pulses we'd normally expect.  */
-	  /* | ~viapb6 & hsync & ~va4 & ~va3 & ~va2 */
-	  | ~viapb6 & ~hsync & (~va4 | va4 & ~va3 & ~va2 |
-				    va4 & ~va3 & va2 & ~va1));
+	  | ~vsync & ~viapb6 & ~hsync & va4 & va3 & va2 & va1
+	  | ~viapb6 & ~hsync & ~va4
+	  | ~viapb6 & ~hsync & va4 & ~va3 & ~va2
+	  | ~viapb6 & ~hsync & va4 & ~va3 & va2 & ~va1);
       // viapb6 <=
       // 	~(~hsync & resnyb // 1 indicates horizontal retrace (pseudo VA6)
       // 	  | va1 & ~viapb6
@@ -212,7 +204,7 @@ module lag(simclk, n_res,
       reslin <= // try to generate line 370
 	~(l28
 	  | ~vsync
-	  | hsync
+	  | ~hsync // HACKED previously hsync, but negated for testing.
 	  | viapb6
 	  | ~vclk);
       // N.B. Primary conceptual equation:
@@ -222,16 +214,16 @@ module lag(simclk, n_res,
       // TODO FIXME HACK: Possibly incorrect interpretation of viapb6
       // with hsync.
       resnyb <=
-	~(vclk // increment VA5:VA14 in 0F and 2B
-	  | viapb6
-	  | va1
-	  | va2
-	  | hsync & va4
-	  | hsync & va3
-	  | ~hsync & ~va4
-	  | ~hsync & ~va3
-	  | ~va4 & va3
-	  | va4 & ~va3);
+      	~(vclk // increment VA5:VA14 in 0F and 2B
+      	  | // viapb6 // TODO FIXME HACK PHASE
+      	  | va1
+      	  | va2
+      	  | hsync & va4
+      	  | hsync & va3
+      	  | ~hsync & ~va4
+      	  | ~hsync & ~va3
+      	  | ~va4 & va3
+      	  | va4 & ~va3);
       end
    end
 endmodule
