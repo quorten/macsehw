@@ -1,0 +1,47 @@
+Name     glu ;
+PartNo   00 ;
+Date     07/11/2020 ;
+Revision 01 ;
+Designer Kai Robinson ;
+Company  Atmel ;
+Assembly None ;
+Location  ;
+Device   virtual ;
+
+/* Dedicated input pins */
+
+pin 1   = CLK;       /* Input */
+pin 2   = PB6;       /* Input */
+pin 3   = IRQ;       /* Input */
+pin 4   = WRDATA;    /* Input */
+pin 5   = ENABLE1;    /* Input */
+pin 6   = PA4;       /* Input */
+pin 7   = 16MCLK;   /* Input */
+pin 8   = PA3;       /* Input */
+pin 9   = RTXCB;    /* Input */
+pin 11  = OE;       /* Input */
+
+/* Programmable output pins */
+
+pin 12  = RTXCA;    /* Combinatorial output */
+pin 13  = OUTA;      /* Fixed high output */
+pin 14  = BBUIRQ;   /* Combinatorial output w/ output enable */
+pin 15  = ENABLEL;  /* Combinatorial output */
+pin 16  = ENABLEU;  /* Combinatorial output */
+pin 17  = FLOPPYWR; /* Combinatorial output */
+pin 18  = nc;        /* Fixed high output */
+pin 19  = FCLK; /* Combinatorial output w/ output enable */
+
+/* Output equations */
+
+!FCLK     = 16MCLK   & !OE;
+ nc       = 'b'1;
+!FLOPPYWR = WRDATA;
+!ENABLEU  = !ENABLE1 & !PA4;
+!ENABLEL  = !ENABLE1 &  PA4;
+!BBUIRQ   = !PB6     &  IRQ;
+ OUTA     = 'b'1;
+!RTXCA    = !PA3    & !RTXCB   & !OUTA 
+          #  PA3    & !RTXCB   & !OUTA 
+          # !PA3    &  RTXCB   & !OUTA 
+          #  PA3    & !RTXCB   &  OUTA;
