@@ -109,10 +109,10 @@ module test_mac128pal();
 
    // Set simulation time limit.
    initial begin
-      #1920000 $finish;
+      // #1920000 $finish;
       // PLEASE NOTE: We must simulate LOTS of cycles in order to see
       // what the oscilloscope trace for one video frame looks like.
-      // #30720000 $finish;
+      #30720000 $finish;
    end
 
    // We can use `$display()` for printf-style messages and implement

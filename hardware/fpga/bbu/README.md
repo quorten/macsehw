@@ -321,11 +321,28 @@ Peripheral device signals, input or output?
 
 ----------
 
+Digital copy of _Guide to the Macintosh family hardware_ on the
+Internet Archive:
+
+20200905/https://archive.org/details/apple-guide-macintosh-family-hardware
+
 Please note: Information on how the older compact Macintosh PAL gates
 worked, which provide nearly identical functionality of the BBU.
 
 20201116/http://www.retro.co.za/ccc/mac/ReverseEngineering/PALs.html  
 20201116/https://web.archive.org/web/20170726142931/http://www.mactech.com/articles/mactech/Vol.01/01.11/PAL/index.html
+
+Here are scans of one of the drafts of the Unitron's reverse
+engineering efforts for the PAL.  The Unitron is the first Macintosh
+clone.  Despite minor errors in some of the more difficult to reverse
+engineer equations, these equations are far more accurate than most
+third-party equation sources.
+
+20201120/http://www.merlintec.com/download/unitron1.pdf  
+20201120/http://www.merlintec.com/download/unitron2.pdf
+
+Please note that I have corrected some of the errors in my simulatable
+transcribed copy of the equations into Verilog, see `mac128pal.v`.
 
 There is still more to learn/investigate relating to unspecified
 signals.

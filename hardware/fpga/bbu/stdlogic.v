@@ -127,7 +127,7 @@ module f32(s1a, s1b, s1y, s2a, s2b, s2y, gnd,
 endmodule
 
 // LS161: 4-bit binary counter.
-// Used to generate sequential video and sound RAM addresses.
+// Used to generate PWM sound signal.
 module ls161(n_clr, clk, a, b, c, d, enp, gnd,
 	     n_load, ent, q_d, q_c, q_b, q_a, rco, vcc);
    input wire n_clr, clk, a, b, c, d, enp;

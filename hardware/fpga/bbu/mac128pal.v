@@ -151,17 +151,28 @@ module lag(simclk, n_res,
       // to get at least partial behavior for analysis.
       // TODO FIXME: We trigger hsync a bit too soon at the end of the
       // scanline.  And, we release it too soon at the beginning.
+      // HACKED ~vclk inserted
       hsync <=
-	~(viapb6 /* & ~p0q2 & s1 */ & ~vclk & va1 & va2 & va3 & va4 /* FIXME & ~va1 & ~va2 & ~va3 & ~va4 */
+	~(viapb6 & ~vclk & va1 & va2 & va3 & va4 /* FIXME & va4 & ~va3 & ~va2 & va1 */
 	  | ~hsync & ~va4
 	  | ~hsync & ~va3
 	  | ~hsync & va2
 	  | ~hsync & va1);
+      // TODO TEST NEATER REWRITES:
+      // viapb6 <=
+      // 	~(~hsync & ~va4 & ~va3 & va2 & va1
+      // 	  | ~viapb6 & snddma
+      // 	  | ~viapb6 & vclk);
+      // hsync <=
+      // 	~(~viapb6 & ~va4 & ~va3 & va2 & ~va1
+      // 	  | ~hsync & ~viapb6
+      // 	  | ~hsync & ~va4);
       s1 <=
 	~(~p0q2 // 0 for processor and 1 for video
 	  | ~vclk
 	  | ~vsync & hsync
 	  | ~vsync & viapb6 // vertical retrace only has sound cycles
+	  // Next line HACKED, was: ~viapb6 & hsync & ~va4 & ~va3 & ~va2
 	  | ~vsync & ~viapb6 & ~hsync & va4 & va3 & va2 & va1
 	  | ~viapb6 & ~hsync & ~va4
 	  | ~viapb6 & ~hsync & va4 & ~va3 & ~va2
@@ -196,16 +207,14 @@ module lag(simclk, n_res,
 	  | ~viapb6 & ~va2
 	  | ~viapb6 & ~va3
 	  | ~viapb6 & ~va4);
-      // TODO FIXME HACK: Previously viapb6 but negated for testing.
       snddma <=
 	~(~viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
 	  | ~snddma & vclk); // ... indicates sound cycle
-      // TODO FIXME HACK: Previously ~viapb6 but negated for testing.
       reslin <= // try to generate line 370
 	~(l28
 	  | ~vsync
 	  | ~hsync // HACKED previously hsync, but negated for testing.
-	  | viapb6
+	  | viapb6 // HACKED previously ~viapb6 but negated for testing.
 	  | ~vclk);
       // N.B. Primary conceptual equation:
       // resnyb <=
@@ -224,6 +233,16 @@ module lag(simclk, n_res,
       	  | ~hsync & ~va3
       	  | ~va4 & va3
       	  | va4 & ~va3);
+      // TODO TEST NEATER REWRITES:
+      // ??? = /SOM . /VCLK + HS . P6 . /4 . /3 . /2 . /1
+      // /RN = P2 . P6 . /4 . /3 . /2 . /1 + /RN . P2 + /RN . SOM . 4 + /RN . SOM . 3 + /RN . SOM . 2 + /RN . SOM . 1 + /RN . /P6 . HS + VCLK
+      // ??? = P6 . /VCLK . /P2 . /HS . 4 . 3 . /2 . /1 + /VCLK . /P2 . /P6 . <CHOPPED OFF?>/4 . /3 . /2 . /1
+      // N.B. P2 maybe shorthand for P0Q2?
+      // POSSIBLY SIMPLIFIED EQUATIONS?
+      // ??? = HS . 4 + HS . 3 + /HS . /4 + /4 . 3 + /HS . /3 + 4 . /3
+      // ??? = [/P6 VCLK P2 2 1] + (HS + /4 + /3)(/HS + 4 . <CHOPPED OFF>
+      // ??? = /VA4 * /VA3 * /HSYNC * /V <CHOPPED OFF>
+      // ...<CONTINUE> VA4 * VA3 * /HSYNC * V <CHOPPED OFF>
       end
    end
 endmodule
@@ -421,6 +440,57 @@ module tsg(simclk, n_res,
    end
 endmodule
 
+// U11E-16R8: Analog Signal Generator
+
+// N.B.: ASG as a "sound generator" is largely a misnomer, it is
+// primarily a PWM disk speed generator.  Therefore, the Unitron
+// didn't need an ASG because it didn't clone Apple disk drives.
+// TODO FIXME: ASG not fully implemented.
+module asg(simclk, n_res,
+	   sysclk, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_snddma, vclk, gnd,
+	   tsen2, n_dmald, pwm, r5, r4, r3, r2, r1, r0, vcc);
+   input `virtwire simclk, n_res;
+   input wire sysclk;
+   input wire rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_snddma, vclk;
+   `power wire gnd;
+   input wire tsen2;
+   output reg n_dmald, pwm, r5, r4, r3, r2, r1, r0;
+   `power wire vcc;
+
+   // We must implement RESET for simulation or else this will never
+   // stabilize.
+   always @(negedge n_res) begin
+      n_dmald <= 1;
+      r5 <= 1; r4 <= 1; r3 <= 1; r2 <= 1; r1 <= 1; r0 <= 1;
+   end
+
+   // Simulate registered logic.
+   always @(posedge sysclk) begin
+      if (n_res) begin
+	 n_dmald <=
+	   ~(~vclk & ~n_snddma);
+	 // (a ^ b) == (a | b) & ~(a & b)
+	 // ~~(a ^ b) == ~(~(a | b) | (a & b))
+	 // ~~(a ^ b) == ~((~a & ~b) | (a & b))
+	 // ~~(a ^ b) == ~((~a & ~(f & g & h)) | (a & (f & g & h)))
+	 // ~~(a ^ b) == ~((~a & (~f | ~g | ~h)) | (a & (f & g & h)))
+	 // ~~(a ^ b) == ~(~a & ~f | ~a & ~g | ~a & ~h | (a & (f & g & h)))
+
+	 // N.B.: This expansion almost exceeds the term limit of the
+	 // PAL.
+
+	 // TODO FIXME: Not in PAL equation format.
+	 r0 <= n_dmald & (r0 ^ ~pwm);
+	 r1 <= n_dmald & (r1 ^ (r0 & ~pwm));
+	 r2 <= n_dmald & (r2 ^ (r1 & r0 & ~pwm));
+	 r3 <= n_dmald & (r3 ^ (r2 & r1 & r0 & ~pwm));
+	 r4 <= n_dmald & (r4 ^ (r3 & r2 & r1 & r0 & ~pwm));
+	 r5 <= n_dmald & (r5 ^ (r4 & r3 & r2 & r1 & r0 & ~pwm));
+	 pwm <= n_dmald & r5 & r4 & r3 & r2 & r1 & r0;
+      end
+   end
+endmodule
+
 /* Now in order to fully implement the Macintosh's custom board
    capabilities, we must as a baseline have an implementation of some
    standard logic chips that are found on the Macintosh Main Logic
@@ -430,6 +500,9 @@ endmodule
 // Wire that PAL cluster together, along with supporting standard
 // logic chips.  Here, we try to better indicate active high and
 // active low because we also need to stick in a hex inverter chip.
+//
+// Important!  This is actually a board-level description of a
+// Macintosh Plus.
 module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 	     sysclk, pclk, p0q1, clkscc, p0q2, vclk, q3, q4,
 	     e, keyclk,
@@ -522,8 +595,6 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 
    // *DMALD is generated by ASG.  It's very similar to how *LDPS is
    // generated.
-   // n_dmald <=
-   //   ~(s1 & ~vclk & ~n_snddma);
    wire n_dmald;
 
    // u12f_tc is the carry propagation signal for the dual PWM sound
@@ -534,6 +605,8 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // This is just a pull-up resistor, possibly connected to a RESET
    // circuit.
    wire s5;
+   wire tsen2; // Pull-down resistor
+   wire pwm;
 
    // L12 => va13
    // L13 => va14
@@ -567,6 +640,8 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // S5: Pull-up resistor.  TODO FIXME: Should this be controlled by
    // another thing too?
    assign s5 = vcc;
+   // TSEN2: Pull-down resistorr.
+   assign tsen2 = gnd;
 
    // TODO FIXME: A1 - A13 are connected to a pull-up resistors bank
    // RP1.
@@ -636,13 +711,9 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 	    sysclk, n_vpa, a19, vclk, p0q1, e, keyclk, n_intscc,
 	    n_intvia, gnd, tsg_oe3, d0, q6, clkscc, q4, q3, viacb1,
 	    pclk, n_ipl0, vcc);
-
-   // N.B.: ASG as a "sound generator" is largely a misnomer, it is
-   // primarily a PWM disk speed generator.
-
-   // TODO FIXME: ASG not implemented.
-   // asg u11e(c16mf, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_dma, vclk, gnd,
-   // 	    tsen2, n_dmald, pwm, , , , , , , vcc);
+   asg u11e(simclk, n_res,
+	    c16mf, rdq0, rdq1, rdq2, rdq3, rdq4, rdq5, n_snddma, vclk, gnd,
+	    tsen2, n_dmald, pwm, , , , , , , vcc);
 endmodule
 
 `endif // not MAC128PAL_V
