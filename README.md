@@ -19,15 +19,15 @@ of conventional Macintosh emulators.
 
 ## What is currently available?
 
-Currently, this repository only contains a vector graphics hand
-trace-over of page 1 of the Macintosh SE Main Logic Board (MLB)
-schematics.  Typed text is used for all legible text.  Since pages 2
-and 3 of the MLB schematics are missing and nowhere to be found on the
-Internet, they will have to be redrawn from the reverse engineered
-printed circuit board layout.
+* Replica RTC based off of an AVR microcontroller
 
-Follow this link to [jump to the redrawn
-schematic](old_artifacts/schems/retrace_se_mlb_p1.svg).
+* Macintosh 128k PAL logic circuits
+
+* BBU replica work-in-progress
+
+* [Vector graphics hand
+  traceover](old_artifacts/schems/retrace_se_mlb_p1.svg) of one page
+  of the Macintosh SE schematics
 
 There are lots of other independent projects with good pieces of
 information out and about on the Macintosh SE.  For the time being,
@@ -42,6 +42,16 @@ Check out the GitHub repository repository with redrawn schematics for
 the Macintosh SE/30:
 
 https://github.com/mishimasensei/macse30mlb
+
+Macintosh SE Reloaded, a project to replicate the Macintosh SE Main
+Logic Board.
+
+https://github.com/kr239/Macintosh-SE-Reloaded
+
+PLEASE NOTE that the most up-to-date info for this part of the project
+is primarily on the 68kMLA forum:
+
+https://68kmla.org/forums/topic/60059-reverse-engineering-the-macintosh-se-pcb-custom-chips-for-11-reproduction/
 
 ## License
 
