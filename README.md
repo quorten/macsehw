@@ -29,6 +29,8 @@ of conventional Macintosh emulators.
   traceover](old_artifacts/schems/retrace_se_mlb_p1.svg) of one page
   of the Macintosh SE schematics
 
+* Replica shipping box designs work-in-progress
+
 There are lots of other independent projects with good pieces of
 information out and about on the Macintosh SE.  For the time being,
 these are linked from documentation in the repository.  In the event
