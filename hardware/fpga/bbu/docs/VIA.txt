@@ -1,0 +1,30 @@
+Macintosh SE VIA pin assignments.
+
+VIA Data register A:
+
+7 Input  vSCCWrReq  0 = SCC Wait/Request, channel A or B
+6 Output vPage2     0 = alternate screen buffer, 1 = main screen buffer
+5 Output vHeadSel   Floppy disk state-control line SEL
+4 Output vDriveSel  0 = upper internal floppy disk drive, 1 = lower
+3 Output vSync      1 = synchronous model support, channel A
+2 Output vSound(2)    Sound volume
+1 Output vSound(1)  { (111 = maximum, 000 = minimum;
+0 Output vSound(0)    bit  2 = most significant bit )
+
+VIA Data register B:
+
+7 Output    vSndEnb 0 = sound enabled
+6 Output    vH4     0 = SCSI IRQ enabled
+5 Output    vFDesk2 ADB state input 1 (ST1)
+4 Output    vFDesk1 ADB state input 0 (ST0)
+3 Input     vFDBInt 0 = ADB interrupt
+2 Output    rTCEnb  0 = real-time clock enabled
+1 Output    rtcCLK  Real-time clock's serial data-clock line
+0 In or Out rtcData Real-time clock's serial data line
+
+VIA Peripheral Control register:
+
+CB2 7-5 Apple Desktop Bus data
+CB1 4   Apple Desktop Bus clock
+CA2 3-1 One-second interrupt
+CA1 0   Vertical blanking interrupt
