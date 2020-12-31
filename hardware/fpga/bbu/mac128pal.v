@@ -353,8 +353,6 @@ module bmu0(simclk, n_res,
    input wire oe1;
    output wire g244, we;
    output reg ava14, l15, vid, ava13;
-   // N.B. Although this is nominally an output we can treat it as an
-   // input?
    input wire servid, dtack;
    `power wire vcc;
 
@@ -439,7 +437,6 @@ module tsg(simclk, n_res,
       end
    end
 endmodule
-
 // U11E-16R8: Analog Signal Generator
 
 // N.B.: ASG as a "sound generator" is largely a misnomer, it is
@@ -491,6 +488,110 @@ module asg(simclk, n_res,
    end
 endmodule
 
+// 20R4: Bus Management Unit 2
+
+// The Macintosh Plus's version of BMU0, almost exactly the same
+// except for the addition of `C2M`, `*DMA`, `*TSEN0` as an input, and
+// RA8.
+module bmu2(simclk, n_res,
+	    sysclk, ramen, romen, va10, va11, va12, va13, va14, rw,
+	    c2m, n_snddma, gnd, oe1, oe1_2, ra8, g244, ava14, ava13,
+	    l15, vid, we, servid, dtack, vcc);
+   input `virtwire simclk, n_res;
+   input wire sysclk;
+   input wire ramen, romen, va10, va11, va12, va13, va14, rw,
+	      c2m, n_snddma;
+   `power wire gnd;
+   input wire oe1, oe1_2;
+   output wire ra8, g244;
+   output reg ava14, ava13, l15, vid;
+   output wire we;
+   input wire servid, dtack;
+   `power wire vcc;
+
+   // We must implement RESET for simulation or else this will never
+   // stabilize.
+   always @(negedge n_res) begin
+      // g244 = 1; we = 1;
+
+      ava14 <= 1; l15 <= 1; vid <= 1; ava13 <= 1;
+   end
+
+   // Simulate combinatorial logic.
+   assign g244
+     = ~(~ramen & rw
+	 | ~g244 & ~ramen);
+   assign we
+     = ~(~ramen & ~rw
+	 | ~we & ~dtack); // or `dtack` is shorter before the video cycle
+   // TODO FIXME: Determine how we should drive RA8.
+   assign ra8
+     = ~(~n_snddma & c2m & va10);
+
+   // Simulate registered logic.
+   always @(posedge sysclk) begin
+      if (n_res) begin
+      ava14 <= ~(~va14 & ~va13); // + 1
+      l15 <=
+	~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
+	  | va14 & ~va13 & va12 & va11 & va10); // passed by 368
+      vid <=
+	~(servid); // here we invert: blanking is in `vshft`
+      ava13 <= ~(va13); // + 1
+      end
+   end
+endmodule
+
+// 20L8: Column Access Strobe
+module cas(simclk, n_res,
+	   a9, a19, a20, a21, a22, a23, c2m, s1, n_casl, n_cash,
+	   rows, gnd, tsen2, ramsize, n_romen, ovlay, n_cas0l,
+	   n_cas0h, n_cas1l, n_cas1h, n_scsi, n_dack, n_as, vcc);
+   input `virtwire simclk, n_res;
+   input wire a9, a19, a20, a21, a22, a23, c2m, s1, n_casl, n_cash,
+	      rows;
+   `power wire gnd;
+   input wire tsen2;
+   input wire ramsize;
+   output wire n_romen;
+   input wire ovlay;
+   output wire n_cas0l, n_cas0h, n_cas1l, n_cas1h, n_scsi, n_dack;
+   input wire n_as;
+   `power wire vcc;
+
+   // We must implement RESET for simulation or else this will never
+   // stabilize.
+   always @(negedge n_res) begin
+   end
+
+   // Simulate combinatorial logic.
+   assign n_romen
+     = ~(a23  | a21  | a20  | ~ovlay & ~a22);
+   assign n_cas0l
+     = ~(n_casl);
+   assign n_cas0h
+     = ~(n_cash);
+   assign n_cas1l
+     = ~(n_casl
+	 | ovlay & ~rows
+	 | ramsize & ~rows
+	 | ~rows & n_as
+	 | ~rows & n_cash
+	 | ramsize & ~s1 & ~c2m & ~a23 & ~a22 & ~a21
+	 | rows & ~s1 & ~c2m & ~a23 & ~a22 & ~a21 & ~a20 & ~a19);
+   assign n_cas1h
+     = ~(n_cash
+	 | ovlay & ~rows
+	 | ramsize & ~rows
+	 | ~rows & n_as
+	 | ramsize & ~n_casl & ~s1 & ~c2m & ~a23 & ~a22 & ~a21
+	 | rows & ~n_casl & ~s1 & ~c2m & ~a23 & ~a22 & ~a21 & ~a20 & ~a19);
+   assign n_scsi
+     = ~(n_as  | a23  | ~a22  | a21  | ~a20  | ~a19  | a9);
+   assign n_dack
+     = ~(n_as  | a23  | ~a22  | a21  | ~a20  | ~a19  | ~a9);
+endmodule
+
 /* Now in order to fully implement the Macintosh's custom board
    capabilities, we must as a baseline have an implementation of some
    standard logic chips that are found on the Macintosh Main Logic
@@ -501,8 +602,8 @@ endmodule
 // logic chips.  Here, we try to better indicate active high and
 // active low because we also need to stick in a hex inverter chip.
 //
-// Important!  This is actually a board-level description of a
-// Macintosh Plus.
+// Important!  This is actually almost a board-level description of a
+// Macintosh Plus, but not quite.
 module palcl(simclk, vcc, gnd, n_res, n_sysclk,
 	     sysclk, pclk, p0q1, clkscc, p0q2, vclk, q3, q4,
 	     e, keyclk,
