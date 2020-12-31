@@ -568,7 +568,8 @@ endmodule
  
    These are the particular address zones for Macintosh SE, according
    to MESS/MAME source code.  In particular, SCC and IWM are
-   surrounded with invalid address guard zones:
+   surrounded with invalid address guard zones... these are simply
+   available for use by PDS expansion cards:
 
    * 0x000000 - 0x3fffff: RAM/ROM (switches based on overlay)
    * 0x400000 - 0x4fffff: ROM
