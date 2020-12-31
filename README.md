@@ -55,6 +55,26 @@ is primarily on the 68kMLA forum:
 
 https://68kmla.org/forums/topic/60059-reverse-engineering-the-macintosh-se-pcb-custom-chips-for-11-reproduction/
 
+Compact Macintosh (CRT) Repair Guide:
+
+https://web.archive.org/web/20200107140520/http://www.ccadams.org/se/classicmac2.pdf
+
+Plus Two, a Macintosh Plus FPGA replica that is not nearly so detailed
+and true-to-life accurate:
+
+https://www.bigmessowires.com/plus-too/
+
+Enhanced Plus Two for the MiST board, contains a Verilog
+implementation of the SCSI and SCC controllers.
+
+https://www.bigmessowires.com/2015/10/22/plus-too-mac-replica-new-progress/  
+https://github.com/mist-devel/mist-board/tree/master/cores/plus_too
+
+Apple II disk controller, contains an Verilog implementation of the
+IWM.
+
+https://github.com/steve-chamberlin/fpga-disk-controller
+
 ## License
 
 Since a primary goal of this project is to assemble historic
