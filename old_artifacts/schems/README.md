@@ -10,6 +10,11 @@ SE schematics scan.
 
 https://archive.org/details/Macintosh68kSchematics
 
+PLEASE NOTE: Here is a link to the Macintosh 512k schematics, very
+useful for filling in the missing details.
+
+20210101/http://www.digibarn.com/collections/diagrams/mac-512klogicboard/mac-logic-schematic.jpg
+
 ----------
 
 Due to the illegiblity of the original Main Logic Board (MLB) page 1
