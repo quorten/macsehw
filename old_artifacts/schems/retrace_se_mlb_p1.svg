@@ -19,6 +19,13 @@
    sodipodi:docname="retrace_se_mlb_p1.svg">
   <defs
      id="defs2">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 495 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="1530 : 495 : 1"
+       inkscape:persp3d-origin="765 : 330 : 1"
+       id="perspective4661" />
     <marker
        inkscape:stockid="Arrow2Mend"
        orient="auto"
@@ -59,9 +66,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="637.56936"
-     inkscape:cy="578.86591"
+     inkscape:zoom="2.8284272"
+     inkscape:cx="259.5337"
+     inkscape:cy="868.62038"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -91,14 +98,14 @@
      style="display:none"
      sodipodi:insensitive="true">
     <image
-       sodipodi:absref="/home/andrew/XG/se_mlb_p1_proc.png"
+       sodipodi:absref="/home/andrew/XG/oldmac/se_mlb_p1_proc.png"
        xlink:href="se_mlb_p1_proc.png"
-       y="-1.2478054"
-       x="0.26458079"
-       id="image18"
-       preserveAspectRatio="none"
+       width="386.15598"
        height="296.18311"
-       width="386.15598" />
+       preserveAspectRatio="none"
+       id="image18"
+       x="0.26458079"
+       y="-1.2478054" />
   </g>
   <g
      inkscape:label="Layer 1"
@@ -8621,15 +8628,14 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="45.372791"
        y="17.938437"
        id="text6227"><tspan
          sodipodi:role="line"
          id="tspan6225"
          x="45.372791"
-         y="17.938437"
-         style="stroke-width:0.3562324">1.  ALL RESISTANCE VALUES ARE IN OHMS, 1/6W, 5%</tspan></text>
+         y="17.938437">1.  ALL RESISTANCE VALUES ARE IN OHMS, 1/4W, 5%</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
@@ -8643,15 +8649,14 @@
          style="stroke-width:0.3562324">2.  ALL CAPACITANCE VALUES ARE IN MICROFARADS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
+       style="font-size:1.66241777px;font-style:normal;font-weight:normal;line-height:1;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
        x="45.498737"
        y="25.432289"
        id="text6235"><tspan
          sodipodi:role="line"
          id="tspan6233"
          x="45.498737"
-         y="25.432289"
-         style="stroke-width:0.3562324">3   COMPONENT CRT NOT INSERTED</tspan></text>
+         y="25.432289">3   COMPONENT C67 NOT INSERTED</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:1.66241777px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.3562324"
