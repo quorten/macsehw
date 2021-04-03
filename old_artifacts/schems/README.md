@@ -13,7 +13,11 @@ https://archive.org/details/Macintosh68kSchematics
 PLEASE NOTE: Here is a link to the Macintosh 512k schematics, very
 useful for filling in the missing details.
 
-20210101/http://www.digibarn.com/collections/diagrams/mac-512klogicboard/mac-logic-schematic.jpg
+20210101/https://www.folklore.org/images/Macintosh/schematic.jpg
+
+Here's a link to some redrawn Macintosh 128k schematics.
+
+20210403/https://kiramek.com/21test95/EarlyMacSchematics.pdf
 
 ----------
 
