@@ -350,8 +350,10 @@ module bmu0(simclk, n_res,
       l15 <=
 	~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
 	  | va14 & ~va13 & va12 & va11 & va10); // passed by 368
+      // TODO VERIFY: Unitron inverts the video signal here, Macintosh
+      // does not.
       vid <=
-	~(servid); // here we invert: blanking is in `vshft`
+	~(~servid); // here we buffer: blanking is in `vshft`
       ava13 <= ~(va13); // + 1
       end
    end
@@ -507,8 +509,10 @@ module bmu2(simclk, n_res,
       l15 <=
 	~(~va14 & ~va13 & ~va12 & ~va11 & ~va10 // we haven't passed line 15
 	  | va14 & ~va13 & va12 & va11 & va10); // passed by 368
+      // TODO VERIFY: Unitron inverts the video signal here, Macintosh
+      // does not.
       vid <=
-	~(servid); // here we invert: blanking is in `vshft`
+	~(~servid); // here we buffer: blanking is in `vshft`
       ava13 <= ~(va13); // + 1
       end
    end
