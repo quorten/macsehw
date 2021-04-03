@@ -64,13 +64,13 @@ module tsm(simclk, n_res,
    // Simulate combinatorial logic.
    assign casl
      = ~(~s0 & s1 & sysclk // video
-	 | ~s0 & ~ramen & ~lds // processor
-	 | ~s0 & ~casl & sysclk
+	 | ~s0 & ~ramen & ~lds & sysclk // processor
+	 | ~s0 & ~casl
 	 | pclk & ~casl);
    assign cash
      = ~(~s0 & s1 & sysclk // video
-	 | ~s0 & ~ramen & ~uds // processor
-	 | ~s0 & ~cash & sysclk
+	 | ~s0 & ~ramen & ~uds & sysclk // processor
+	 | ~s0 & ~cash
 	 | pclk & ~cash);
    assign s0
      = ~(~ras & ~sysclk // 0 for `cas` and 1 for `ras` (counting with the delay of the PAL)
@@ -139,129 +139,66 @@ module lag(simclk, n_res,
       vsync <=
 	~(reslin
 	  | ~vsync & ~l28);
-      // hsync  <=
-      // 	~(viapb6 & va4 & ~va3 & ~va2 & va1 // begins in 29 (VA5)
-      // 	  | /*~ ???*/resnyb
-      // 	  | ~hsync & viapb6); // ends in 0F
-      // hsync  <=
-      // 	~(~viapb6 & ~va4 & ~va3 & va2 & va1 // begins in 29 (VA5)
-      // 	  | ~hsync & ~va4
-      // 	  | ~hsync & ~viapb6); // ends in 0F
-      // TODO FIXME: This is incorrect, temporary equations in order
-      // to get at least partial behavior for analysis.
-      // TODO FIXME: We trigger hsync a bit too soon at the end of the
-      // scanline.  And, we release it too soon at the beginning.
-      // HACKED ~vclk inserted
       hsync <=
-	~(viapb6 & ~vclk & va1 & va2 & va3 & va4 /* FIXME & va4 & ~va3 & ~va2 & va1 */
+      	~(~viapb6 & ~va4 & ~va3 & va2 & ~va1 // begins in 22 (VA6)
+      	  | ~hsync & ~viapb6
 	  | ~hsync & ~va4
-	  | ~hsync & ~va3
+	  | ~hsync & va3
 	  | ~hsync & va2
-	  | ~hsync & va1);
-      // TODO TEST NEATER REWRITES:
-      // viapb6 <=
-      // 	~(~hsync & ~va4 & ~va3 & va2 & va1
-      // 	  | ~viapb6 & snddma
-      // 	  | ~viapb6 & vclk);
-      // hsync <=
-      // 	~(~viapb6 & ~va4 & ~va3 & va2 & ~va1
-      // 	  | ~hsync & ~viapb6
-      // 	  | ~hsync & ~va4);
+	  | ~hsync & va1); // ends in 07
       s1 <=
 	~(~p0q2 // 0 for processor and 1 for video
 	  | ~vclk
 	  | ~vsync & hsync
 	  | ~vsync & viapb6 // vertical retrace only has sound cycles
-	  // Next line HACKED, was: ~viapb6 & hsync & ~va4 & ~va3 & ~va2
-	  | ~vsync & ~viapb6 & ~hsync & va4 & va3 & va2 & va1
+	  | ~viapb6 & hsync & ~va4 & ~va3 & ~va2
 	  | ~viapb6 & ~hsync & ~va4
 	  | ~viapb6 & ~hsync & va4 & ~va3 & ~va2
 	  | ~viapb6 & ~hsync & va4 & ~va3 & va2 & ~va1);
-      // viapb6 <=
-      // 	~(~hsync & resnyb // 1 indicates horizontal retrace (pseudo VA6)
-      // 	  | va1 & ~viapb6
-      // 	  | va2 & ~viapb6
-      // 	  | ~hsync & ~viapb6
-      // 	  | resnyb & ~viapb6
-      // 	  | vshft & ~viapb6);
-      // viapb6 <=
-      // 	~(hsync & ~va4 & ~va3 & va2 & va1 // 1 indicates horizontal retrace (pseudo VA6)
-      // 	  | ~viapb6 & snddma
-      // 	  | ~viapb6 & vclk);
-      // TODO FIXME: This is incorrect, temporary equations in order
-      // to get at least partial behavior for analysis.
-      // TODO FIXME: Why this latches up and is broken, we should not
-      // use memory access to clock this to one sensitivity cycle.
-
-      // TODO FIXME: Okay, this is how to do it.  The trick is within
-      // "self-latching" logic equations.  When another clock period
-      // remains the same, we use self-latching logic equations, but
-      // they loose effect... okay, I don't know what I'm talking
-      // about.
       viapb6 <=
-	~(~hsync // 1 indicates horizontal retrace (pseudo VA6)
-	  /* | ~viapb6 & p0q2
-	  | ~viapb6 & ~s1 */
-	  | ~viapb6 & ~vclk
-	  | ~viapb6 & ~va1 // TODO FIXME wrong phase
-	  | ~viapb6 & ~va2
-	  | ~viapb6 & ~va3
-	  | ~viapb6 & ~va4);
+      	~(hsync & ~va4 & ~va3 & va2 & va1 // 1 indicates horizontal retrace (pseudo VA6)
+      	  | ~viapb6 & snddma
+      	  | ~viapb6 & vclk);
       snddma <=
 	~(~viapb6 & va4 & ~va3 & va2 & va1 & p0q2 & vclk & ~hsync // 0 in this output
 	  | ~snddma & vclk); // ... indicates sound cycle
       reslin <= // try to generate line 370
 	~(l28
 	  | ~vsync
-	  | ~hsync // HACKED previously hsync, but negated for testing.
-	  | viapb6 // HACKED previously ~viapb6 but negated for testing.
+	  | hsync
+	  | ~viapb6
 	  | ~vclk);
-      // N.B. Primary conceptual equation:
-      // resnyb <=
-      //   ((~viapb6 & hsync & ~va4 & ~va3 & ~va2 & ~va1)
-      //    | (~viapb6 & ~hsync & va4 & va3 & ~va2 & ~va1));
-      // TODO FIXME HACK: Possibly incorrect interpretation of viapb6
-      // with hsync.
       resnyb <=
       	~(vclk // increment VA5:VA14 in 0F and 2B
-      	  | // viapb6 // TODO FIXME HACK PHASE
+      	  | p0q2
       	  | va1
       	  | va2
-      	  | hsync & va4
-      	  | hsync & va3
-      	  | ~hsync & ~va4
-      	  | ~hsync & ~va3
-      	  | ~va4 & va3
-      	  | va4 & ~va3);
-      // TODO TEST NEATER REWRITES:
-      // ??? = /SOM . /VCLK + HS . P6 . /4 . /3 . /2 . /1
-      // /RN = P2 . P6 . /4 . /3 . /2 . /1 + /RN . P2 + /RN . SOM . 4 + /RN . SOM . 3 + /RN . SOM . 2 + /RN . SOM . 1 + /RN . /P6 . HS + VCLK
-      // ??? = P6 . /VCLK . /P2 . /HS . 4 . 3 . /2 . /1 + /VCLK . /P2 . /P6 . <CHOPPED OFF?>/4 . /3 . /2 . /1
-      // N.B. P2 maybe shorthand for P0Q2?
-      // POSSIBLY SIMPLIFIED EQUATIONS?
-      // ??? = HS . 4 + HS . 3 + /HS . /4 + /4 . 3 + /HS . /3 + 4 . /3
-      // ??? = [/P6 VCLK P2 2 1] + (HS + /4 + /3)(/HS + 4 . <CHOPPED OFF>
-      // ??? = /VA4 * /VA3 * /HSYNC * /V <CHOPPED OFF>
-      // ...<CONTINUE> VA4 * VA3 * /HSYNC * V <CHOPPED OFF>
+      	  | ~viapb6 & va3
+	  | hsync & ~viapb6
+	  | hsync & va3
+	  | hsync & va4
+	  | viapb6 & ~va3 & ~hsync
+      	  | ~hsync & va3 & ~va4
+      	  | ~hsync & ~va3 & va4);
       end
    end
 endmodule
 
-/*
-This LAG doesn't work correctly, here's how it is supposed to work.
+/* Here's how the LAG works.
 
 1. Count video addresses to 32.  During this count, generate resnyb
-   every time we need a carry.
+   (reset nybble) every time we need a carry.
 
-2. Once we reach 32, that's 512 pixels, one scanline.  Now, we assert
-   the *HSYNC signal.  But please note, at this point we do **not**
+2. Once we reach 32, that's 512 pixels, one scanline.  Wait 16 more
+   pixels to generate a blank overscan image.  Now, we assert the
+   *HSYNC signal.  But please note, at this point we do **not**
    generate resnyb for the carry at 32, instead we let that counter
    wrap around to zero without a carry.
 
-3. When the *HSYNC signal is asserted, we only count to 12.  That's
-   192 pixels for horizontal blanking.  Just when we're about to reach
-   the end, we assert the *SNDDMA signal.  That's when we fetch the
-   sound sample, at the very end of horizontal blanking, not the very
+3. During horizontal blanking, we only count to 12.  That's 192 pixels
+   for horizontal blanking.  Just when we're about to reach the end,
+   we assert the *SNDDMA signal.  That's when we fetch the sound
+   sample, at the very end of horizontal blanking, not the very
    beginning.
 
    Finally, we assert resnyb to clear the counter and finally
@@ -275,12 +212,46 @@ But, to implement this... it's tricky because va5 and va6 are not
 connected to any PAL.  How do we generate the signals then?  We can
 otherwise only count to 16, we need to get to 32.
 
-Okay, I think I've got it figured out.  VIAPB6 is a little white lie,
-it's not the actual horizontal blanking signal, it's a prep signal
-before the horizontal blanking actually occurs.  But, nevertheless, it
-is almost the same thing, 16 cycles at 16MHz rather than 12 cycles.
-For the 8 MHz CPU, it pretty much looks like the same thing.  And
-that's where we hide the additional bit of memory we need.
+Okay, I've got it figured out.  VIAPB6 is a little white lie, it's not
+the actual horizontal blanking signal, it's a prep signal before the
+horizontal blanking actually occurs.  But, nevertheless, it is almost
+the same thing, 19 cycles at 1MHz rather than 12 cycles.  Here's how
+the whole interplay works in detail.
+
+1. Immediately after *SNDDMA is asserted, VIAPB6 is asserted.
+
+2. Now, here's where the real trickery comes into play.  Even though
+   horizontal blanking is supposed to end right now, we delay
+   de-asserting the *HSYNC signal until we reach video address 8, such
+   that we start shifting out visible screen pixels apparently during
+   the horizontal blanking period.  Why?  Well we need this glitched
+   behavior so we can count to 32 with only 4 video address bits.
+
+   Apparently this is still within the tolerance of the CRT circuitry:
+   the CRT actually completes horizontal blanking and starts the
+   regular visible area sweep before we de-assert *HSYNC, so actually
+   we won't be drawing these pixels during horizontal blanking.
+
+3. Now, the ultimate conclusion of the glitched counter.  When we
+   wrap-around to zero, both *HSYNC and VIAPB6 are still asserted.  We
+   check for this condition to generate resnyb in the middle of a
+   scanline.
+
+4. VIAPB6 is deasserted at video address 19.  Therefore, it is
+   asserted for a total of 19 cycles at 1MHz.
+
+Let's summarize the information pertinent to sound timing and VIAPB6.
+
+1. *SNDDMA is asserted at the very end of horizontal blanking, just
+   before the beginning of the visible line.
+2. Immediately after *SNDDMA is asserted, VIAPB6 is asserted (+5V).
+3. VIAPB6 remains high for 19 cycles @ 1MHz.
+4. VIAPB6 is deasserted.
+
+Sound sample #0 is fetched from the Macintosh's sound buffer at the
+end of the first vertical blanking line, #28 at the end of the first
+visible video line, and the last sound sample #369 is fetched at the
+end of the last visible video line.
 
 */
 
@@ -327,15 +298,15 @@ module bmu1(simclk, n_res,
      = ~(~a23 & ~a22 & ~a21 & ~as & ~ovlay // 000000
 	 | ~a23 & a22 & a21 & ~as & ovlay); // (600000 with `ovlay`)
    assign io1
-     = ~(~l15 & ~va9 & va8 & ~va7 // reached 368 or we don't pass line 26
-	 | ~l28 & ~l15
+     = ~(~l15 & ~va9 & va8 & ~va7 // reached 368
+	 | ~l28 & ~l15 // ... or we don't pass line 26
 	 | ~l28 & ~va9
 	 | ~l28 & va8
 	 | ~l28 & ~va7
 	 | ~n_res); // SIMULATION ONLY: Else we never settle.
    assign l28
-     = ~(~l15 & ~va9 & ~va8 & va7 // reached 370 or we don't pass line 28
-	 | ~l28 & ~l15
+     = ~(~l15 & ~va9 & ~va8 & va7 // reached 370
+	 | ~l28 & ~l15 // ... or we don't pass line 28
 	 | ~l28 & ~va9
 	 | ~l28 & ~va8
 	 | ~l28 & va7
@@ -411,10 +382,11 @@ module tsg(simclk, n_res,
 
    // Simulate combinatorial logic.
    assign ipl0
-     = ~intscc | intvia; // CORRECTION
-   // assign ipl0 = ~(0); // ??? /M nanda
+     = ~intscc | intvia;
+   // N.B.: We tristate D0 so that we don't interfere with unrelated
+   // address bus uses.
    assign d0
-     = ~(~vpa & ~a19 & e); // F00000 sample the phase with 0  /n e' + usado
+     = (~vpa & ~a19 & e) ? ~(vcc) : 'bz; // F00000 sample the phase with 0  /n e' + usado
 
    // Simulate registered logic.
    always @(posedge sysclk) begin
@@ -427,7 +399,7 @@ module tsg(simclk, n_res,
 	  | clkscc & ~pclk & vclk
 	  | ~clkscc & pclk
 	  | ~clkscc & q4 & q3 & ~vclk); // skip one inversion every 32 cycles
-      viacb1 <= ~(0); // ??? /M nanda
+      viacb1 <= ~(~keyclk); // buffer the keyboard clock
       pclk <= ~(pclk); // divide SYSCLK by 2 (8MHz)
       q3 <= ~(~vclk); // `sysclk` / 16
       q4 <=
@@ -734,9 +706,6 @@ module palcl(simclk, vcc, gnd, n_res, n_sysclk,
    // TSEN1: 150 ohm resistor to GND for LAG.
    assign lag_oe2 = gnd;
    // Pull-down resistor shared by TSG, ASG, and CAS (if present).
-   // TODO INVESTIGATE: Surely this is controlled by another switch
-   // related to the RAM data bus switches, otherwise D0 is
-   // unconditionally coerced for non-phase read accesses.
    assign tsg_oe3 = gnd;
    // S5: Pull-up resistor.  TODO FIXME: Should this be controlled by
    // another thing too?
